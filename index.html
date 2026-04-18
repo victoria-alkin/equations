@@ -152,13 +152,21 @@
     .timed-tagline { text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 1.4rem; }
 
     /* Auth */
+    .auth-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; background: #EAEAEA; padding: 4px; border-radius: 20px; }
+    .auth-tab {
+      flex: 1; padding: 0.4rem; border: none; border-radius: 16px;
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer;
+      background: transparent; color: #888; transition: background 0.2s, color 0.2s;
+    }
+    .auth-tab.active { background: white; color: #333; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
     .auth-form { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.8rem; }
 
-    .auth-form input[type="email"] {
+    .auth-form input {
       padding: 0.65rem 1rem; border: 2px solid #DDD; border-radius: 10px;
-      font-size: 0.95rem; outline: none; transition: border-color 0.15s;
+      font-size: 0.95rem; outline: none; transition: border-color 0.15s; background: white;
     }
-    .auth-form input[type="email"]:focus { border-color: #8DC883; }
+    .auth-form input:focus { border-color: #8DC883; }
 
     .btn-magic {
       padding: 0.65rem 1rem; background: #8DC883; color: white; border: none;
@@ -295,10 +303,26 @@
     <!-- Auth (not logged in) -->
     <div id="timedAuth">
       <p class="timed-tagline">How many can you solve in 60 seconds?</p>
-      <div class="auth-form">
-        <input type="email" id="emailInput" placeholder="your@email.com">
-        <button class="btn-magic" id="btnMagicLink">Send Magic Link</button>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth="login">Log In</button>
+        <button class="auth-tab" data-auth="signup">Sign Up</button>
       </div>
+
+      <div id="loginForm" class="auth-form">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button class="btn-magic" id="btnLogin">Log In</button>
+      </div>
+
+      <div id="signupForm" class="auth-form hidden">
+        <input type="text" id="signupUsername" placeholder="Username (letters, numbers, _)">
+        <input type="email" id="signupEmail" placeholder="Email">
+        <input type="password" id="signupPassword" placeholder="Password (min. 6 characters)">
+        <input type="password" id="signupConfirm" placeholder="Confirm password">
+        <button class="btn-magic" id="btnSignup">Create Account</button>
+      </div>
+
       <p class="auth-msg" id="authMsg"></p>
     </div>
 
@@ -750,12 +774,16 @@
       }
     }
 
-    function updateAuthUI() {
+    let currentUsername = '';
+
+    async function updateAuthUI() {
       if (currentSession) {
-        const name = currentSession.user.email.split('@')[0];
-        document.getElementById('timedUsername').textContent = name;
+        const { data: profile } = await db.from('profiles').select('username').eq('id', currentSession.user.id).maybeSingle();
+        currentUsername = profile?.username || currentSession.user.email.split('@')[0];
+        document.getElementById('timedUsername').textContent = currentUsername;
         showTimedState('idle');
       } else {
+        currentUsername = '';
         showTimedState('auth');
       }
     }
@@ -862,7 +890,7 @@
 
     async function saveTimedScore(score) {
       const userId      = currentSession.user.id;
-      const displayName = currentSession.user.email.split('@')[0];
+      const displayName = currentUsername;
       const today       = new Date().toISOString().split('T')[0];
       await db.from('timed_scores').insert({ user_id: userId, display_name: displayName, score, day: today });
       const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
@@ -909,16 +937,56 @@
     });
 
     // ─── Auth ────────────────────────────────────────────────────────────────────
-    document.getElementById('btnMagicLink').addEventListener('click', async () => {
-      const email = document.getElementById('emailInput').value.trim();
-      const msg   = document.getElementById('authMsg');
-      const btn   = document.getElementById('btnMagicLink');
-      if (!email) { msg.textContent = 'Please enter your email.'; msg.className = 'auth-msg err'; return; }
-      btn.disabled = true; msg.textContent = 'Sending...'; msg.className = 'auth-msg';
-      const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href.split('#')[0] } });
+    function setAuthMsg(msg, type) {
+      const el = document.getElementById('authMsg');
+      el.textContent = msg; el.className = 'auth-msg ' + (type ?? '');
+    }
+
+    // Auth tab toggle
+    document.querySelectorAll('.auth-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
+        const mode = btn.dataset.auth;
+        document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
+        document.getElementById('signupForm').classList.toggle('hidden', mode !== 'signup');
+        setAuthMsg('');
+      });
+    });
+
+    // Log in
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      const email    = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn      = document.getElementById('btnLogin');
+      if (!email || !password) { setAuthMsg('Please fill in all fields.', 'err'); return; }
+      btn.disabled = true; setAuthMsg('Logging in...');
+      const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
-      if (error) { msg.textContent = error.message; msg.className = 'auth-msg err'; }
-      else { msg.textContent = 'Check your email for the magic link!'; msg.className = 'auth-msg ok'; }
+      if (error) setAuthMsg(error.message === 'Email not confirmed' ? 'Please verify your email first.' : error.message, 'err');
+    });
+
+    // Sign up
+    document.getElementById('btnSignup').addEventListener('click', async () => {
+      const username = document.getElementById('signupUsername').value.trim();
+      const email    = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirm  = document.getElementById('signupConfirm').value;
+      const btn      = document.getElementById('btnSignup');
+
+      if (!username || !email || !password || !confirm) { setAuthMsg('Please fill in all fields.', 'err'); return; }
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { setAuthMsg('Username must be 3–20 characters: letters, numbers, or _.', 'err'); return; }
+      if (password.length < 6) { setAuthMsg('Password must be at least 6 characters.', 'err'); return; }
+      if (password !== confirm) { setAuthMsg('Passwords do not match.', 'err'); return; }
+
+      btn.disabled = true; setAuthMsg('Checking username...');
+      const { data: existing } = await db.from('profiles').select('username').eq('username', username).maybeSingle();
+      if (existing) { setAuthMsg('Username already taken — please choose another.', 'err'); btn.disabled = false; return; }
+
+      setAuthMsg('Creating account...');
+      const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
+      btn.disabled = false;
+      if (error) setAuthMsg(error.message, 'err');
+      else setAuthMsg('Account created! Check your email to verify, then log in.', 'ok');
     });
 
     document.getElementById('btnSignOut').addEventListener('click', async () => { await db.auth.signOut(); });
@@ -927,7 +995,11 @@
 
     document.getElementById('btnPlayAgain').addEventListener('click', startTimedGame);
 
-    db.auth.onAuthStateChange((_event, session) => { currentSession = session; if (document.getElementById('timedCard').classList.contains('hidden')) return; updateAuthUI(); });
+    db.auth.onAuthStateChange((_event, session) => {
+      currentSession = session;
+      if (document.getElementById('timedCard').classList.contains('hidden')) return;
+      updateAuthUI();
+    });
 
     // ─── Mode switching ──────────────────────────────────────────────────────────
     document.querySelectorAll('.mode-btn').forEach(btn => {
