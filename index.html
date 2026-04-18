@@ -19,19 +19,36 @@
       padding: 2rem 1rem 3rem;
     }
 
-    .logo {
-      width: 380px;
-      max-width: 90vw;
-      margin-bottom: 0.4rem;
+    .logo { width: 380px; max-width: 90vw; margin-bottom: 0.4rem; }
+
+    .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 1rem; letter-spacing: 0.02em; }
+
+    /* --- Mode switcher --- */
+    .mode-switcher {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1.2rem;
+      background: #EAEAEA;
+      padding: 4px;
+      border-radius: 24px;
     }
 
-    .subtitle {
+    .mode-btn {
+      padding: 0.4rem 1.4rem;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      background: transparent;
       color: #888;
-      font-size: 0.85rem;
-      margin-bottom: 1.4rem;
-      letter-spacing: 0.02em;
+      transition: background 0.2s, color 0.2s;
     }
 
+    .mode-btn.active { background: white; color: #333; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+
+    /* --- Game card --- */
     .game-card {
       background: #FEFEFD;
       border-radius: 18px;
@@ -41,255 +58,203 @@
       max-width: 95vw;
     }
 
-    .difficulty-tabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.6rem;
-      justify-content: center;
-    }
+    .hidden { display: none !important; }
+
+    /* --- Daily: difficulty tabs --- */
+    .difficulty-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.6rem; justify-content: center; }
 
     .tab {
-      flex: 1;
-      padding: 0.45rem 0;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      background: #E8E8E8;
-      color: #888;
-      transition: background 0.2s, color 0.2s;
+      flex: 1; padding: 0.45rem 0; border: none; border-radius: 20px; cursor: pointer;
+      font-weight: 700; font-size: 0.78rem; letter-spacing: 0.06em;
+      background: #E8E8E8; color: #888; transition: background 0.2s, color 0.2s;
     }
-
     .tab.active { background: #8DC883; color: white; }
 
     /* --- Equation --- */
     .equation {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.45rem;
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0.6rem 0 1.6rem;
-      flex-wrap: wrap;
-      min-height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.45rem; font-size: 2rem; font-weight: 700;
+      margin: 0.6rem 0 1.6rem; flex-wrap: wrap; min-height: 64px;
     }
 
-    .atom-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-
+    .atom-group { display: inline-flex; align-items: center; gap: 3px; }
     .num { color: #333; min-width: 1rem; text-align: center; }
 
     .box {
-      width: 52px;
-      height: 52px;
-      border: 2.5px dashed #C8C8C8;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.3rem;
-      background: white;
-      color: #7BBF72;
+      width: 52px; height: 52px; border: 2.5px dashed #C8C8C8; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; background: white; color: #7BBF72;
       transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, transform 0.1s;
       user-select: none;
-      cursor: default;
     }
 
-    .box.unary { width: 52px; height: 52px; font-size: 1.3rem; }
-
-    .box.filled {
-      border-style: solid;
-      border-color: #C0C0C0;
-      cursor: grab;
-    }
-
+    .box.filled   { border-style: solid; border-color: #C0C0C0; cursor: grab; }
     .box.filled:active { cursor: grabbing; }
+    .box.drag-over { border-color: #8DC883; background: #F0FAF0; transform: scale(1.08); box-shadow: 0 0 0 3px rgba(141,200,131,0.3); }
+    .box.tap-over  { border-color: #8DC883; background: #F0FAF0; transform: scale(1.08); box-shadow: 0 0 0 3px rgba(141,200,131,0.3); }
+    .box.correct   { border-style: solid; border-color: #8DC883; background: #F0FAF0; color: #5A9E52; }
+    .box.wrong     { border-style: solid; border-color: #E87070; background: #FFF0F0; color: #CC4444; animation: shake 0.35s ease; }
 
-    .box.drag-over {
-      border-color: #8DC883;
-      background: #F0FAF0;
-      transform: scale(1.08);
-      box-shadow: 0 0 0 3px rgba(141,200,131,0.3);
-    }
-
-    .box.correct { border-style: solid; border-color: #8DC883; background: #F0FAF0; color: #5A9E52; }
-    .box.wrong   { border-style: solid; border-color: #E87070; background: #FFF0F0; color: #CC4444;
-                   animation: shake 0.35s ease; }
-
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      25%      { transform: translateX(-5px); }
-      75%      { transform: translateX(5px); }
-    }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 
     .equals-sign { color: #555; }
 
-    /* --- Operators palette --- */
-    .palette-label {
-      text-align: center;
-      font-size: 0.72rem;
-      color: #bbb;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.5rem;
-    }
+    /* --- Operator palette (daily, drag) --- */
+    .palette-label { text-align: center; font-size: 0.72rem; color: #bbb; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
 
-    .operators {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-bottom: 1.4rem;
-    }
+    .operators { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.4rem; }
 
     .op-btn {
-      width: 56px;
-      height: 56px;
-      border: 2px solid #DDD;
-      border-radius: 10px;
-      font-size: 1.4rem;
-      cursor: grab;
-      background: white;
-      color: #444;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      transition: background 0.15s, border-color 0.15s, transform 0.1s, opacity 0.15s;
+      width: 56px; height: 56px; border: 2px solid #DDD; border-radius: 10px;
+      font-size: 1.4rem; cursor: grab; background: white; color: #444;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none; transition: background 0.15s, border-color 0.15s, transform 0.1s;
       touch-action: none;
     }
-
-    .op-btn:hover   { background: #F5F5F5; border-color: #bbb; }
-    .op-btn:active  { cursor: grabbing; transform: scale(0.92); }
+    .op-btn:hover  { background: #F5F5F5; border-color: #bbb; }
+    .op-btn:active { cursor: grabbing; transform: scale(0.92); }
     .op-btn.dragging { opacity: 0.4; }
+
+    /* --- Touch drag clone --- */
+    .touch-clone {
+      position: fixed; z-index: 1000; pointer-events: none;
+      width: 56px; height: 56px; background: #8DC883; color: white;
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; font-family: 'Segoe UI', sans-serif;
+      opacity: 0.92; box-shadow: 0 6px 20px rgba(0,0,0,0.22); transform: translate(-50%,-50%);
+    }
 
     /* --- Actions --- */
     .actions { display: flex; gap: 0.5rem; justify-content: center; }
 
     .action-btn {
-      padding: 0.55rem 1.5rem;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.88rem;
-      letter-spacing: 0.03em;
-      transition: transform 0.1s;
+      padding: 0.55rem 1.5rem; border: none; border-radius: 20px; cursor: pointer;
+      font-weight: 700; font-size: 0.88rem; letter-spacing: 0.03em; transition: transform 0.1s;
     }
-
     .action-btn:active { transform: scale(0.95); }
-    .btn-check  { background: #8DC883; color: white; }
-    .btn-reset  { background: #E8E8E8; color: #666; }
+    .btn-check { background: #8DC883; color: white; }
+    .btn-reset { background: #E8E8E8; color: #666; }
 
-    .next-puzzle {
-      text-align: center;
-      font-size: 0.8rem;
-      color: #aaa;
-      margin-top: 1rem;
-      min-height: 1.1em;
-      letter-spacing: 0.02em;
-    }
+    .next-puzzle { text-align: center; font-size: 0.8rem; color: #aaa; margin-top: 1rem; min-height: 1.1em; letter-spacing: 0.02em; }
 
     /* --- Feedback --- */
-    .feedback {
-      text-align: center;
-      font-weight: 700;
-      font-size: 0.95rem;
-      margin-bottom: 1rem;
-      min-height: 1.2em;
-    }
-
+    .feedback { text-align: center; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem; min-height: 1.2em; }
     .feedback.success { color: #5A9E52; }
     .feedback.error   { color: #CC4444; }
 
-    .solved-banner {
-      display: none;
-      text-align: center;
-      padding: 0.6rem;
-      margin-bottom: 0.8rem;
-      background: #F0FAF0;
-      border-radius: 10px;
-      color: #5A9E52;
-      font-weight: 700;
-    }
-
+    .solved-banner { display: none; text-align: center; padding: 0.6rem; margin-bottom: 0.8rem; background: #F0FAF0; border-radius: 10px; color: #5A9E52; font-weight: 700; }
     .solved-banner.show { display: block; }
 
-    /* --- Touch drag clone --- */
-    .touch-clone {
-      position: fixed;
-      z-index: 1000;
-      pointer-events: none;
-      width: 56px;
-      height: 56px;
-      background: #8DC883;
-      color: white;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      font-weight: 700;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      opacity: 0.92;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.22);
-      transform: translate(-50%, -50%);
+    /* ═══════════════════════════════════════════
+       TIMED MODE
+    ═══════════════════════════════════════════ */
+
+    .timed-tagline { text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 1.4rem; }
+
+    /* Auth */
+    .auth-form { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.8rem; }
+
+    .auth-form input[type="email"] {
+      padding: 0.65rem 1rem; border: 2px solid #DDD; border-radius: 10px;
+      font-size: 0.95rem; outline: none; transition: border-color 0.15s;
     }
+    .auth-form input[type="email"]:focus { border-color: #8DC883; }
+
+    .btn-magic {
+      padding: 0.65rem 1rem; background: #8DC883; color: white; border: none;
+      border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-magic:disabled { opacity: 0.5; cursor: default; }
+
+    .auth-msg { text-align: center; font-size: 0.85rem; color: #888; min-height: 1.2em; }
+    .auth-msg.ok  { color: #5A9E52; }
+    .auth-msg.err { color: #CC4444; }
+
+    /* User bar */
+    .timed-user-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .timed-username { font-weight: 700; color: #444; font-size: 0.9rem; }
+    .link-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.8rem; text-decoration: underline; }
+
+    /* Start button */
+    .btn-start {
+      display: block; width: 100%; padding: 0.9rem; background: #8DC883; color: white;
+      border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; margin-bottom: 1.6rem; transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-start:active { transform: scale(0.97); }
+
+    /* Playing header */
+    .timed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+
+    .timer {
+      font-size: 2.4rem; font-weight: 800; color: #8DC883;
+      transition: color 0.3s; min-width: 3rem; text-align: center;
+    }
+    .timer.urgent { color: #E87070; }
+
+    .score-display { font-size: 1.1rem; font-weight: 700; color: #555; }
+    .score-display span { color: #8DC883; }
+
+    /* Timed operator buttons (click-based, bigger targets) */
+    .timed-ops { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1.4rem; }
+
+    .timed-op-btn {
+      width: 64px; height: 64px; border: 2px solid #DDD; border-radius: 12px;
+      font-size: 1.6rem; cursor: pointer; background: white; color: #444;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, transform 0.1s;
+      user-select: none;
+    }
+    .timed-op-btn:hover  { background: #8DC883; color: white; border-color: #8DC883; }
+    .timed-op-btn:active { transform: scale(0.9); }
+
+    /* Finished */
+    .finish-card { text-align: center; padding: 0.5rem 0 1.4rem; }
+    .finish-label { font-size: 0.95rem; color: #888; }
+    .finish-num   { font-size: 3.5rem; font-weight: 800; color: #8DC883; line-height: 1.1; }
+    .finish-sub   { font-size: 0.95rem; color: #888; margin-bottom: 1.4rem; }
+
+    /* Leaderboard */
+    .lb-divider { border: none; border-top: 1px solid #EEE; margin: 1.4rem 0 1.2rem; }
+
+    .lb-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
+
+    .lb-tab {
+      flex: 1; padding: 0.4rem; border: none; border-radius: 16px;
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; cursor: pointer;
+      background: #E8E8E8; color: #888; transition: background 0.2s, color 0.2s;
+    }
+    .lb-tab.active { background: #8DC883; color: white; }
+
+    .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
+
+    .lb-table { width: 100%; border-collapse: collapse; }
+
+    .lb-table tr { border-bottom: 1px solid #F0F0F0; }
+    .lb-table tr:last-child { border-bottom: none; }
+
+    .lb-table td { padding: 0.5rem 0.3rem; font-size: 0.88rem; }
+
+    .lb-rank  { color: #bbb; font-weight: 700; width: 2rem; text-align: center; }
+    .lb-name  { color: #444; }
+    .lb-score { color: #8DC883; font-weight: 700; text-align: right; }
+    .lb-me    { background: #F6FBF5; }
+    .lb-me .lb-name { font-weight: 700; }
+
+    .lb-empty  { text-align: center; color: #bbb; font-size: 0.85rem; padding: 1rem 0; }
+    .lb-loading { text-align: center; color: #ccc; font-size: 0.85rem; padding: 1rem 0; }
 
     /* --- Help --- */
-    .help-btn {
-      margin-top: 1rem;
-      background: none;
-      border: none;
-      color: #aaa;
-      cursor: pointer;
-      font-size: 0.82rem;
-      text-decoration: underline;
-      letter-spacing: 0.03em;
-    }
+    .help-btn { margin-top: 1rem; background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
 
     /* --- Modal --- */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.25);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: #FEFEFD;
-      border-radius: 14px;
-      padding: 2rem;
-      width: 440px;
-      max-width: 92vw;
-      position: relative;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-    }
-
+    .modal { background: #FEFEFD; border-radius: 14px; padding: 2rem; width: 440px; max-width: 92vw; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
     .modal h2 { font-size: 1.1rem; color: #444; margin-bottom: 1rem; text-align: center; }
     .modal p  { font-size: 0.88rem; color: #555; line-height: 1.7; margin-bottom: 0.7rem; }
-
-    .modal-close {
-      position: absolute;
-      top: 0.7rem;
-      right: 1rem;
-      font-size: 1.1rem;
-      cursor: pointer;
-      background: none;
-      border: none;
-      color: #888;
-      font-weight: bold;
-    }
+    .modal-close { position: absolute; top: 0.7rem; right: 1rem; font-size: 1.1rem; cursor: pointer; background: none; border: none; color: #888; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -297,7 +262,13 @@
   <img src="images/finallogo no bg.png" alt="EQUATIONS" class="logo">
   <p class="subtitle">New Puzzles Daily!</p>
 
-  <div class="game-card">
+  <div class="mode-switcher">
+    <button class="mode-btn active" data-mode="daily">Daily</button>
+    <button class="mode-btn" data-mode="timed">Timed</button>
+  </div>
+
+  <!-- ═══ DAILY MODE ═══ -->
+  <div class="game-card" id="dailyCard">
     <div class="difficulty-tabs">
       <button class="tab active" data-diff="easy">EASY</button>
       <button class="tab" data-diff="medium">MEDIUM</button>
@@ -306,7 +277,6 @@
 
     <div class="solved-banner" id="solvedBanner">Correct! Well done!</div>
     <div class="feedback" id="feedback"></div>
-
     <div class="equation" id="equation"></div>
 
     <p class="palette-label">DRAG TO PLACE</p>
@@ -319,31 +289,89 @@
     <p class="next-puzzle" id="nextPuzzle"></p>
   </div>
 
+  <!-- ═══ TIMED MODE ═══ -->
+  <div class="game-card hidden" id="timedCard">
+
+    <!-- Auth (not logged in) -->
+    <div id="timedAuth">
+      <p class="timed-tagline">How many can you solve in 60 seconds?</p>
+      <div class="auth-form">
+        <input type="email" id="emailInput" placeholder="your@email.com">
+        <button class="btn-magic" id="btnMagicLink">Send Magic Link</button>
+      </div>
+      <p class="auth-msg" id="authMsg"></p>
+    </div>
+
+    <!-- Logged in -->
+    <div id="timedLoggedIn" class="hidden">
+
+      <!-- Idle -->
+      <div id="timedIdle">
+        <div class="timed-user-bar">
+          <span class="timed-username" id="timedUsername"></span>
+          <button class="link-btn" id="btnSignOut">Sign out</button>
+        </div>
+        <p class="timed-tagline">How many can you solve in 60 seconds?</p>
+        <button class="btn-start" id="btnStartGame">Start</button>
+      </div>
+
+      <!-- Playing -->
+      <div id="timedPlaying" class="hidden">
+        <div class="timed-header">
+          <div class="timer" id="timedTimer">60</div>
+          <div class="score-display">Score: <span id="timedScore">0</span></div>
+        </div>
+        <div class="equation" id="timedEquation"></div>
+        <div class="timed-ops" id="timedOps"></div>
+      </div>
+
+      <!-- Finished -->
+      <div id="timedFinished" class="hidden">
+        <div class="finish-card">
+          <p class="finish-label">You solved</p>
+          <p class="finish-num" id="finalScore">0</p>
+          <p class="finish-sub">puzzles in 60 seconds!</p>
+          <button class="btn-start" id="btnPlayAgain">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard (always visible in timed card) -->
+    <hr class="lb-divider">
+    <div class="lb-tabs">
+      <button class="lb-tab active" data-lb="daily">Today</button>
+      <button class="lb-tab" data-lb="alltime">All Time</button>
+    </div>
+    <div id="lbContent"><p class="lb-loading">Loading...</p></div>
+  </div>
+
   <button class="help-btn" id="helpBtn">How to Play</button>
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <button class="modal-close" id="modalClose">✕</button>
       <h2>How to Play</h2>
-      <p>Fill in the blank boxes so the equation is true.</p>
-      <p><strong>1.</strong> Drag an operator from the palette at the bottom.</p>
-      <p><strong>2.</strong> Drop it onto any blank box in the equation.</p>
-      <p><strong>3.</strong> To move an operator, drag it from its box to another. To remove one, drag it back to the palette area or click it.</p>
-      <p><strong>4.</strong> Press <strong>Check</strong> when all boxes are filled.</p>
-      <p>On harder levels, some boxes sit next to a single number — those need operators like √ or ². Experiment!</p>
-      <p><strong>Reset</strong> clears your answers. A new set of puzzles arrives every day!</p>
+      <p><strong>Daily:</strong> Fill blank boxes so the equation is true. Drag an operator from the palette and drop it onto a box. Drag between boxes to rearrange, or click a filled box to clear it. One puzzle per difficulty per day.</p>
+      <p><strong>Timed:</strong> Solve as many equations as you can in 60 seconds! Click an operator to place it in the next empty box. Correct answers advance automatically. Sign in to submit your score to the leaderboard.</p>
+      <p><strong>Reset</strong> clears your answers. A new set of daily puzzles arrives every day!</p>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
-    // ─── Puzzle format ──────────────────────────────────────────────────────────
-    // atoms:     [{value, pre:{answer}|null, post:{answer}|null}]
-    // binaryOps: [{answer}]
-    // Blank reading order per atom: pre? → post? → binaryOp after?
+    // ─── Supabase ────────────────────────────────────────────────────────────────
+    const { createClient } = supabase;
+    const db = createClient(
+      'https://pcyymbfaxacvmkxrvmhx.supabase.co',
+      'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u'
+    );
+    let currentSession = null;
 
+    // ─── Puzzle helpers ──────────────────────────────────────────────────────────
     function A(v, pr, po) { return { value: v, pre: pr || null, post: po || null }; }
     function B(a)          { return { answer: a }; }
 
+    // ─── Daily puzzles ───────────────────────────────────────────────────────────
     const PUZZLES = {
       easy: [
         { atoms:[A(7),A(1),A(7)],     binaryOps:[B('+'),B('+')],   result:15 },
@@ -380,21 +408,21 @@
         { atoms:[A(64,B('√')),A(3)],         binaryOps:[B('+')],  result:11 },
       ],
       hard: [
-        { atoms:[A(9,B('√')),A(2,null,B('²'))],    binaryOps:[B('+')],  result:7  },
-        { atoms:[A(2,null,B('³')),A(4)],            binaryOps:[B('−')],  result:4  },
-        { atoms:[A(27,B('∛')),A(2)],                binaryOps:[B('×')],  result:6  },
-        { atoms:[A(3,null,B('³')),A(3)],            binaryOps:[B('−')],  result:24 },
-        { atoms:[A(4,B('√')),A(2,null,B('³'))],     binaryOps:[B('+')],  result:10 },
-        { atoms:[A(16,B('√')),A(3,null,B('²'))],    binaryOps:[B('+')],  result:13 },
-        { atoms:[A(4,null,B('²')),A(8,B('∛'))],     binaryOps:[B('−')],  result:14 },
-        { atoms:[A(64,B('∛')),A(9,B('√'))],         binaryOps:[B('×')],  result:12 },
-        { atoms:[A(2,null,B('²')),A(3,null,B('³'))],binaryOps:[B('+')],  result:31 },
-        { atoms:[A(25,B('√')),A(8,B('∛'))],         binaryOps:[B('−')],  result:3  },
-        { atoms:[A(3,null,B('²')),A(8,B('∛'))],     binaryOps:[B('×')],  result:18 },
-        { atoms:[A(64,B('√')),A(2,null,B('³'))],    binaryOps:[B('÷')],  result:1  },
-        { atoms:[A(5,null,B('²')),A(4,null,B('²'))],binaryOps:[B('−')],  result:9  },
-        { atoms:[A(27,B('∛')),A(2,null,B('³'))],    binaryOps:[B('+')],  result:11 },
-        { atoms:[A(4,null,B('²')),A(9,B('√'))],     binaryOps:[B('+')],  result:19 },
+        { atoms:[A(9,B('√')),A(2,null,B('²'))],     binaryOps:[B('+')],  result:7  },
+        { atoms:[A(2,null,B('³')),A(4)],             binaryOps:[B('−')],  result:4  },
+        { atoms:[A(27,B('∛')),A(2)],                 binaryOps:[B('×')],  result:6  },
+        { atoms:[A(3,null,B('³')),A(3)],             binaryOps:[B('−')],  result:24 },
+        { atoms:[A(4,B('√')),A(2,null,B('³'))],      binaryOps:[B('+')],  result:10 },
+        { atoms:[A(16,B('√')),A(3,null,B('²'))],     binaryOps:[B('+')],  result:13 },
+        { atoms:[A(4,null,B('²')),A(8,B('∛'))],      binaryOps:[B('−')],  result:14 },
+        { atoms:[A(64,B('∛')),A(9,B('√'))],          binaryOps:[B('×')],  result:12 },
+        { atoms:[A(2,null,B('²')),A(3,null,B('³'))], binaryOps:[B('+')],  result:31 },
+        { atoms:[A(25,B('√')),A(8,B('∛'))],          binaryOps:[B('−')],  result:3  },
+        { atoms:[A(3,null,B('²')),A(8,B('∛'))],      binaryOps:[B('×')],  result:18 },
+        { atoms:[A(64,B('√')),A(2,null,B('³'))],     binaryOps:[B('÷')],  result:1  },
+        { atoms:[A(5,null,B('²')),A(4,null,B('²'))], binaryOps:[B('−')],  result:9  },
+        { atoms:[A(27,B('∛')),A(2,null,B('³'))],     binaryOps:[B('+')],  result:11 },
+        { atoms:[A(4,null,B('²')),A(9,B('√'))],      binaryOps:[B('+')],  result:19 },
       ],
     };
 
@@ -404,43 +432,90 @@
       hard:   ['+','−','×','÷','√','²','³','∛'],
     };
 
-    // ─── State ──────────────────────────────────────────────────────────────────
-    let difficulty  = 'easy';
-    let puzzleIndex = 0;
-    let userAnswers = [];
-    let solved      = false;
-    let blankDescs  = [];
+    // ─── Timed puzzles (binary-only, fast to solve) ──────────────────────────────
+    const TIMED_PUZZLES = [
+      { atoms:[A(3),A(4)],        binaryOps:[B('×')],         result:12 },
+      { atoms:[A(10),A(2)],       binaryOps:[B('÷')],         result:5  },
+      { atoms:[A(8),A(3)],        binaryOps:[B('+')],         result:11 },
+      { atoms:[A(9),A(4)],        binaryOps:[B('−')],         result:5  },
+      { atoms:[A(6),A(2)],        binaryOps:[B('×')],         result:12 },
+      { atoms:[A(15),A(3)],       binaryOps:[B('÷')],         result:5  },
+      { atoms:[A(5),A(5)],        binaryOps:[B('+')],         result:10 },
+      { atoms:[A(12),A(4)],       binaryOps:[B('÷')],         result:3  },
+      { atoms:[A(7),A(3)],        binaryOps:[B('×')],         result:21 },
+      { atoms:[A(18),A(6)],       binaryOps:[B('÷')],         result:3  },
+      { atoms:[A(4),A(6)],        binaryOps:[B('+')],         result:10 },
+      { atoms:[A(13),A(5)],       binaryOps:[B('−')],         result:8  },
+      { atoms:[A(8),A(4)],        binaryOps:[B('÷')],         result:2  },
+      { atoms:[A(5),A(7)],        binaryOps:[B('×')],         result:35 },
+      { atoms:[A(20),A(8)],       binaryOps:[B('−')],         result:12 },
+      { atoms:[A(6),A(9)],        binaryOps:[B('+')],         result:15 },
+      { atoms:[A(16),A(4)],       binaryOps:[B('÷')],         result:4  },
+      { atoms:[A(3),A(8)],        binaryOps:[B('×')],         result:24 },
+      { atoms:[A(11),A(4)],       binaryOps:[B('−')],         result:7  },
+      { atoms:[A(7),A(8)],        binaryOps:[B('+')],         result:15 },
+      { atoms:[A(9),A(6)],        binaryOps:[B('−')],         result:3  },
+      { atoms:[A(4),A(5)],        binaryOps:[B('×')],         result:20 },
+      { atoms:[A(14),A(7)],       binaryOps:[B('÷')],         result:2  },
+      { atoms:[A(6),A(7)],        binaryOps:[B('+')],         result:13 },
+      { atoms:[A(15),A(6)],       binaryOps:[B('−')],         result:9  },
+      { atoms:[A(2),A(3),A(4)],   binaryOps:[B('+'),B('+')],  result:9  },
+      { atoms:[A(10),A(3),A(2)],  binaryOps:[B('−'),B('+')],  result:9  },
+      { atoms:[A(4),A(2),A(1)],   binaryOps:[B('×'),B('+')],  result:9  },
+      { atoms:[A(5),A(3),A(2)],   binaryOps:[B('+'),B('+')],  result:10 },
+      { atoms:[A(8),A(2),A(1)],   binaryOps:[B('−'),B('−')],  result:5  },
+      { atoms:[A(2),A(4),A(3)],   binaryOps:[B('×'),B('+')],  result:11 },
+      { atoms:[A(10),A(2),A(3)],  binaryOps:[B('÷'),B('+')],  result:8  },
+      { atoms:[A(6),A(2),A(4)],   binaryOps:[B('×'),B('÷')],  result:3  },
+      { atoms:[A(4),A(3),A(2)],   binaryOps:[B('×'),B('+')],  result:14 },
+      { atoms:[A(3),A(3),A(3)],   binaryOps:[B('+'),B('+')],  result:9  },
+      { atoms:[A(5),A(2),A(3)],   binaryOps:[B('×'),B('+')],  result:13 },
+      { atoms:[A(12),A(4),A(2)],  binaryOps:[B('÷'),B('×')],  result:6  },
+      { atoms:[A(9),A(3),A(2)],   binaryOps:[B('÷'),B('+')],  result:5  },
+      { atoms:[A(7),A(2),A(3)],   binaryOps:[B('+'),B('×')],  result:13 },
+      { atoms:[A(8),A(4),A(2)],   binaryOps:[B('÷'),B('+')],  result:4  },
+      { atoms:[A(6),A(3),A(4)],   binaryOps:[B('×'),B('−')],  result:14 },
+      { atoms:[A(2),A(5),A(3)],   binaryOps:[B('+'),B('×')],  result:17 },
+      { atoms:[A(4),A(2),A(6)],   binaryOps:[B('×'),B('−')],  result:2  },
+      { atoms:[A(3),A(4),A(5)],   binaryOps:[B('+'),B('+')],  result:12 },
+      { atoms:[A(5),A(3),A(2)],   binaryOps:[B('+'),B('×')],  result:11 },
+      { atoms:[A(8),A(3),A(2)],   binaryOps:[B('−'),B('+')],  result:7  },
+      { atoms:[A(4),A(4),A(6)],   binaryOps:[B('×'),B('−')],  result:10 },
+      { atoms:[A(6),A(4),A(2)],   binaryOps:[B('+'),B('×')],  result:14 },
+      { atoms:[A(9),A(3),A(6)],   binaryOps:[B('÷'),B('+')],  result:9  },
+      { atoms:[A(3),A(5),A(4)],   binaryOps:[B('×'),B('−')],  result:11 },
+    ];
 
-    function currentPuzzle() { return PUZZLES[difficulty][puzzleIndex]; }
-
-    function getDailyIndex(diff) {
-      return Math.floor(Date.now() / 86400000) % PUZZLES[diff].length;
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
+    // ─── Shared evaluation ───────────────────────────────────────────────────────
     function buildBlankDescs(puzzle) {
       const d = [];
       puzzle.atoms.forEach((atom, i) => {
-        if (atom.pre)  d.push({ kind: 'pre',    answer: atom.pre.answer });
-        if (atom.post) d.push({ kind: 'post',   answer: atom.post.answer });
-        if (i < puzzle.binaryOps.length)
-                       d.push({ kind: 'binary', answer: puzzle.binaryOps[i].answer });
+        if (atom.pre)  d.push({ kind:'pre',    answer: atom.pre.answer });
+        if (atom.post) d.push({ kind:'post',   answer: atom.post.answer });
+        if (i < puzzle.binaryOps.length) d.push({ kind:'binary', answer: puzzle.binaryOps[i].answer });
       });
       return d;
     }
 
-    // ─── Evaluation ─────────────────────────────────────────────────────────────
     function buildExpression(puzzle, answers) {
       let idx = 0, expr = '';
       puzzle.atoms.forEach((atom, i) => {
         const userPre  = atom.pre  ? (answers[idx++] ?? null) : null;
         const userPost = atom.post ? (answers[idx++] ?? null) : null;
-
         let e = String(atom.value);
         if      (userPost === '²') e = `Math.pow(${atom.value},2)`;
         else if (userPost === '³') e = `Math.pow(${atom.value},3)`;
         if      (userPre  === '√') e = `Math.sqrt(${e})`;
         else if (userPre  === '∛') e = `Math.cbrt(${e})`;
-
         expr += e;
         if (i < puzzle.binaryOps.length) {
           const op = answers[idx++] ?? '';
@@ -455,343 +530,428 @@
       catch { return NaN; }
     }
 
-    // ─── Render equation ─────────────────────────────────────────────────────────
-    function renderEquation(markings) {
-      const eq = document.getElementById('equation');
-      eq.innerHTML = '';
-      const p = currentPuzzle();
-      let bi = 0;
-
-      p.atoms.forEach((atom, i) => {
-        const group = document.createElement('span');
-        group.className = 'atom-group';
-
-        if (atom.pre)  group.appendChild(makeBox(bi++, markings, true));
-
-        const numEl = document.createElement('span');
-        numEl.className   = 'num';
-        numEl.textContent = atom.value;
-        group.appendChild(numEl);
-
-        if (atom.post) group.appendChild(makeBox(bi++, markings, true));
-
-        eq.appendChild(group);
-        if (i < p.binaryOps.length) eq.appendChild(makeBox(bi++, markings, false));
-      });
-
-      const eqSign       = document.createElement('span');
-      eqSign.className   = 'equals-sign';
-      eqSign.textContent = '=';
-      eq.appendChild(eqSign);
-
-      const res       = document.createElement('span');
-      res.className   = 'num';
-      res.textContent = p.result;
-      eq.appendChild(res);
-    }
-
-    function makeBox(bi, markings, isUnary) {
-      const box = document.createElement('div');
-      box.className    = 'box' + (isUnary ? ' unary' : '');
-      box.dataset.bi   = bi;
-      const val        = userAnswers[bi];
-      box.textContent  = val ?? '';
-      if (val) box.classList.add('filled');
-
-      if (markings) {
-        box.classList.add(markings[bi]);
-      } else {
-        // Drop target (desktop)
-        box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag-over'); });
-        box.addEventListener('dragleave', ()  => box.classList.remove('drag-over'));
-        box.addEventListener('drop', e => {
-          e.preventDefault();
-          box.classList.remove('drag-over');
-          if (solved) return;
-          const op        = e.dataTransfer.getData('op');
-          const srcBi     = e.dataTransfer.getData('srcBi');
-          if (srcBi !== '') userAnswers[parseInt(srcBi)] = null;
-          userAnswers[bi] = op;
-          renderEquation();
-          renderOperators();
-        });
-
-        // Filled boxes are draggable (to rearrange)
-        if (val) {
-          box.draggable = true;
-          box.addEventListener('dragstart', e => {
-            e.dataTransfer.setData('op', val);
-            e.dataTransfer.setData('srcBi', bi);
-            e.dataTransfer.effectAllowed = 'move';
-            setTimeout(() => box.classList.add('dragging'), 0);
-          });
-          box.addEventListener('dragend', () => box.classList.remove('dragging'));
-        }
-
-        // Click filled box to clear
-        box.addEventListener('click', () => {
-          if (solved || !userAnswers[bi]) return;
-          userAnswers[bi] = null;
-          renderEquation();
-          renderOperators();
-        });
-      }
-      return box;
-    }
-
-    // ─── Render operator palette ─────────────────────────────────────────────────
-    function renderOperators() {
-      const container = document.getElementById('operators');
-      container.innerHTML = '';
-
-      OPS[difficulty].forEach(sym => {
-        const btn = document.createElement('button');
-        btn.className   = 'op-btn';
-        btn.textContent = sym;
-        btn.draggable   = true;
-
-        // Desktop drag from palette
-        btn.addEventListener('dragstart', e => {
-          e.dataTransfer.setData('op', sym);
-          e.dataTransfer.setData('srcBi', '');
-          e.dataTransfer.effectAllowed = 'copy';
-          btn.classList.add('dragging');
-        });
-        btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
-
-        // Touch drag
-        btn.addEventListener('touchstart', e => startTouchDrag(e, sym, null), { passive: false });
-
-        container.appendChild(btn);
-      });
-
-      // Palette area is also a drop target (drag back from box to clear)
-      container.addEventListener('dragover', e => e.preventDefault());
-      container.addEventListener('drop', e => {
-        e.preventDefault();
-        if (solved) return;
-        const srcBi = e.dataTransfer.getData('srcBi');
-        if (srcBi !== '') {
-          userAnswers[parseInt(srcBi)] = null;
-          renderEquation();
-          renderOperators();
-        }
-      });
-    }
-
-    // ─── Touch drag ─────────────────────────────────────────────────────────────
-    let touchOp      = null;
-    let touchSrcBi   = null;
-    let touchClone   = null;
-    let lastDropBox  = null;
-
-    function startTouchDrag(e, sym, srcBi) {
-      e.preventDefault();
-      if (solved) return;
-      touchOp    = sym;
-      touchSrcBi = srcBi;
-
-      touchClone = document.createElement('div');
-      touchClone.className   = 'touch-clone';
-      touchClone.textContent = sym;
-      document.body.appendChild(touchClone);
-
-      moveTouchClone(e.touches[0]);
-
-      document.addEventListener('touchmove',  onTouchMove,  { passive: false });
-      document.addEventListener('touchend',   onTouchEnd,   { passive: false });
-      document.addEventListener('touchcancel',onTouchCancel,{ passive: false });
-    }
-
-    function moveTouchClone(touch) {
-      if (!touchClone) return;
-      touchClone.style.left = touch.clientX + 'px';
-      touchClone.style.top  = touch.clientY + 'px';
-
-      // Highlight box under finger
-      touchClone.style.display = 'none';
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      touchClone.style.display = '';
-
-      document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
-      if (el && el.classList.contains('box')) {
-        lastDropBox = el;
-        el.classList.add('drag-over');
-      } else {
-        lastDropBox = null;
-      }
-    }
-
-    function onTouchMove(e) {
-      e.preventDefault();
-      moveTouchClone(e.touches[0]);
-    }
-
-    function onTouchEnd(e) {
-      e.preventDefault();
-      cleanup();
-      if (!lastDropBox || solved) return;
-      const bi = parseInt(lastDropBox.dataset.bi);
-      if (touchSrcBi !== null) userAnswers[touchSrcBi] = null;
-      userAnswers[bi] = touchOp;
-      renderEquation();
-      renderOperators();
-      // Also wire touch on filled boxes for rearranging
-      wireTouchOnBoxes();
-    }
-
-    function onTouchCancel() { cleanup(); }
-
-    function cleanup() {
-      if (touchClone) { touchClone.remove(); touchClone = null; }
-      document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
-      document.removeEventListener('touchmove',  onTouchMove);
-      document.removeEventListener('touchend',   onTouchEnd);
-      document.removeEventListener('touchcancel',onTouchCancel);
-      lastDropBox = null;
-      touchOp     = null;
-      touchSrcBi  = null;
-    }
-
-    // Add touch drag to filled boxes after render
-    function wireTouchOnBoxes() {
-      document.querySelectorAll('.box.filled').forEach(box => {
-        const bi  = parseInt(box.dataset.bi);
-        const sym = userAnswers[bi];
-        if (!sym) return;
-        box.addEventListener('touchstart', e => startTouchDrag(e, sym, bi), { passive: false });
-      });
-    }
-
-    // ─── localStorage helpers ────────────────────────────────────────────────────
-    function todayKey(diff) {
-      return `equations_${diff}_${Math.floor(Date.now() / 86400000)}`;
-    }
-
-    function saveProgress() {
-      localStorage.setItem(todayKey(difficulty), JSON.stringify({ userAnswers, solved }));
-    }
-
-    function loadProgress() {
-      try {
-        const raw = localStorage.getItem(todayKey(difficulty));
-        return raw ? JSON.parse(raw) : null;
-      } catch { return null; }
-    }
-
-    // ─── Countdown ───────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DAILY MODE
+    // ═══════════════════════════════════════════════════════════════════════════
+    let difficulty    = 'easy';
+    let puzzleIndex   = 0;
+    let userAnswers   = [];
+    let solved        = false;
+    let blankDescs    = [];
     let countdownTimer = null;
+
+    function currentPuzzle() { return PUZZLES[difficulty][puzzleIndex]; }
+    function getDailyIndex(diff) { return Math.floor(Date.now() / 86400000) % PUZZLES[diff].length; }
+
+    function todayKey(diff) { return `equations_${diff}_${Math.floor(Date.now() / 86400000)}`; }
+    function saveProgress() { localStorage.setItem(todayKey(difficulty), JSON.stringify({ userAnswers, solved })); }
+    function loadProgress() {
+      try { const r = localStorage.getItem(todayKey(difficulty)); return r ? JSON.parse(r) : null; }
+      catch { return null; }
+    }
 
     function startCountdown() {
       const el = document.getElementById('nextPuzzle');
       if (countdownTimer) clearInterval(countdownTimer);
-
       function tick() {
-        const now       = Date.now();
-        const midnight  = (Math.floor(now / 86400000) + 1) * 86400000;
-        const diff      = midnight - now;
-        const h         = Math.floor(diff / 3600000);
-        const m         = Math.floor((diff % 3600000) / 60000);
-        const s         = Math.floor((diff % 60000) / 1000);
-        el.textContent  = `Next puzzle in ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+        const now = Date.now(), mid = (Math.floor(now/86400000)+1)*86400000, d = mid-now;
+        const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
+        el.textContent = `Next puzzle in ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
       }
-
-      tick();
-      countdownTimer = setInterval(tick, 1000);
+      tick(); countdownTimer = setInterval(tick, 1000);
     }
-
     function stopCountdown() {
       if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
       document.getElementById('nextPuzzle').textContent = '';
     }
 
-    // ─── Game flow ───────────────────────────────────────────────────────────────
     function setFeedback(msg, type) {
-      const el    = document.getElementById('feedback');
-      el.textContent = msg;
-      el.className   = 'feedback ' + (type ?? '');
+      const el = document.getElementById('feedback');
+      el.textContent = msg; el.className = 'feedback ' + (type ?? '');
     }
 
-    function loadPuzzle() {
+    function loadDailyPuzzle() {
       blankDescs = buildBlankDescs(currentPuzzle());
       stopCountdown();
-
       const saved = loadProgress();
-      if (saved) {
-        userAnswers = saved.userAnswers;
-        solved      = saved.solved;
-      } else {
-        userAnswers = [];
-        solved      = false;
-      }
-
+      if (saved) { userAnswers = saved.userAnswers; solved = saved.solved; }
+      else { userAnswers = []; solved = false; }
       document.getElementById('solvedBanner').classList.toggle('show', solved);
       setFeedback('');
-      renderEquation();
-      renderOperators();
-      wireTouchOnBoxes();
+      renderEquation(); renderOperators(); wireTouchOnBoxes();
       if (solved) startCountdown();
+    }
+
+    function renderEquation(markings) {
+      const eq = document.getElementById('equation');
+      eq.innerHTML = '';
+      const p = currentPuzzle(); let bi = 0;
+      p.atoms.forEach((atom, i) => {
+        const group = document.createElement('span'); group.className = 'atom-group';
+        if (atom.pre)  group.appendChild(makeBox(bi++, markings, true));
+        const numEl = document.createElement('span'); numEl.className = 'num'; numEl.textContent = atom.value;
+        group.appendChild(numEl);
+        if (atom.post) group.appendChild(makeBox(bi++, markings, true));
+        eq.appendChild(group);
+        if (i < p.binaryOps.length) eq.appendChild(makeBox(bi++, markings, false));
+      });
+      const eqSign = document.createElement('span'); eqSign.className = 'equals-sign'; eqSign.textContent = '='; eq.appendChild(eqSign);
+      const res = document.createElement('span'); res.className = 'num'; res.textContent = p.result; eq.appendChild(res);
+    }
+
+    function makeBox(bi, markings, isUnary) {
+      const box = document.createElement('div');
+      box.className = 'box'; box.dataset.bi = bi;
+      const val = userAnswers[bi]; box.textContent = val ?? '';
+      if (val) box.classList.add('filled');
+      if (markings) { box.classList.add(markings[bi]); return box; }
+      box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag-over'); });
+      box.addEventListener('dragleave', () => box.classList.remove('drag-over'));
+      box.addEventListener('drop', e => {
+        e.preventDefault(); box.classList.remove('drag-over');
+        if (solved) return;
+        const op = e.dataTransfer.getData('op'), srcBi = e.dataTransfer.getData('srcBi');
+        if (srcBi !== '') userAnswers[parseInt(srcBi)] = null;
+        userAnswers[bi] = op; renderEquation(); renderOperators();
+      });
+      if (val) {
+        box.draggable = true;
+        box.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('op', val); e.dataTransfer.setData('srcBi', bi);
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => box.classList.add('dragging'), 0);
+        });
+        box.addEventListener('dragend', () => box.classList.remove('dragging'));
+      }
+      box.addEventListener('click', () => { if (solved || !userAnswers[bi]) return; userAnswers[bi] = null; renderEquation(); renderOperators(); });
+      return box;
+    }
+
+    function renderOperators() {
+      const container = document.getElementById('operators'); container.innerHTML = '';
+      OPS[difficulty].forEach(sym => {
+        const btn = document.createElement('button'); btn.className = 'op-btn'; btn.textContent = sym; btn.draggable = true;
+        btn.addEventListener('dragstart', e => { e.dataTransfer.setData('op', sym); e.dataTransfer.setData('srcBi', ''); e.dataTransfer.effectAllowed = 'copy'; btn.classList.add('dragging'); });
+        btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+        btn.addEventListener('touchstart', e => startTouchDrag(e, sym, null), { passive: false });
+        container.appendChild(btn);
+      });
+      container.addEventListener('dragover', e => e.preventDefault());
+      container.addEventListener('drop', e => {
+        e.preventDefault(); if (solved) return;
+        const srcBi = e.dataTransfer.getData('srcBi');
+        if (srcBi !== '') { userAnswers[parseInt(srcBi)] = null; renderEquation(); renderOperators(); }
+      });
+    }
+
+    // Touch drag (daily)
+    let touchOp = null, touchSrcBi = null, touchClone = null, lastDropBox = null;
+
+    function startTouchDrag(e, sym, srcBi) {
+      e.preventDefault(); if (solved) return;
+      touchOp = sym; touchSrcBi = srcBi;
+      touchClone = document.createElement('div'); touchClone.className = 'touch-clone'; touchClone.textContent = sym;
+      document.body.appendChild(touchClone); moveTouchClone(e.touches[0]);
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd, { passive: false });
+      document.addEventListener('touchcancel', onTouchCancel, { passive: false });
+    }
+
+    function moveTouchClone(touch) {
+      if (!touchClone) return;
+      touchClone.style.left = touch.clientX + 'px'; touchClone.style.top = touch.clientY + 'px';
+      touchClone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      touchClone.style.display = '';
+      document.querySelectorAll('#equation .box').forEach(b => b.classList.remove('drag-over'));
+      if (el && el.classList.contains('box') && el.closest('#equation')) { lastDropBox = el; el.classList.add('drag-over'); }
+      else lastDropBox = null;
+    }
+
+    function onTouchMove(e) { e.preventDefault(); moveTouchClone(e.touches[0]); }
+    function onTouchEnd(e) {
+      e.preventDefault(); cleanupTouch();
+      if (!lastDropBox || solved) return;
+      const bi = parseInt(lastDropBox.dataset.bi);
+      if (touchSrcBi !== null) userAnswers[touchSrcBi] = null;
+      userAnswers[bi] = touchOp; renderEquation(); renderOperators(); wireTouchOnBoxes();
+    }
+    function onTouchCancel() { cleanupTouch(); }
+    function cleanupTouch() {
+      if (touchClone) { touchClone.remove(); touchClone = null; }
+      document.querySelectorAll('#equation .box').forEach(b => b.classList.remove('drag-over'));
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchcancel', onTouchCancel);
+      lastDropBox = null; touchOp = null; touchSrcBi = null;
+    }
+
+    function wireTouchOnBoxes() {
+      document.querySelectorAll('#equation .box.filled').forEach(box => {
+        const bi = parseInt(box.dataset.bi); const sym = userAnswers[bi]; if (!sym) return;
+        box.addEventListener('touchstart', e => startTouchDrag(e, sym, bi), { passive: false });
+      });
     }
 
     function checkAnswer() {
       if (solved) return;
-      const total = blankDescs.length;
-      if (userAnswers.filter(Boolean).length < total) {
-        setFeedback('Fill in all the boxes first!', 'error');
-        return;
-      }
-      const p        = currentPuzzle();
-      const val      = evaluate(p, userAnswers);
-      const correct  = Math.abs(val - p.result) < 1e-9;
+      if (userAnswers.filter(Boolean).length < blankDescs.length) { setFeedback('Fill in all the boxes first!', 'error'); return; }
+      const p = currentPuzzle(), val = evaluate(p, userAnswers);
+      const correct = Math.abs(val - p.result) < 1e-9;
       const markings = blankDescs.map((d, i) => userAnswers[i] === d.answer ? 'correct' : 'wrong');
-
       renderEquation(markings);
-
       if (correct) {
-        solved = true;
-        saveProgress();
-        document.getElementById('solvedBanner').classList.add('show');
-        setFeedback('');
-        startCountdown();
+        solved = true; saveProgress();
+        document.getElementById('solvedBanner').classList.add('show'); setFeedback(''); startCountdown();
       } else {
         setFeedback('Not quite. Try again!', 'error');
         setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); wireTouchOnBoxes(); } }, 900);
       }
     }
 
-    // ─── Events ──────────────────────────────────────────────────────────────────
     document.querySelectorAll('.tab').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        difficulty  = btn.dataset.diff;
-        puzzleIndex = getDailyIndex(difficulty);
-        loadPuzzle();
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
+        difficulty = btn.dataset.diff; puzzleIndex = getDailyIndex(difficulty); loadDailyPuzzle();
+      });
+    });
+    document.getElementById('btnCheck').addEventListener('click', checkAnswer);
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (solved) return; userAnswers = []; setFeedback(''); renderEquation(); renderOperators();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TIMED MODE
+    // ═══════════════════════════════════════════════════════════════════════════
+    let timedScore    = 0;
+    let timedSeconds  = 60;
+    let timedInterval = null;
+    let timedQueue    = [];
+    let timedQueueIdx = 0;
+    let timedAnswers  = [];
+    let timedDescs    = [];
+    let lbMode        = 'daily';
+    let lbData        = { daily: [], allTime: [] };
+
+    function showTimedState(state) {
+      ['timedAuth','timedLoggedIn','timedIdle','timedPlaying','timedFinished'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.classList.add('hidden');
+      });
+      if (state === 'auth') {
+        document.getElementById('timedAuth').classList.remove('hidden');
+      } else {
+        document.getElementById('timedLoggedIn').classList.remove('hidden');
+        document.getElementById('timedIdle').classList.add('hidden');
+        document.getElementById('timedPlaying').classList.add('hidden');
+        document.getElementById('timedFinished').classList.add('hidden');
+        if (state === 'idle')     document.getElementById('timedIdle').classList.remove('hidden');
+        if (state === 'playing')  document.getElementById('timedPlaying').classList.remove('hidden');
+        if (state === 'finished') document.getElementById('timedFinished').classList.remove('hidden');
+      }
+    }
+
+    function updateAuthUI() {
+      if (currentSession) {
+        const name = currentSession.user.email.split('@')[0];
+        document.getElementById('timedUsername').textContent = name;
+        showTimedState('idle');
+      } else {
+        showTimedState('auth');
+      }
+    }
+
+    function startTimedGame() {
+      timedScore = 0; timedSeconds = 60;
+      timedQueue = shuffle(TIMED_PUZZLES); timedQueueIdx = 0;
+      document.getElementById('timedScore').textContent = '0';
+      document.getElementById('timedTimer').textContent = '60';
+      document.getElementById('timedTimer').classList.remove('urgent');
+      showTimedState('playing');
+      loadTimedPuzzle();
+      timedInterval = setInterval(() => {
+        timedSeconds--;
+        const el = document.getElementById('timedTimer');
+        el.textContent = timedSeconds;
+        if (timedSeconds <= 10) el.classList.add('urgent');
+        if (timedSeconds <= 0) endTimedGame();
+      }, 1000);
+    }
+
+    function loadTimedPuzzle() {
+      if (timedQueueIdx >= timedQueue.length) { timedQueue = shuffle(TIMED_PUZZLES); timedQueueIdx = 0; }
+      const p = timedQueue[timedQueueIdx++];
+      timedDescs   = buildBlankDescs(p);
+      timedAnswers = [];
+      renderTimedEquation(p);
+      renderTimedOps();
+    }
+
+    function renderTimedEquation(p) {
+      const eq = document.getElementById('timedEquation'); eq.innerHTML = ''; let bi = 0;
+      p.atoms.forEach((atom, i) => {
+        const group = document.createElement('span'); group.className = 'atom-group';
+        if (atom.pre) { const box = makeTimedBox(bi++); group.appendChild(box); }
+        const numEl = document.createElement('span'); numEl.className = 'num'; numEl.textContent = atom.value;
+        group.appendChild(numEl);
+        if (atom.post) { const box = makeTimedBox(bi++); group.appendChild(box); }
+        eq.appendChild(group);
+        if (i < p.binaryOps.length) eq.appendChild(makeTimedBox(bi++));
+      });
+      const eqSign = document.createElement('span'); eqSign.className = 'equals-sign'; eqSign.textContent = '='; eq.appendChild(eqSign);
+      const res = document.createElement('span'); res.className = 'num'; res.textContent = p.result; eq.appendChild(res);
+    }
+
+    function makeTimedBox(bi) {
+      const box = document.createElement('div'); box.className = 'box'; box.dataset.bi = bi;
+      box.textContent = timedAnswers[bi] ?? '';
+      if (timedAnswers[bi]) box.classList.add('filled');
+      box.addEventListener('click', () => {
+        if (!timedAnswers[bi]) return;
+        timedAnswers[bi] = null;
+        const p = timedQueue[timedQueueIdx - 1];
+        renderTimedEquation(p);
+      });
+      return box;
+    }
+
+    function renderTimedOps() {
+      const container = document.getElementById('timedOps'); container.innerHTML = '';
+      ['+','−','×','÷'].forEach(sym => {
+        const btn = document.createElement('button'); btn.className = 'timed-op-btn'; btn.textContent = sym;
+        btn.addEventListener('click', () => placeTimedOp(sym));
+        container.appendChild(btn);
+      });
+    }
+
+    function placeTimedOp(sym) {
+      if (timedSeconds <= 0) return;
+      const firstEmpty = timedDescs.findIndex((_, i) => !timedAnswers[i]);
+      if (firstEmpty === -1) return;
+      timedAnswers[firstEmpty] = sym;
+      const p = timedQueue[timedQueueIdx - 1];
+      renderTimedEquation(p);
+      // Auto-check when all filled
+      if (timedAnswers.filter(Boolean).length === timedDescs.length) {
+        const val = evaluate(p, timedAnswers);
+        if (Math.abs(val - p.result) < 1e-9) {
+          timedScore++;
+          document.getElementById('timedScore').textContent = timedScore;
+          flashTimedEquation('correct');
+          setTimeout(loadTimedPuzzle, 350);
+        } else {
+          flashTimedEquation('wrong');
+          setTimeout(() => { timedAnswers = []; renderTimedEquation(p); }, 500);
+        }
+      }
+    }
+
+    function flashTimedEquation(cls) {
+      document.querySelectorAll('#timedEquation .box').forEach(b => {
+        b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 400);
+      });
+    }
+
+    async function endTimedGame() {
+      clearInterval(timedInterval); timedInterval = null;
+      document.getElementById('finalScore').textContent = timedScore;
+      showTimedState('finished');
+      if (currentSession) await saveTimedScore(timedScore);
+      await fetchLeaderboards();
+      renderLeaderboard();
+    }
+
+    async function saveTimedScore(score) {
+      const userId      = currentSession.user.id;
+      const displayName = currentSession.user.email.split('@')[0];
+      const today       = new Date().toISOString().split('T')[0];
+      await db.from('timed_scores').insert({ user_id: userId, display_name: displayName, score, day: today });
+      const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
+      if (!existing || score > existing.score) {
+        await db.from('best_scores').upsert({ user_id: userId, display_name: displayName, score, achieved_on: today, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+      }
+    }
+
+    // ─── Leaderboard ────────────────────────────────────────────────────────────
+    async function fetchLeaderboards() {
+      document.getElementById('lbContent').innerHTML = '<p class="lb-loading">Loading...</p>';
+      const today = new Date().toISOString().split('T')[0];
+      const { data: dailyRaw } = await db.from('timed_scores').select('user_id, display_name, score').eq('day', today).order('score', { ascending: false }).limit(200);
+      const userBest = {};
+      for (const row of (dailyRaw || [])) {
+        if (!userBest[row.user_id] || row.score > userBest[row.user_id].score) userBest[row.user_id] = row;
+      }
+      lbData.daily = Object.values(userBest).sort((a, b) => b.score - a.score).slice(0, 10);
+      const { data: allTime } = await db.from('best_scores').select('user_id, display_name, score').order('score', { ascending: false }).limit(10);
+      lbData.allTime = allTime || [];
+    }
+
+    function renderLeaderboard() {
+      const rows = lbMode === 'daily' ? lbData.daily : lbData.allTime;
+      const myId = currentSession?.user?.id;
+      const container = document.getElementById('lbContent');
+      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet — be the first!</p>'; return; }
+      const table = document.createElement('table'); table.className = 'lb-table';
+      rows.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        if (row.user_id === myId) tr.classList.add('lb-me');
+        const medals = ['🥇','🥈','🥉'];
+        tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}</td><td class="lb-score">${row.score}</td>`;
+        table.appendChild(tr);
+      });
+      container.innerHTML = ''; container.appendChild(table);
+    }
+
+    document.querySelectorAll('.lb-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
+        lbMode = btn.dataset.lb; renderLeaderboard();
       });
     });
 
-    document.getElementById('btnCheck').addEventListener('click', checkAnswer);
-
-    document.getElementById('btnReset').addEventListener('click', () => {
-      if (solved) return;
-      userAnswers = [];
-      setFeedback('');
-      renderEquation();
-      renderOperators();
+    // ─── Auth ────────────────────────────────────────────────────────────────────
+    document.getElementById('btnMagicLink').addEventListener('click', async () => {
+      const email = document.getElementById('emailInput').value.trim();
+      const msg   = document.getElementById('authMsg');
+      const btn   = document.getElementById('btnMagicLink');
+      if (!email) { msg.textContent = 'Please enter your email.'; msg.className = 'auth-msg err'; return; }
+      btn.disabled = true; msg.textContent = 'Sending...'; msg.className = 'auth-msg';
+      const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href.split('#')[0] } });
+      btn.disabled = false;
+      if (error) { msg.textContent = error.message; msg.className = 'auth-msg err'; }
+      else { msg.textContent = 'Check your email for the magic link!'; msg.className = 'auth-msg ok'; }
     });
 
-    document.getElementById('helpBtn').addEventListener('click', () =>
-      document.getElementById('modalOverlay').classList.add('open'));
-    document.getElementById('modalClose').addEventListener('click', () =>
-      document.getElementById('modalOverlay').classList.remove('open'));
-    document.getElementById('modalOverlay').addEventListener('click', e => {
-      if (e.target === document.getElementById('modalOverlay'))
-        document.getElementById('modalOverlay').classList.remove('open');
+    document.getElementById('btnSignOut').addEventListener('click', async () => { await db.auth.signOut(); });
+
+    document.getElementById('btnStartGame').addEventListener('click', startTimedGame);
+
+    document.getElementById('btnPlayAgain').addEventListener('click', startTimedGame);
+
+    db.auth.onAuthStateChange((_event, session) => { currentSession = session; if (document.getElementById('timedCard').classList.contains('hidden')) return; updateAuthUI(); });
+
+    // ─── Mode switching ──────────────────────────────────────────────────────────
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+        const mode = btn.dataset.mode;
+        document.getElementById('dailyCard').classList.toggle('hidden', mode !== 'daily');
+        document.getElementById('timedCard').classList.toggle('hidden', mode !== 'timed');
+        if (mode === 'timed') { updateAuthUI(); fetchLeaderboards().then(renderLeaderboard); }
+      });
     });
+
+    // ─── Modal ───────────────────────────────────────────────────────────────────
+    document.getElementById('helpBtn').addEventListener('click', () => document.getElementById('modalOverlay').classList.add('open'));
+    document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
+    document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); });
 
     // ─── Init ────────────────────────────────────────────────────────────────────
-    puzzleIndex = getDailyIndex(difficulty);
-    loadPuzzle();
+    (async () => {
+      const { data: { session } } = await db.auth.getSession();
+      currentSession = session;
+      puzzleIndex = getDailyIndex(difficulty);
+      loadDailyPuzzle();
+    })();
   </script>
 </body>
 </html>
