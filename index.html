@@ -62,10 +62,7 @@
       transition: background 0.2s, color 0.2s;
     }
 
-    .tab.active {
-      background: #8DC883;
-      color: white;
-    }
+    .tab.active { background: #8DC883; color: white; }
 
     /* --- Equation --- */
     .equation {
@@ -80,61 +77,50 @@
       min-height: 64px;
     }
 
-    /* Atom group: pre-box + number + post-box, tightly spaced */
     .atom-group {
       display: inline-flex;
       align-items: center;
       gap: 3px;
     }
 
-    .num {
-      color: #333;
-      min-width: 1rem;
-      text-align: center;
-    }
+    .num { color: #333; min-width: 1rem; text-align: center; }
 
     .box {
       width: 52px;
       height: 52px;
-      border: 2.5px solid #D0D0D0;
+      border: 2.5px dashed #C8C8C8;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
       font-size: 1.3rem;
       background: white;
       color: #7BBF72;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, transform 0.1s;
       user-select: none;
+      cursor: default;
     }
 
-    /* Unary boxes (pre/post) are slightly smaller */
-    .box.unary {
-      width: 44px;
-      height: 44px;
-      font-size: 1.1rem;
+    .box.unary { width: 44px; height: 44px; font-size: 1.1rem; }
+
+    .box.filled {
+      border-style: solid;
+      border-color: #C0C0C0;
+      cursor: grab;
     }
 
-    .box:hover { border-color: #aaa; }
+    .box.filled:active { cursor: grabbing; }
 
-    .box.selected {
-      border-color: #8DC883;
-      box-shadow: 0 0 0 3px rgba(141,200,131,0.28);
-    }
-
-    .box.correct {
+    .box.drag-over {
       border-color: #8DC883;
       background: #F0FAF0;
-      color: #5A9E52;
+      transform: scale(1.08);
+      box-shadow: 0 0 0 3px rgba(141,200,131,0.3);
     }
 
-    .box.wrong {
-      border-color: #E87070;
-      background: #FFF0F0;
-      color: #CC4444;
-      animation: shake 0.35s ease;
-    }
+    .box.correct { border-style: solid; border-color: #8DC883; background: #F0FAF0; color: #5A9E52; }
+    .box.wrong   { border-style: solid; border-color: #E87070; background: #FFF0F0; color: #CC4444;
+                   animation: shake 0.35s ease; }
 
     @keyframes shake {
       0%,100% { transform: translateX(0); }
@@ -144,7 +130,15 @@
 
     .equals-sign { color: #555; }
 
-    /* --- Operators --- */
+    /* --- Operators palette --- */
+    .palette-label {
+      text-align: center;
+      font-size: 0.72rem;
+      color: #bbb;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
     .operators {
       display: flex;
       flex-wrap: wrap;
@@ -159,35 +153,23 @@
       border: 2px solid #DDD;
       border-radius: 10px;
       font-size: 1.4rem;
-      cursor: pointer;
+      cursor: grab;
       background: white;
       color: #444;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
       user-select: none;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s, opacity 0.15s;
+      touch-action: none;
     }
 
-    .op-btn:hover:not(.op-disabled) {
-      background: #8DC883;
-      color: white;
-      border-color: #8DC883;
-    }
-
-    .op-btn:active:not(.op-disabled) { transform: scale(0.92); }
-
-    .op-btn.op-disabled {
-      opacity: 0.25;
-      cursor: default;
-    }
+    .op-btn:hover   { background: #F5F5F5; border-color: #bbb; }
+    .op-btn:active  { cursor: grabbing; transform: scale(0.92); }
+    .op-btn.dragging { opacity: 0.4; }
 
     /* --- Actions --- */
-    .actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-    }
+    .actions { display: flex; gap: 0.5rem; justify-content: center; }
 
     .action-btn {
       padding: 0.55rem 1.5rem;
@@ -197,13 +179,12 @@
       font-weight: 700;
       font-size: 0.88rem;
       letter-spacing: 0.03em;
-      transition: opacity 0.15s, transform 0.1s;
+      transition: transform 0.1s;
     }
 
     .action-btn:active { transform: scale(0.95); }
-
-    .btn-check              { background: #8DC883; color: white; }
-    .btn-reset, .btn-skip   { background: #E8E8E8; color: #666; }
+    .btn-check            { background: #8DC883; color: white; }
+    .btn-reset, .btn-skip { background: #E8E8E8; color: #666; }
 
     /* --- Feedback --- */
     .feedback {
@@ -226,12 +207,32 @@
       border-radius: 10px;
       color: #5A9E52;
       font-weight: 700;
-      font-size: 1rem;
     }
 
     .solved-banner.show { display: block; }
 
-    /* --- Help button --- */
+    /* --- Touch drag clone --- */
+    .touch-clone {
+      position: fixed;
+      z-index: 1000;
+      pointer-events: none;
+      width: 56px;
+      height: 56px;
+      background: #8DC883;
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      opacity: 0.92;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+      transform: translate(-50%, -50%);
+    }
+
+    /* --- Help --- */
     .help-btn {
       margin-top: 1rem;
       background: none;
@@ -266,19 +267,8 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.15);
     }
 
-    .modal h2 {
-      font-size: 1.1rem;
-      color: #444;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    .modal p {
-      font-size: 0.88rem;
-      color: #555;
-      line-height: 1.7;
-      margin-bottom: 0.7rem;
-    }
+    .modal h2 { font-size: 1.1rem; color: #444; margin-bottom: 1rem; text-align: center; }
+    .modal p  { font-size: 0.88rem; color: #555; line-height: 1.7; margin-bottom: 0.7rem; }
 
     .modal-close {
       position: absolute;
@@ -310,6 +300,7 @@
 
     <div class="equation" id="equation"></div>
 
+    <p class="palette-label">DRAG TO PLACE</p>
     <div class="operators" id="operators"></div>
 
     <div class="actions">
@@ -326,20 +317,20 @@
       <button class="modal-close" id="modalClose">✕</button>
       <h2>How to Play</h2>
       <p>Fill in the blank boxes so the equation is true.</p>
-      <p><strong>1.</strong> Click a blank box to select it (green border).</p>
-      <p><strong>2.</strong> Click an operator button to place it. Focus moves to the next box automatically.</p>
-      <p><strong>3.</strong> Press <strong>Check</strong> when all boxes are filled.</p>
-      <p>On harder levels, some boxes sit <em>before</em> a number (like √9) or <em>after</em> it (like 3²). Only the matching operator type will work — the other buttons will be dimmed when that box is selected.</p>
-      <p><strong>Reset</strong> clears your answers. <strong>Skip</strong> goes to the next puzzle.</p>
+      <p><strong>1.</strong> Drag an operator from the palette at the bottom.</p>
+      <p><strong>2.</strong> Drop it onto any blank box in the equation.</p>
+      <p><strong>3.</strong> To move an operator, drag it from its box to another. To remove one, drag it back to the palette area or click it.</p>
+      <p><strong>4.</strong> Press <strong>Check</strong> when all boxes are filled.</p>
+      <p>On harder levels, some boxes sit next to a single number — those need operators like √ or ². Experiment!</p>
+      <p><strong>Reset</strong> clears everything. <strong>Skip</strong> goes to the next puzzle.</p>
     </div>
   </div>
 
   <script>
     // ─── Puzzle format ──────────────────────────────────────────────────────────
-    // atoms:     [{value, pre:{answer} or null, post:{answer} or null}]
-    // binaryOps: [{answer}]   — one fewer than atoms
-    // Blanks indexed left-to-right reading order:
-    //   for each atom in order: pre? → post? → binaryOp after atom?
+    // atoms:     [{value, pre:{answer}|null, post:{answer}|null}]
+    // binaryOps: [{answer}]
+    // Blank reading order per atom: pre? → post? → binaryOp after?
 
     function A(v, pr, po) { return { value: v, pre: pr || null, post: po || null }; }
     function B(a)          { return { answer: a }; }
@@ -362,8 +353,6 @@
         { atoms:[A(7),A(3)],          binaryOps:[B('×')],           result:21 },
         { atoms:[A(18),A(6)],         binaryOps:[B('÷')],           result:3  },
       ],
-
-      // Medium: adds √ (prefix) and ² (postfix)
       medium: [
         { atoms:[A(9,B('√')),A(4)],          binaryOps:[B('+')],  result:7  },
         { atoms:[A(3,null,B('²')),A(4)],     binaryOps:[B('−')],  result:5  },
@@ -381,8 +370,6 @@
         { atoms:[A(4,null,B('²')),A(6)],     binaryOps:[B('−')],  result:10 },
         { atoms:[A(64,B('√')),A(3)],         binaryOps:[B('+')],  result:11 },
       ],
-
-      // Hard: adds ³ (postfix) and ∛ (prefix)
       hard: [
         { atoms:[A(9,B('√')),A(2,null,B('²'))],    binaryOps:[B('+')],  result:7  },
         { atoms:[A(2,null,B('³')),A(4)],            binaryOps:[B('−')],  result:4  },
@@ -402,119 +389,85 @@
       ],
     };
 
-    // Operators available per difficulty, tagged with their kind
     const OPS = {
-      easy:   [{sym:'+',kind:'binary'},{sym:'−',kind:'binary'},{sym:'×',kind:'binary'},{sym:'÷',kind:'binary'}],
-      medium: [{sym:'+',kind:'binary'},{sym:'−',kind:'binary'},{sym:'×',kind:'binary'},{sym:'÷',kind:'binary'},
-               {sym:'√',kind:'prefix'},{sym:'²',kind:'postfix'}],
-      hard:   [{sym:'+',kind:'binary'},{sym:'−',kind:'binary'},{sym:'×',kind:'binary'},{sym:'÷',kind:'binary'},
-               {sym:'√',kind:'prefix'},{sym:'²',kind:'postfix'},{sym:'³',kind:'postfix'},{sym:'∛',kind:'prefix'}],
+      easy:   ['+','−','×','÷'],
+      medium: ['+','−','×','÷','√','²'],
+      hard:   ['+','−','×','÷','√','²','³','∛'],
     };
 
     // ─── State ──────────────────────────────────────────────────────────────────
-    let difficulty    = 'easy';
-    let puzzleIndex   = 0;
-    let userAnswers   = [];
-    let selectedBox   = -1;
-    let solved        = false;
-    let blankDescs    = []; // [{kind:'pre'|'post'|'binary', answer}] in reading order
+    let difficulty  = 'easy';
+    let puzzleIndex = 0;
+    let userAnswers = [];
+    let solved      = false;
+    let blankDescs  = [];
 
     function currentPuzzle() { return PUZZLES[difficulty][puzzleIndex]; }
 
     function getDailyIndex(diff) {
-      const day = Math.floor(Date.now() / 86400000);
-      return day % PUZZLES[diff].length;
+      return Math.floor(Date.now() / 86400000) % PUZZLES[diff].length;
     }
 
-    // Build blank descriptors in reading order: pre → post → binary (per atom)
     function buildBlankDescs(puzzle) {
-      const descs = [];
+      const d = [];
       puzzle.atoms.forEach((atom, i) => {
-        if (atom.pre)  descs.push({ kind: 'pre',    answer: atom.pre.answer });
-        if (atom.post) descs.push({ kind: 'post',   answer: atom.post.answer });
+        if (atom.pre)  d.push({ kind: 'pre',    answer: atom.pre.answer });
+        if (atom.post) d.push({ kind: 'post',   answer: atom.post.answer });
         if (i < puzzle.binaryOps.length)
-                       descs.push({ kind: 'binary', answer: puzzle.binaryOps[i].answer });
+                       d.push({ kind: 'binary', answer: puzzle.binaryOps[i].answer });
       });
-      return descs;
+      return d;
     }
 
     // ─── Evaluation ─────────────────────────────────────────────────────────────
     function buildExpression(puzzle, answers) {
-      let idx  = 0;
-      let expr = '';
-
+      let idx = 0, expr = '';
       puzzle.atoms.forEach((atom, i) => {
         const userPre  = atom.pre  ? (answers[idx++] ?? null) : null;
         const userPost = atom.post ? (answers[idx++] ?? null) : null;
 
-        let atomExpr = String(atom.value);
-        if      (userPost === '²') atomExpr = `Math.pow(${atom.value},2)`;
-        else if (userPost === '³') atomExpr = `Math.pow(${atom.value},3)`;
+        let e = String(atom.value);
+        if      (userPost === '²') e = `Math.pow(${atom.value},2)`;
+        else if (userPost === '³') e = `Math.pow(${atom.value},3)`;
+        if      (userPre  === '√') e = `Math.sqrt(${e})`;
+        else if (userPre  === '∛') e = `Math.cbrt(${e})`;
 
-        if      (userPre === '√')  atomExpr = `Math.sqrt(${atomExpr})`;
-        else if (userPre === '∛')  atomExpr = `Math.cbrt(${atomExpr})`;
-
-        expr += atomExpr;
-
+        expr += e;
         if (i < puzzle.binaryOps.length) {
-          const op   = answers[idx++] ?? '';
-          const jsOp = op === '×' ? '*' : op === '÷' ? '/' : op === '−' ? '-' : op || '0';
-          expr += jsOp;
+          const op = answers[idx++] ?? '';
+          expr += op === '×' ? '*' : op === '÷' ? '/' : op === '−' ? '-' : op || '0';
         }
       });
-
       return expr;
     }
 
     function evaluate(puzzle, answers) {
-      const expr = buildExpression(puzzle, answers);
-      try { return Function('"use strict"; return (' + expr + ')')(); }
+      try { return Function('"use strict"; return (' + buildExpression(puzzle, answers) + ')')(); }
       catch { return NaN; }
     }
 
-    // ─── Render ─────────────────────────────────────────────────────────────────
-    function createBox(blankIdx, markings) {
-      const desc = blankDescs[blankIdx];
-      const box  = document.createElement('div');
-      box.className  = 'box' + (desc.kind !== 'binary' ? ' unary' : '');
-      box.dataset.bi = blankIdx;
-      box.textContent = userAnswers[blankIdx] ?? '';
-
-      if (markings)               box.classList.add(markings[blankIdx]);
-      else if (blankIdx === selectedBox) box.classList.add('selected');
-
-      box.addEventListener('click', () => {
-        if (solved) return;
-        selectedBox = blankIdx;
-        setFeedback('');
-        renderEquation();
-        renderOperators();
-      });
-      return box;
-    }
-
+    // ─── Render equation ─────────────────────────────────────────────────────────
     function renderEquation(markings) {
       const eq = document.getElementById('equation');
       eq.innerHTML = '';
       const p = currentPuzzle();
-      let bi = 0; // blank index
+      let bi = 0;
 
       p.atoms.forEach((atom, i) => {
         const group = document.createElement('span');
         group.className = 'atom-group';
 
-        if (atom.pre)  group.appendChild(createBox(bi++, markings));
+        if (atom.pre)  group.appendChild(makeBox(bi++, markings, true));
 
         const numEl = document.createElement('span');
         numEl.className   = 'num';
         numEl.textContent = atom.value;
         group.appendChild(numEl);
 
-        if (atom.post) group.appendChild(createBox(bi++, markings));
+        if (atom.post) group.appendChild(makeBox(bi++, markings, true));
 
         eq.appendChild(group);
-
-        if (i < p.binaryOps.length) eq.appendChild(createBox(bi++, markings));
+        if (i < p.binaryOps.length) eq.appendChild(makeBox(bi++, markings, false));
       });
 
       const eqSign       = document.createElement('span');
@@ -522,60 +475,186 @@
       eqSign.textContent = '=';
       eq.appendChild(eqSign);
 
-      const resEl       = document.createElement('span');
-      resEl.className   = 'num';
-      resEl.textContent = p.result;
-      eq.appendChild(resEl);
+      const res       = document.createElement('span');
+      res.className   = 'num';
+      res.textContent = p.result;
+      eq.appendChild(res);
     }
 
-    function renderOperators() {
-      const container = document.getElementById('operators');
-      container.innerHTML = '';
-      const selectedKind = selectedBox >= 0 ? blankDescs[selectedBox]?.kind : null;
+    function makeBox(bi, markings, isUnary) {
+      const box = document.createElement('div');
+      box.className    = 'box' + (isUnary ? ' unary' : '');
+      box.dataset.bi   = bi;
+      const val        = userAnswers[bi];
+      box.textContent  = val ?? '';
+      if (val) box.classList.add('filled');
 
-      OPS[difficulty].forEach(op => {
-        const btn = document.createElement('button');
-        btn.className    = 'op-btn';
-        btn.textContent  = op.sym;
-        btn.dataset.sym  = op.sym;
-        btn.dataset.kind = op.kind;
-
-        // Disable if a box is selected and operator kind doesn't match
-        const mismatch =
-          selectedKind === 'binary'  && op.kind !== 'binary'  ||
-          selectedKind === 'pre'     && op.kind !== 'prefix'  ||
-          selectedKind === 'post'    && op.kind !== 'postfix';
-
-        if (mismatch) btn.classList.add('op-disabled');
-
-        btn.addEventListener('click', () => {
-          if (solved || btn.classList.contains('op-disabled')) return;
-          if (selectedBox < 0) { setFeedback('Select a box first!', 'error'); return; }
-          userAnswers[selectedBox] = op.sym;
-
-          // Advance to next empty box of matching kind, or any next empty
-          const total = blankDescs.length;
-          const matchKind = blankDescs[selectedBox].kind;
-          let next = -1;
-          for (let i = selectedBox + 1; i < total; i++) {
-            if (!userAnswers[i] && blankDescs[i].kind === matchKind) { next = i; break; }
-          }
-          if (next === -1) {
-            for (let i = 0; i < total; i++) {
-              if (!userAnswers[i]) { next = i; break; }
-            }
-          }
-          selectedBox = next;
-          setFeedback('');
+      if (markings) {
+        box.classList.add(markings[bi]);
+      } else {
+        // Drop target (desktop)
+        box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag-over'); });
+        box.addEventListener('dragleave', ()  => box.classList.remove('drag-over'));
+        box.addEventListener('drop', e => {
+          e.preventDefault();
+          box.classList.remove('drag-over');
+          if (solved) return;
+          const op        = e.dataTransfer.getData('op');
+          const srcBi     = e.dataTransfer.getData('srcBi');
+          if (srcBi !== '') userAnswers[parseInt(srcBi)] = null;
+          userAnswers[bi] = op;
           renderEquation();
           renderOperators();
         });
 
+        // Filled boxes are draggable (to rearrange)
+        if (val) {
+          box.draggable = true;
+          box.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('op', val);
+            e.dataTransfer.setData('srcBi', bi);
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => box.classList.add('dragging'), 0);
+          });
+          box.addEventListener('dragend', () => box.classList.remove('dragging'));
+        }
+
+        // Click filled box to clear
+        box.addEventListener('click', () => {
+          if (solved || !userAnswers[bi]) return;
+          userAnswers[bi] = null;
+          renderEquation();
+          renderOperators();
+        });
+      }
+      return box;
+    }
+
+    // ─── Render operator palette ─────────────────────────────────────────────────
+    function renderOperators() {
+      const container = document.getElementById('operators');
+      container.innerHTML = '';
+
+      OPS[difficulty].forEach(sym => {
+        const btn = document.createElement('button');
+        btn.className   = 'op-btn';
+        btn.textContent = sym;
+        btn.draggable   = true;
+
+        // Desktop drag from palette
+        btn.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('op', sym);
+          e.dataTransfer.setData('srcBi', '');
+          e.dataTransfer.effectAllowed = 'copy';
+          btn.classList.add('dragging');
+        });
+        btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+
+        // Touch drag
+        btn.addEventListener('touchstart', e => startTouchDrag(e, sym, null), { passive: false });
+
         container.appendChild(btn);
+      });
+
+      // Palette area is also a drop target (drag back from box to clear)
+      container.addEventListener('dragover', e => e.preventDefault());
+      container.addEventListener('drop', e => {
+        e.preventDefault();
+        if (solved) return;
+        const srcBi = e.dataTransfer.getData('srcBi');
+        if (srcBi !== '') {
+          userAnswers[parseInt(srcBi)] = null;
+          renderEquation();
+          renderOperators();
+        }
       });
     }
 
-    // ─── Feedback & state helpers ────────────────────────────────────────────────
+    // ─── Touch drag ─────────────────────────────────────────────────────────────
+    let touchOp      = null;
+    let touchSrcBi   = null;
+    let touchClone   = null;
+    let lastDropBox  = null;
+
+    function startTouchDrag(e, sym, srcBi) {
+      e.preventDefault();
+      if (solved) return;
+      touchOp    = sym;
+      touchSrcBi = srcBi;
+
+      touchClone = document.createElement('div');
+      touchClone.className   = 'touch-clone';
+      touchClone.textContent = sym;
+      document.body.appendChild(touchClone);
+
+      moveTouchClone(e.touches[0]);
+
+      document.addEventListener('touchmove',  onTouchMove,  { passive: false });
+      document.addEventListener('touchend',   onTouchEnd,   { passive: false });
+      document.addEventListener('touchcancel',onTouchCancel,{ passive: false });
+    }
+
+    function moveTouchClone(touch) {
+      if (!touchClone) return;
+      touchClone.style.left = touch.clientX + 'px';
+      touchClone.style.top  = touch.clientY + 'px';
+
+      // Highlight box under finger
+      touchClone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      touchClone.style.display = '';
+
+      document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
+      if (el && el.classList.contains('box')) {
+        lastDropBox = el;
+        el.classList.add('drag-over');
+      } else {
+        lastDropBox = null;
+      }
+    }
+
+    function onTouchMove(e) {
+      e.preventDefault();
+      moveTouchClone(e.touches[0]);
+    }
+
+    function onTouchEnd(e) {
+      e.preventDefault();
+      cleanup();
+      if (!lastDropBox || solved) return;
+      const bi = parseInt(lastDropBox.dataset.bi);
+      if (touchSrcBi !== null) userAnswers[touchSrcBi] = null;
+      userAnswers[bi] = touchOp;
+      renderEquation();
+      renderOperators();
+      // Also wire touch on filled boxes for rearranging
+      wireTouchOnBoxes();
+    }
+
+    function onTouchCancel() { cleanup(); }
+
+    function cleanup() {
+      if (touchClone) { touchClone.remove(); touchClone = null; }
+      document.querySelectorAll('.box').forEach(b => b.classList.remove('drag-over'));
+      document.removeEventListener('touchmove',  onTouchMove);
+      document.removeEventListener('touchend',   onTouchEnd);
+      document.removeEventListener('touchcancel',onTouchCancel);
+      lastDropBox = null;
+      touchOp     = null;
+      touchSrcBi  = null;
+    }
+
+    // Add touch drag to filled boxes after render
+    function wireTouchOnBoxes() {
+      document.querySelectorAll('.box.filled').forEach(box => {
+        const bi  = parseInt(box.dataset.bi);
+        const sym = userAnswers[bi];
+        if (!sym) return;
+        box.addEventListener('touchstart', e => startTouchDrag(e, sym, bi), { passive: false });
+      });
+    }
+
+    // ─── Game flow ───────────────────────────────────────────────────────────────
     function setFeedback(msg, type) {
       const el    = document.getElementById('feedback');
       el.textContent = msg;
@@ -583,10 +662,8 @@
     }
 
     function loadPuzzle() {
-      const p     = currentPuzzle();
-      blankDescs  = buildBlankDescs(p);
+      blankDescs  = buildBlankDescs(currentPuzzle());
       userAnswers = [];
-      selectedBox = 0;
       solved      = false;
       document.getElementById('solvedBanner').classList.remove('show');
       setFeedback('');
@@ -594,7 +671,6 @@
       renderOperators();
     }
 
-    // ─── Check ───────────────────────────────────────────────────────────────────
     function checkAnswer() {
       if (solved) return;
       const total = blankDescs.length;
@@ -602,7 +678,6 @@
         setFeedback('Fill in all the boxes first!', 'error');
         return;
       }
-
       const p        = currentPuzzle();
       const val      = evaluate(p, userAnswers);
       const correct  = Math.abs(val - p.result) < 1e-9;
@@ -612,13 +687,11 @@
 
       if (correct) {
         solved = true;
-        selectedBox = -1;
         document.getElementById('solvedBanner').classList.add('show');
         setFeedback('');
-        renderOperators();
       } else {
         setFeedback('Not quite. Try again!', 'error');
-        setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); } }, 900);
+        setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); wireTouchOnBoxes(); } }, 900);
       }
     }
 
@@ -627,8 +700,8 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
-        difficulty   = btn.dataset.diff;
-        puzzleIndex  = getDailyIndex(difficulty);
+        difficulty  = btn.dataset.diff;
+        puzzleIndex = getDailyIndex(difficulty);
         loadPuzzle();
       });
     });
@@ -638,7 +711,6 @@
     document.getElementById('btnReset').addEventListener('click', () => {
       if (solved) return;
       userAnswers = [];
-      selectedBox = 0;
       setFeedback('');
       renderEquation();
       renderOperators();
@@ -651,10 +723,8 @@
 
     document.getElementById('helpBtn').addEventListener('click', () =>
       document.getElementById('modalOverlay').classList.add('open'));
-
     document.getElementById('modalClose').addEventListener('click', () =>
       document.getElementById('modalOverlay').classList.remove('open'));
-
     document.getElementById('modalOverlay').addEventListener('click', e => {
       if (e.target === document.getElementById('modalOverlay'))
         document.getElementById('modalOverlay').classList.remove('open');
