@@ -183,8 +183,17 @@
     }
 
     .action-btn:active { transform: scale(0.95); }
-    .btn-check            { background: #8DC883; color: white; }
-    .btn-reset, .btn-skip { background: #E8E8E8; color: #666; }
+    .btn-check  { background: #8DC883; color: white; }
+    .btn-reset  { background: #E8E8E8; color: #666; }
+
+    .next-puzzle {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-top: 1rem;
+      min-height: 1.1em;
+      letter-spacing: 0.02em;
+    }
 
     /* --- Feedback --- */
     .feedback {
@@ -306,8 +315,8 @@
     <div class="actions">
       <button class="action-btn btn-check" id="btnCheck">Check</button>
       <button class="action-btn btn-reset" id="btnReset">Reset</button>
-      <button class="action-btn btn-skip"  id="btnSkip">Skip</button>
     </div>
+    <p class="next-puzzle" id="nextPuzzle"></p>
   </div>
 
   <button class="help-btn" id="helpBtn">How to Play</button>
@@ -322,7 +331,7 @@
       <p><strong>3.</strong> To move an operator, drag it from its box to another. To remove one, drag it back to the palette area or click it.</p>
       <p><strong>4.</strong> Press <strong>Check</strong> when all boxes are filled.</p>
       <p>On harder levels, some boxes sit next to a single number — those need operators like √ or ². Experiment!</p>
-      <p><strong>Reset</strong> clears everything. <strong>Skip</strong> goes to the next puzzle.</p>
+      <p><strong>Reset</strong> clears your answers. A new set of puzzles arrives every day!</p>
     </div>
   </div>
 
@@ -654,6 +663,48 @@
       });
     }
 
+    // ─── localStorage helpers ────────────────────────────────────────────────────
+    function todayKey(diff) {
+      return `equations_${diff}_${Math.floor(Date.now() / 86400000)}`;
+    }
+
+    function saveProgress() {
+      localStorage.setItem(todayKey(difficulty), JSON.stringify({ userAnswers, solved }));
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(todayKey(difficulty));
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+
+    // ─── Countdown ───────────────────────────────────────────────────────────────
+    let countdownTimer = null;
+
+    function startCountdown() {
+      const el = document.getElementById('nextPuzzle');
+      if (countdownTimer) clearInterval(countdownTimer);
+
+      function tick() {
+        const now       = Date.now();
+        const midnight  = (Math.floor(now / 86400000) + 1) * 86400000;
+        const diff      = midnight - now;
+        const h         = Math.floor(diff / 3600000);
+        const m         = Math.floor((diff % 3600000) / 60000);
+        const s         = Math.floor((diff % 60000) / 1000);
+        el.textContent  = `Next puzzle in ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+      }
+
+      tick();
+      countdownTimer = setInterval(tick, 1000);
+    }
+
+    function stopCountdown() {
+      if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+      document.getElementById('nextPuzzle').textContent = '';
+    }
+
     // ─── Game flow ───────────────────────────────────────────────────────────────
     function setFeedback(msg, type) {
       const el    = document.getElementById('feedback');
@@ -662,13 +713,24 @@
     }
 
     function loadPuzzle() {
-      blankDescs  = buildBlankDescs(currentPuzzle());
-      userAnswers = [];
-      solved      = false;
-      document.getElementById('solvedBanner').classList.remove('show');
+      blankDescs = buildBlankDescs(currentPuzzle());
+      stopCountdown();
+
+      const saved = loadProgress();
+      if (saved) {
+        userAnswers = saved.userAnswers;
+        solved      = saved.solved;
+      } else {
+        userAnswers = [];
+        solved      = false;
+      }
+
+      document.getElementById('solvedBanner').classList.toggle('show', solved);
       setFeedback('');
       renderEquation();
       renderOperators();
+      wireTouchOnBoxes();
+      if (solved) startCountdown();
     }
 
     function checkAnswer() {
@@ -687,8 +749,10 @@
 
       if (correct) {
         solved = true;
+        saveProgress();
         document.getElementById('solvedBanner').classList.add('show');
         setFeedback('');
+        startCountdown();
       } else {
         setFeedback('Not quite. Try again!', 'error');
         setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); wireTouchOnBoxes(); } }, 900);
@@ -714,11 +778,6 @@
       setFeedback('');
       renderEquation();
       renderOperators();
-    });
-
-    document.getElementById('btnSkip').addEventListener('click', () => {
-      puzzleIndex = (puzzleIndex + 1) % PUZZLES[difficulty].length;
-      loadPuzzle();
     });
 
     document.getElementById('helpBtn').addEventListener('click', () =>
