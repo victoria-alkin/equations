@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EQUATIONS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background-image: url('images/background.png');
+      background-repeat: repeat;
+      background-size: 300px 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .logo {
+      width: 380px;
+      max-width: 90vw;
+      margin-bottom: 0.4rem;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.85rem;
+      margin-bottom: 1.4rem;
+      letter-spacing: 0.02em;
+    }
+
+    .game-card {
+      background: #FEFEFD;
+      border-radius: 18px;
+      padding: 1.8rem 2rem 1.6rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 420px;
+      max-width: 95vw;
+    }
+
+    /* --- Difficulty tabs --- */
+    .difficulty-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.6rem;
+      justify-content: center;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.45rem 0;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      background: #E8E8E8;
+      color: #888;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .tab.active {
+      background: #8DC883;
+      color: white;
+    }
+
+    /* --- Equation row --- */
+    .equation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0.6rem 0 1.6rem;
+      flex-wrap: wrap;
+      min-height: 64px;
+    }
+
+    .num {
+      color: #333;
+      min-width: 1.2rem;
+      text-align: center;
+    }
+
+    .box {
+      width: 52px;
+      height: 52px;
+      border: 2.5px solid #D0D0D0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.4rem;
+      background: white;
+      color: #7BBF72;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      user-select: none;
+    }
+
+    .box:hover {
+      border-color: #aaa;
+    }
+
+    .box.selected {
+      border-color: #8DC883;
+      box-shadow: 0 0 0 3px rgba(141,200,131,0.28);
+    }
+
+    .box.correct {
+      border-color: #8DC883;
+      background: #F0FAF0;
+      color: #5A9E52;
+    }
+
+    .box.wrong {
+      border-color: #E87070;
+      background: #FFF0F0;
+      color: #CC4444;
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .equals-sign { color: #555; }
+
+    /* --- Operator buttons --- */
+    .operators {
+      display: flex;
+      gap: 0.55rem;
+      justify-content: center;
+      margin-bottom: 1.4rem;
+    }
+
+    .op-btn {
+      width: 58px;
+      height: 58px;
+      border: 2px solid #DDD;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      background: white;
+      color: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      user-select: none;
+    }
+
+    .op-btn:hover {
+      background: #8DC883;
+      color: white;
+      border-color: #8DC883;
+    }
+
+    .op-btn:active { transform: scale(0.92); }
+
+    /* --- Action buttons --- */
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .action-btn {
+      padding: 0.55rem 1.5rem;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.03em;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .action-btn:active { transform: scale(0.95); }
+
+    .btn-check {
+      background: #8DC883;
+      color: white;
+    }
+
+    .btn-reset, .btn-skip {
+      background: #E8E8E8;
+      color: #666;
+    }
+
+    /* --- Feedback banner --- */
+    .feedback {
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      min-height: 1.2em;
+      transition: opacity 0.3s;
+    }
+
+    .feedback.success { color: #5A9E52; }
+    .feedback.error   { color: #CC4444; }
+
+    /* --- How to Play button --- */
+    .help-btn {
+      margin-top: 1rem;
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 0.82rem;
+      text-decoration: underline;
+      letter-spacing: 0.03em;
+    }
+
+    /* --- Modal --- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #FEFEFD;
+      border-radius: 14px;
+      padding: 2rem;
+      width: 420px;
+      max-width: 92vw;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      color: #444;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .modal p {
+      font-size: 0.88rem;
+      color: #555;
+      line-height: 1.7;
+      margin-bottom: 0.7rem;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 0.7rem;
+      right: 1rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #888;
+      font-weight: bold;
+    }
+
+    /* --- Solved banner --- */
+    .solved-banner {
+      display: none;
+      text-align: center;
+      padding: 0.6rem;
+      margin-bottom: 0.8rem;
+      background: #F0FAF0;
+      border-radius: 10px;
+      color: #5A9E52;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .solved-banner.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <img src="images/finallogo no bg.png" alt="EQUATIONS" class="logo">
+  <p class="subtitle">New Puzzles Daily!</p>
+
+  <div class="game-card">
+    <div class="difficulty-tabs">
+      <button class="tab active" data-diff="easy">EASY</button>
+      <button class="tab" data-diff="medium">MEDIUM</button>
+      <button class="tab" data-diff="hard">HARD</button>
+    </div>
+
+    <div class="solved-banner" id="solvedBanner">Correct! Well done!</div>
+    <div class="feedback" id="feedback"></div>
+
+    <div class="equation" id="equation"></div>
+
+    <div class="operators">
+      <button class="op-btn" data-op="+">+</button>
+      <button class="op-btn" data-op="−">−</button>
+      <button class="op-btn" data-op="×">×</button>
+      <button class="op-btn" data-op="÷">÷</button>
+    </div>
+
+    <div class="actions">
+      <button class="action-btn btn-check" id="btnCheck">Check</button>
+      <button class="action-btn btn-reset" id="btnReset">Reset</button>
+      <button class="action-btn btn-skip"  id="btnSkip">Skip</button>
+    </div>
+  </div>
+
+  <button class="help-btn" id="helpBtn">How to Play</button>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <h2>How to Play</h2>
+      <p>You'll see an equation with <strong>blank boxes</strong> between the numbers. Your job is to fill in the correct math operators so the equation is true.</p>
+      <p><strong>1.</strong> Click a blank box to select it (it turns green).</p>
+      <p><strong>2.</strong> Click an operator button (<strong>+  −  ×  ÷</strong>) to place it in the selected box. The next blank box is automatically selected.</p>
+      <p><strong>3.</strong> Hit <strong>Check</strong> when all boxes are filled to see if you're right.</p>
+      <p><strong>Reset</strong> clears your answers. <strong>Skip</strong> moves to the next puzzle. A new set of puzzles is available every day!</p>
+    </div>
+  </div>
+
+  <script>
+    // ─── Puzzle data ────────────────────────────────────────────────────────────
+    // Format: { nums: [...], ops: ['+','−','×','÷'], result: N }
+    // ops are the CORRECT operators; nums.length === ops.length + 1
+    const PUZZLES = {
+      easy: [
+        { nums:[7,1,7],   ops:['+','+'],   result:15 },
+        { nums:[3,4],     ops:['×'],       result:12 },
+        { nums:[10,2],    ops:['÷'],       result:5  },
+        { nums:[8,3],     ops:['+'],       result:11 },
+        { nums:[9,4],     ops:['−'],       result:5  },
+        { nums:[6,2],     ops:['×'],       result:12 },
+        { nums:[15,3],    ops:['÷'],       result:5  },
+        { nums:[5,5],     ops:['+'],       result:10 },
+        { nums:[12,4],    ops:['÷'],       result:3  },
+        { nums:[2,3,4],   ops:['+','+'],   result:9  },
+        { nums:[10,3,2],  ops:['−','+'],   result:9  },
+        { nums:[4,2,1],   ops:['×','+'],   result:9  },
+        { nums:[20,4],    ops:['÷'],       result:5  },
+        { nums:[7,3],     ops:['×'],       result:21 },
+        { nums:[18,6],    ops:['÷'],       result:3  },
+      ],
+      medium: [
+        { nums:[3,4,2],   ops:['×','+'],   result:14 },
+        { nums:[10,2,3],  ops:['÷','+'],   result:8  },
+        { nums:[5,3,2],   ops:['+','×'],   result:16 },
+        { nums:[12,3,4],  ops:['÷','×'],   result:16 },
+        { nums:[8,2,3],   ops:['×','−'],   result:13 },
+        { nums:[6,2,4],   ops:['×','÷'],   result:3  },
+        { nums:[9,3,2],   ops:['×','+'],   result:29 },
+        { nums:[15,3,4],  ops:['÷','+'],   result:9  },
+        { nums:[7,2,3],   ops:['×','−'],   result:11 },
+        { nums:[4,3,2],   ops:['+','×'],   result:14 },
+        { nums:[20,4,3],  ops:['÷','+'],   result:8  },
+        { nums:[6,3,2],   ops:['×','÷'],   result:3  },
+        { nums:[8,4,2],   ops:['÷','×'],   result:4  },
+        { nums:[5,4,3],   ops:['×','−'],   result:17 },
+        { nums:[9,3,5],   ops:['−','×'],   result:30 },
+      ],
+      hard: [
+        { nums:[2,3,4,1],  ops:['+','×','−'], result:13 },
+        { nums:[5,2,3,4],  ops:['×','+','−'], result:9  },
+        { nums:[10,2,3,4], ops:['÷','+','×'], result:17 },
+        { nums:[4,3,2,5],  ops:['×','−','+'], result:15 },
+        { nums:[6,2,4,3],  ops:['÷','×','+'], result:15 },
+        { nums:[3,4,2,1],  ops:['×','+','×'], result:14 },
+        { nums:[8,2,3,1],  ops:['÷','+','×'], result:4  },
+        { nums:[5,3,2,4],  ops:['+','×','−'], result:12 },
+        { nums:[9,3,2,1],  ops:['÷','×','+'], result:7  },
+        { nums:[7,2,3,4],  ops:['×','−','+'], result:15 },
+        { nums:[4,2,3,1],  ops:['×','+','×'], result:11 },
+        { nums:[6,3,2,4],  ops:['×','÷','+'], result:8  },
+        { nums:[10,5,2,3], ops:['÷','×','+'], result:7  },
+        { nums:[8,4,3,2],  ops:['÷','+','×'], result:8  },
+        { nums:[3,2,4,5],  ops:['+','×','−'], result:30 },
+      ],
+    };
+
+    // ─── State ──────────────────────────────────────────────────────────────────
+    let difficulty = 'easy';
+    let puzzleIndex = 0;
+    let userOps = [];
+    let selectedBox = -1;
+    let solved = false;
+
+    function getDailyIndex(diff) {
+      const d = new Date();
+      const dayNum = Math.floor(d / 86400000);
+      return dayNum % PUZZLES[diff].length;
+    }
+
+    function currentPuzzle() {
+      return PUZZLES[difficulty][puzzleIndex];
+    }
+
+    // ─── Render ─────────────────────────────────────────────────────────────────
+    function renderEquation(markings) {
+      const eq = document.getElementById('equation');
+      eq.innerHTML = '';
+      const p = currentPuzzle();
+
+      p.nums.forEach((n, i) => {
+        const numEl = document.createElement('span');
+        numEl.className = 'num';
+        numEl.textContent = n;
+        eq.appendChild(numEl);
+
+        if (i < p.ops.length) {
+          const box = document.createElement('div');
+          box.className = 'box';
+          box.dataset.index = i;
+
+          if (markings) {
+            box.classList.add(markings[i]);
+          } else if (i === selectedBox) {
+            box.classList.add('selected');
+          }
+
+          box.textContent = userOps[i] ?? '';
+          box.addEventListener('click', () => selectBox(i));
+          eq.appendChild(box);
+        }
+      });
+
+      const eq2 = document.createElement('span');
+      eq2.className = 'equals-sign';
+      eq2.textContent = '=';
+      eq.appendChild(eq2);
+
+      const res = document.createElement('span');
+      res.className = 'num';
+      res.textContent = p.result;
+      eq.appendChild(res);
+    }
+
+    function selectBox(i) {
+      if (solved) return;
+      selectedBox = i;
+      setFeedback('');
+      renderEquation(null);
+    }
+
+    function setFeedback(msg, type) {
+      const el = document.getElementById('feedback');
+      el.textContent = msg;
+      el.className = 'feedback ' + (type ?? '');
+    }
+
+    function loadPuzzle() {
+      solved = false;
+      userOps = [];
+      selectedBox = 0;
+      document.getElementById('solvedBanner').classList.remove('show');
+      setFeedback('');
+      renderEquation(null);
+    }
+
+    // ─── Evaluation ─────────────────────────────────────────────────────────────
+    function evaluate(nums, ops) {
+      // Build expression string; use standard JS order of operations
+      let expr = String(nums[0]);
+      ops.forEach((op, i) => {
+        const jsOp = op === '×' ? '*' : op === '÷' ? '/' : op === '−' ? '-' : op;
+        expr += jsOp + nums[i + 1];
+      });
+      try {
+        return Function('"use strict"; return (' + expr + ')')();
+      } catch { return NaN; }
+    }
+
+    // ─── Check ──────────────────────────────────────────────────────────────────
+    function checkAnswer() {
+      if (solved) return;
+      const p = currentPuzzle();
+      const blanks = p.ops.length;
+
+      if (userOps.filter(Boolean).length < blanks) {
+        setFeedback('Fill in all the boxes first!', 'error');
+        return;
+      }
+
+      const val = evaluate(p.nums, userOps);
+      const markings = userOps.map((op, i) => op === p.ops[i] ? 'correct' : 'wrong');
+      renderEquation(markings);
+
+      const allCorrect = Math.abs(val - p.result) < 1e-9;
+      if (allCorrect) {
+        solved = true;
+        selectedBox = -1;
+        document.getElementById('solvedBanner').classList.add('show');
+        setFeedback('');
+      } else {
+        setFeedback('Not quite. Try again!', 'error');
+        setTimeout(() => { if (!solved) renderEquation(null); }, 900);
+      }
+    }
+
+    // ─── Events ─────────────────────────────────────────────────────────────────
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        difficulty = btn.dataset.diff;
+        puzzleIndex = getDailyIndex(difficulty);
+        loadPuzzle();
+      });
+    });
+
+    document.querySelectorAll('.op-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (solved) return;
+        if (selectedBox < 0) {
+          setFeedback('Select a box first!', 'error');
+          return;
+        }
+        userOps[selectedBox] = btn.dataset.op;
+        // Advance to next empty box
+        const blanks = currentPuzzle().ops.length;
+        let next = -1;
+        for (let i = selectedBox + 1; i < blanks; i++) {
+          if (!userOps[i]) { next = i; break; }
+        }
+        if (next === -1) {
+          // wrap to first empty
+          for (let i = 0; i < blanks; i++) {
+            if (!userOps[i]) { next = i; break; }
+          }
+        }
+        selectedBox = next;
+        setFeedback('');
+        renderEquation(null);
+      });
+    });
+
+    document.getElementById('btnCheck').addEventListener('click', checkAnswer);
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      userOps = [];
+      selectedBox = 0;
+      solved = false;
+      document.getElementById('solvedBanner').classList.remove('show');
+      setFeedback('');
+      renderEquation(null);
+    });
+
+    document.getElementById('btnSkip').addEventListener('click', () => {
+      puzzleIndex = (puzzleIndex + 1) % PUZZLES[difficulty].length;
+      loadPuzzle();
+    });
+
+    document.getElementById('helpBtn').addEventListener('click', () => {
+      document.getElementById('modalOverlay').classList.add('open');
+    });
+
+    document.getElementById('modalClose').addEventListener('click', () => {
+      document.getElementById('modalOverlay').classList.remove('open');
+    });
+
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').classList.remove('open');
+      }
+    });
+
+    // ─── Init ────────────────────────────────────────────────────────────────────
+    puzzleIndex = getDailyIndex(difficulty);
+    loadPuzzle();
+  </script>
+</body>
+</html>
