@@ -1297,7 +1297,7 @@
       btn.disabled = false;
       lockAccountUsernameField();
       setSettingsMsg('Saved!', 'ok');
-      setTimeout(() => setSettingsMsg(''), 2000);
+      setTimeout(() => { setSettingsMsg(''); closeAccountOverlay(); }, 1200);
     }
 
     async function updateAuthUI() {
