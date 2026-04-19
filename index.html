@@ -255,6 +255,30 @@
     .lb-empty  { text-align: center; color: #bbb; font-size: 0.85rem; padding: 1rem 0; }
     .lb-loading { text-align: center; color: #ccc; font-size: 0.85rem; padding: 1rem 0; }
 
+    /* --- User avatar button --- */
+    .user-avatar-btn {
+      position: fixed; top: 1rem; right: 1rem; z-index: 50;
+      width: 42px; height: 42px; border-radius: 50%; border: 2.5px solid white;
+      cursor: pointer; overflow: hidden; padding: 0; background: #8DC883;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .user-avatar-btn:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+    .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* --- Icon picker --- */
+    .account-user  { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 1.2rem; }
+    .icon-label    { font-size: 0.72rem; font-weight: 700; color: #bbb; letter-spacing: 0.08em; margin-bottom: 0.8rem; }
+    .icon-picker   { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.2rem; }
+    .icon-option   {
+      width: 64px; height: 64px; border-radius: 50%; cursor: pointer;
+      border: 3px solid transparent; overflow: hidden;
+      transition: border-color 0.15s, transform 0.1s; flex-shrink: 0;
+    }
+    .icon-option img     { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .icon-option.chosen  { border-color: #8DC883; box-shadow: 0 0 0 3px rgba(141,200,131,0.25); }
+    .icon-option:hover   { transform: scale(1.07); }
+    .account-actions     { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+
     /* --- Share --- */
     .share-row {
       display: flex; align-items: center; justify-content: center;
@@ -316,6 +340,11 @@
   </style>
 </head>
 <body>
+
+  <!-- User avatar (top-right, shown when signed in) -->
+  <button class="user-avatar-btn hidden" id="userAvatarBtn" title="Account settings">
+    <img src="images/icon1.png" alt="Profile" id="userAvatarImg">
+  </button>
 
   <img src="images/finallogo no bg.png" alt="EQUATIONS" class="logo">
   <p class="subtitle">New Puzzles Daily!</p>
@@ -420,6 +449,21 @@
   </div>
 
   <button class="help-btn" id="helpBtn">How to Play</button>
+
+  <!-- Account settings modal -->
+  <div class="modal-overlay" id="accountOverlay">
+    <div class="modal">
+      <button class="modal-close" id="accountClose">✕</button>
+      <h2>Account Settings</h2>
+      <p class="account-user">@<span id="accountUsername"></span></p>
+      <p class="icon-label">PROFILE ICON</p>
+      <div class="icon-picker" id="iconPicker"></div>
+      <div class="account-actions">
+        <button class="btn-magic" id="btnSaveAvatar">Save</button>
+        <button class="link-btn" id="btnSignOutSettings">Sign out</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
@@ -836,19 +880,65 @@
     }
 
     let currentUsername = '';
+    let currentAvatar   = 'icon1';
+    let pendingAvatar   = 'icon1';
+
+    function showUserAvatarBtn() {
+      const btn = document.getElementById('userAvatarBtn');
+      if (currentSession) {
+        document.getElementById('userAvatarImg').src = `images/${currentAvatar}.png`;
+        btn.classList.remove('hidden');
+      } else {
+        btn.classList.add('hidden');
+      }
+    }
+
+    function openAccountSettings() {
+      document.getElementById('accountUsername').textContent = currentUsername;
+      pendingAvatar = currentAvatar;
+      const picker = document.getElementById('iconPicker'); picker.innerHTML = '';
+      ['icon1','icon2','icon3','icon4'].forEach(icon => {
+        const div = document.createElement('div');
+        div.className = 'icon-option' + (icon === pendingAvatar ? ' chosen' : '');
+        div.dataset.icon = icon;
+        const img = document.createElement('img'); img.src = `images/${icon}.png`; img.alt = icon;
+        div.appendChild(img);
+        div.addEventListener('click', () => {
+          pendingAvatar = icon;
+          document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('chosen'));
+          div.classList.add('chosen');
+        });
+        picker.appendChild(div);
+      });
+      document.getElementById('accountOverlay').classList.add('open');
+    }
+
+    async function saveAvatar() {
+      if (!currentSession) return;
+      const btn = document.getElementById('btnSaveAvatar');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      await db.from('profiles').update({ avatar: pendingAvatar }).eq('id', currentSession.user.id);
+      currentAvatar = pendingAvatar;
+      showUserAvatarBtn();
+      btn.disabled = false; btn.textContent = 'Saved!';
+      setTimeout(() => { btn.textContent = 'Save'; }, 1500);
+    }
 
     async function updateAuthUI() {
       if (currentSession) {
-        const { data: profile } = await db.from('profiles').select('username').eq('id', currentSession.user.id).maybeSingle();
+        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
         currentUsername = profile?.username || currentSession.user.email.split('@')[0];
+        currentAvatar   = profile?.avatar   || 'icon1';
         document.getElementById('timedUsername').textContent = currentUsername;
         document.getElementById('splashUserBar').classList.remove('hidden');
         document.getElementById('splashAuthNote').classList.add('hidden');
       } else {
         currentUsername = '';
+        currentAvatar   = 'icon1';
         document.getElementById('splashUserBar').classList.add('hidden');
         document.getElementById('splashAuthNote').classList.remove('hidden');
       }
+      showUserAvatarBtn();
       showTimedState('splash');
     }
 
@@ -1095,6 +1185,16 @@
         document.getElementById('timedCard').classList.toggle('hidden', mode !== 'timed');
         if (mode === 'timed') { updateAuthUI(); fetchLeaderboards().then(renderLeaderboard); }
       });
+    });
+
+    // ─── Account settings ────────────────────────────────────────────────────────
+    document.getElementById('userAvatarBtn').addEventListener('click', openAccountSettings);
+    document.getElementById('accountClose').addEventListener('click', () => document.getElementById('accountOverlay').classList.remove('open'));
+    document.getElementById('accountOverlay').addEventListener('click', e => { if (e.target === document.getElementById('accountOverlay')) document.getElementById('accountOverlay').classList.remove('open'); });
+    document.getElementById('btnSaveAvatar').addEventListener('click', saveAvatar);
+    document.getElementById('btnSignOutSettings').addEventListener('click', async () => {
+      document.getElementById('accountOverlay').classList.remove('open');
+      await db.auth.signOut();
     });
 
     // ─── Modal ───────────────────────────────────────────────────────────────────
