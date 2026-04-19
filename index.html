@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Equations</title>
   <link rel="icon" type="image/png" href="images/favicon2.png">
+  <meta name="description" content="Daily math puzzle game. Fill in the operators to make the equation true.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Equations">
+  <meta property="og:description" content="Daily math puzzle game. Fill in the operators to make the equation true.">
+  <meta property="og:url" content="https://equationsgame.com/">
+  <meta property="og:image" content="https://equationsgame.com/images/opengraph.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Equations">
+  <meta name="twitter:description" content="Daily math puzzle game. Fill in the operators to make the equation true.">
+  <meta name="twitter:image" content="https://equationsgame.com/images/opengraph.png">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1574,7 +1586,7 @@
       showTimedState('finished');
       const scoreCopy = timedScore;
       populateShareRow(document.getElementById('timedShareRow'),
-        `I solved ${scoreCopy} equation${scoreCopy === 1 ? '' : 's'} in 60 seconds on Equations! Can you beat my score? 🧮 play-equations.vercel.app`
+        `I solved ${scoreCopy} equation${scoreCopy === 1 ? '' : 's'} in 60 seconds on Equations! Can you beat my score? 🧮 equationsgame.com`
       );
       if (currentSession) await saveTimedScore(timedScore);
       await fetchLeaderboards();
@@ -1895,7 +1907,7 @@
       const btnFb = document.createElement('button');
       btnFb.className = 'share-net-btn share-fb'; btnFb.title = 'Share on Facebook';
       btnFb.innerHTML = _SVG_FB;
-      btnFb.addEventListener('click', () => window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent('https://play-equations.vercel.app') + '&quote=' + encodeURIComponent(text), '_blank'));
+      btnFb.addEventListener('click', () => window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent('https://equationsgame.com/') + '&quote=' + encodeURIComponent(text), '_blank'));
       rowEl.appendChild(btnFb);
 
       const btnWa = document.createElement('button');
@@ -1929,7 +1941,7 @@
       const row = document.getElementById('dailyShareRow');
       if (solved) {
         const diff = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-        populateShareRow(row, `I solved today's ${diff} Equations puzzle! Can you? 🧮 play-equations.vercel.app`);
+        populateShareRow(row, `I solved today's ${diff} Equations puzzle! Can you? 🧮 equationsgame.com`);
       } else {
         row.classList.add('hidden');
       }
@@ -1942,8 +1954,8 @@
       const myId  = currentSession?.user?.id;
       const rank  = myId ? rows.findIndex(r => r.user_id === myId) : -1;
       const text  = rank >= 0
-        ? `I'm #${rank + 1} on the Equations ${label} leaderboard! Can you beat my score? 🏆 play-equations.vercel.app`
-        : `Check out the Equations ${label} leaderboard! 🏆 play-equations.vercel.app`;
+        ? `I'm #${rank + 1} on the Equations ${label} leaderboard! Can you beat my score? 🏆 equationsgame.com`
+        : `Check out the Equations ${label} leaderboard! 🏆 equationsgame.com`;
       populateShareRow(row, text);
     }
 
