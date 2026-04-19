@@ -294,16 +294,11 @@
     }
     .btn-start-splash {
       display: block; width: 100%; padding: 0.95rem; background: #8DC883;
-      color: white; border: none; border-radius: 14px; font-size: 1.25rem;
+      color: white; border: 3px solid #5A9E52; border-radius: 14px; font-size: 1.25rem;
       font-weight: 800; cursor: pointer; letter-spacing: 0.05em;
       margin-bottom: 1rem; transition: transform 0.1s;
-      animation: splashGlow 2s ease-in-out infinite;
     }
-    .btn-start-splash:active { transform: scale(0.97); animation: none; }
-    @keyframes splashGlow {
-      0%, 100% { box-shadow: 0 4px 16px rgba(141,200,131,0.3); }
-      50%       { box-shadow: 0 4px 32px rgba(141,200,131,0.7); }
-    }
+    .btn-start-splash:active { transform: scale(0.97); }
     .splash-auth-note { text-align: center; font-size: 0.82rem; color: #aaa; }
     .splash-back { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; display: inline-block; margin-bottom: 1rem; }
 
