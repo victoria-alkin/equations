@@ -1037,7 +1037,7 @@
 
       const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
-      if (error) setAuthMsg(error.message === 'Email not confirmed' ? 'Please verify your email first.' : error.message, 'err');
+      if (error) setAuthMsg(error.message, 'err');
     });
 
     // Sign up
@@ -1063,7 +1063,7 @@
       if (error) setAuthMsg(error.message, 'err');
       else {
         document.getElementById('signupForm').classList.add('hidden');
-        setAuthMsg('Account created! Check your email to verify, then log in.', 'ok');
+        setAuthMsg('Welcome to Equations! You can log in now.', 'ok');
       }
     });
 
