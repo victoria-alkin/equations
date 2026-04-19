@@ -211,13 +211,15 @@
 
     .timed-op-btn {
       width: 64px; height: 64px; border: 2px solid #DDD; border-radius: 12px;
-      font-size: 1.6rem; cursor: pointer; background: white; color: #444;
+      font-size: 1.6rem; cursor: grab; background: white; color: #444;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.12s, transform 0.1s;
       user-select: none;
+      touch-action: none;
     }
     .timed-op-btn:hover  { background: #8DC883; color: white; border-color: #8DC883; }
-    .timed-op-btn:active { transform: scale(0.9); }
+    .timed-op-btn:active { cursor: grabbing; transform: scale(0.9); }
+    .timed-op-btn.dragging { opacity: 0.4; }
 
     /* Finished */
     .finish-card { text-align: center; padding: 0.5rem 0 1.4rem; }
@@ -459,6 +461,7 @@
         <div class="score-display">Score: <span id="timedScore">0</span></div>
       </div>
       <div class="equation" id="timedEquation"></div>
+      <p class="palette-label">DRAG TO PLACE</p>
       <div class="timed-ops" id="timedOps"></div>
     </div>
 
@@ -511,7 +514,7 @@
       <button class="modal-close" id="modalClose">✕</button>
       <h2>How to Play</h2>
       <p><strong>Daily:</strong> Fill blank boxes so the equation is true. Drag an operator from the palette and drop it onto a box. Drag between boxes to rearrange, or click a filled box to clear it. One puzzle per difficulty per day.</p>
-      <p><strong>Timed:</strong> Solve as many equations as you can in 60 seconds! Click an operator to place it in the next empty box. Correct answers advance automatically. Sign in to submit your score to the leaderboard.</p>
+      <p><strong>Timed:</strong> Solve as many equations as you can in 60 seconds! Drag an operator onto a blank box (or between boxes to rearrange). Drop on the palette row to remove an operator from the equation. Correct answers advance automatically. Sign in to submit your score to the leaderboard.</p>
       <p><strong>Reset</strong> clears your answers. A new set of daily puzzles arrives every day!</p>
     </div>
   </div>
@@ -1067,6 +1070,7 @@
       timedAnswers = [];
       renderTimedEquation(p);
       renderTimedOps();
+      wireTouchOnTimedBoxes();
     }
 
     function renderTimedEquation(p) {
@@ -1084,49 +1088,207 @@
       const res = document.createElement('span'); res.className = 'num'; res.textContent = p.result; eq.appendChild(res);
     }
 
+    function maybeCompleteTimedPuzzle() {
+      if (timedSeconds <= 0) return;
+      const p = timedQueue[timedQueueIdx - 1];
+      if (!p || timedAnswers.filter(Boolean).length !== timedDescs.length) return;
+      const val = evaluate(p, timedAnswers);
+      if (Math.abs(val - p.result) < 1e-9) {
+        timedScore++;
+        document.getElementById('timedScore').textContent = timedScore;
+        flashTimedEquation('correct');
+        setTimeout(loadTimedPuzzle, 350);
+      } else {
+        flashTimedEquation('wrong');
+        setTimeout(() => {
+          timedAnswers = [];
+          renderTimedEquation(p);
+          renderTimedOps();
+          wireTouchOnTimedBoxes();
+        }, 500);
+      }
+    }
+
+    function applyTimedDrop(targetBi, op, srcBiStr) {
+      if (timedSeconds <= 0 || !op) return;
+      const p = timedQueue[timedQueueIdx - 1];
+      if (!p) return;
+      if (srcBiStr !== '') {
+        const src = parseInt(srcBiStr, 10);
+        if (!Number.isNaN(src)) timedAnswers[src] = null;
+      }
+      timedAnswers[targetBi] = op;
+      renderTimedEquation(p);
+      renderTimedOps();
+      wireTouchOnTimedBoxes();
+      maybeCompleteTimedPuzzle();
+    }
+
     function makeTimedBox(bi) {
       const box = document.createElement('div'); box.className = 'box'; box.dataset.bi = bi;
-      box.textContent = timedAnswers[bi] ?? '';
-      if (timedAnswers[bi]) box.classList.add('filled');
+      const val = timedAnswers[bi];
+      box.textContent = val ?? '';
+      if (val) box.classList.add('filled');
+
+      box.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (timedSeconds <= 0) return;
+        box.classList.add('drag-over');
+      });
+      box.addEventListener('dragleave', () => box.classList.remove('drag-over'));
+      box.addEventListener('drop', e => {
+        e.preventDefault(); box.classList.remove('drag-over');
+        if (timedSeconds <= 0) return;
+        const op = e.dataTransfer.getData('op'), srcBi = e.dataTransfer.getData('srcBi');
+        if (!op) return;
+        applyTimedDrop(bi, op, srcBi);
+      });
+
+      if (val) {
+        box.draggable = true;
+        box.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('op', val);
+          e.dataTransfer.setData('srcBi', String(bi));
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => box.classList.add('dragging'), 0);
+        });
+        box.addEventListener('dragend', () => box.classList.remove('dragging'));
+      }
+
       box.addEventListener('click', () => {
-        if (!timedAnswers[bi]) return;
+        if (timedSeconds <= 0 || !timedAnswers[bi]) return;
         timedAnswers[bi] = null;
         const p = timedQueue[timedQueueIdx - 1];
         renderTimedEquation(p);
+        renderTimedOps();
+        wireTouchOnTimedBoxes();
       });
       return box;
     }
 
     function renderTimedOps() {
-      const container = document.getElementById('timedOps'); container.innerHTML = '';
-      ['+','−','×','÷'].forEach(sym => {
+      const container = document.getElementById('timedOps');
+      container.innerHTML = '';
+      ['+', '−', '×', '÷'].forEach(sym => {
         const btn = document.createElement('button'); btn.className = 'timed-op-btn'; btn.textContent = sym;
-        btn.addEventListener('click', () => placeTimedOp(sym));
+        btn.draggable = true;
+        btn.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('op', sym);
+          e.dataTransfer.setData('srcBi', '');
+          e.dataTransfer.effectAllowed = 'copy';
+          btn.classList.add('dragging');
+        });
+        btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+        btn.addEventListener('touchstart', e => startTimedTouchDrag(e, sym, null), { passive: false });
         container.appendChild(btn);
       });
     }
 
-    function placeTimedOp(sym) {
+    let timedTouchOp = null, timedTouchSrcBi = null, timedTouchClone = null, timedLastDropBox = null;
+
+    function startTimedTouchDrag(e, sym, srcBi) {
+      e.preventDefault();
       if (timedSeconds <= 0) return;
-      const firstEmpty = timedDescs.findIndex((_, i) => !timedAnswers[i]);
-      if (firstEmpty === -1) return;
-      timedAnswers[firstEmpty] = sym;
-      const p = timedQueue[timedQueueIdx - 1];
-      renderTimedEquation(p);
-      // Auto-check when all filled
-      if (timedAnswers.filter(Boolean).length === timedDescs.length) {
-        const val = evaluate(p, timedAnswers);
-        if (Math.abs(val - p.result) < 1e-9) {
-          timedScore++;
-          document.getElementById('timedScore').textContent = timedScore;
-          flashTimedEquation('correct');
-          setTimeout(loadTimedPuzzle, 350);
-        } else {
-          flashTimedEquation('wrong');
-          setTimeout(() => { timedAnswers = []; renderTimedEquation(p); }, 500);
+      timedTouchOp = sym; timedTouchSrcBi = srcBi;
+      timedTouchClone = document.createElement('div');
+      timedTouchClone.className = 'touch-clone';
+      timedTouchClone.textContent = sym;
+      document.body.appendChild(timedTouchClone);
+      moveTimedTouchClone(e.touches[0]);
+      document.addEventListener('touchmove', onTimedTouchMove, { passive: false });
+      document.addEventListener('touchend', onTimedTouchEnd, { passive: false });
+      document.addEventListener('touchcancel', onTimedTouchCancel, { passive: false });
+    }
+
+    function moveTimedTouchClone(touch) {
+      if (!timedTouchClone) return;
+      timedTouchClone.style.left = touch.clientX + 'px';
+      timedTouchClone.style.top = touch.clientY + 'px';
+      timedTouchClone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      timedTouchClone.style.display = '';
+      document.querySelectorAll('#timedEquation .box').forEach(b => b.classList.remove('drag-over'));
+      if (el && el.classList.contains('box') && el.closest('#timedEquation')) {
+        timedLastDropBox = el;
+        el.classList.add('drag-over');
+      } else {
+        timedLastDropBox = null;
+      }
+    }
+
+    function onTimedTouchMove(e) { e.preventDefault(); moveTimedTouchClone(e.touches[0]); }
+
+    function onTimedTouchEnd(e) {
+      e.preventDefault();
+      const lastBox = timedLastDropBox;
+      const op = timedTouchOp;
+      const srcBi = timedTouchSrcBi;
+      cleanupTimedTouch();
+      if (timedSeconds <= 0) return;
+      if (lastBox && op) {
+        const bi = parseInt(lastBox.dataset.bi, 10);
+        applyTimedDrop(bi, op, srcBi === null || srcBi === undefined ? '' : String(srcBi));
+        return;
+      }
+      const touch = e.changedTouches[0];
+      if (touch && (srcBi === 0 || srcBi) && srcBi !== null && srcBi !== undefined) {
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (el && el.closest('#timedOps')) {
+          timedAnswers[srcBi] = null;
+          const p = timedQueue[timedQueueIdx - 1];
+          if (p) {
+            renderTimedEquation(p);
+            renderTimedOps();
+            wireTouchOnTimedBoxes();
+          }
         }
       }
     }
+
+    function onTimedTouchCancel() { cleanupTimedTouch(); }
+
+    function cleanupTimedTouch() {
+      if (timedTouchClone) {
+        timedTouchClone.remove();
+        timedTouchClone = null;
+      }
+      document.querySelectorAll('#timedEquation .box').forEach(b => b.classList.remove('drag-over'));
+      document.removeEventListener('touchmove', onTimedTouchMove);
+      document.removeEventListener('touchend', onTimedTouchEnd);
+      document.removeEventListener('touchcancel', onTimedTouchCancel);
+      timedLastDropBox = null;
+      timedTouchOp = null;
+      timedTouchSrcBi = null;
+    }
+
+    function wireTouchOnTimedBoxes() {
+      document.querySelectorAll('#timedEquation .box.filled').forEach(box => {
+        const bi = parseInt(box.dataset.bi, 10);
+        const sym = timedAnswers[bi];
+        if (!sym) return;
+        box.addEventListener('touchstart', e => startTimedTouchDrag(e, sym, bi), { passive: false });
+      });
+    }
+
+    (function wireTimedPaletteDropOnce() {
+      const palette = document.getElementById('timedOps');
+      if (!palette || palette.dataset.dropWired === '1') return;
+      palette.dataset.dropWired = '1';
+      palette.addEventListener('dragover', e => e.preventDefault());
+      palette.addEventListener('drop', e => {
+        e.preventDefault();
+        if (timedSeconds <= 0) return;
+        const srcBi = e.dataTransfer.getData('srcBi');
+        if (srcBi === '') return;
+        timedAnswers[parseInt(srcBi, 10)] = null;
+        const p = timedQueue[timedQueueIdx - 1];
+        if (p) {
+          renderTimedEquation(p);
+          renderTimedOps();
+          wireTouchOnTimedBoxes();
+        }
+      });
+    })();
 
     function flashTimedEquation(cls) {
       document.querySelectorAll('#timedEquation .box').forEach(b => {
