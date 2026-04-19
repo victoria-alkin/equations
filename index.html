@@ -254,6 +254,18 @@
     .lb-empty  { text-align: center; color: #bbb; font-size: 0.85rem; padding: 1rem 0; }
     .lb-loading { text-align: center; color: #ccc; font-size: 0.85rem; padding: 1rem 0; }
 
+    /* --- Share --- */
+    .share-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.45rem 1.2rem; border: 2px solid #8DC883; border-radius: 20px;
+      background: white; color: #5A9E52; font-weight: 700; font-size: 0.82rem;
+      cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    .share-btn:hover  { background: #8DC883; color: white; }
+    .share-btn:active { transform: scale(0.95); }
+    .share-wrap { text-align: center; }
+
     /* --- Help --- */
     .help-btn { margin-top: 1rem; background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
 
@@ -285,6 +297,7 @@
     </div>
 
     <div class="solved-banner" id="solvedBanner">Correct! Well done!</div>
+    <div class="share-wrap"><button class="share-btn hidden" id="dailyShareBtn">↗ Share</button></div>
     <div class="feedback" id="feedback"></div>
     <div class="equation" id="equation"></div>
 
@@ -356,7 +369,8 @@
           <p class="finish-label">You solved</p>
           <p class="finish-num" id="finalScore">0</p>
           <p class="finish-sub">puzzles in 60 seconds!</p>
-          <button class="btn-start" id="btnPlayAgain">Play Again</button>
+          <div class="share-wrap"><button class="share-btn" id="timedShareBtn">↗ Share your score</button></div>
+          <button class="btn-start" style="margin-top:1rem" id="btnPlayAgain">Play Again</button>
         </div>
       </div>
     </div>
@@ -368,6 +382,7 @@
       <button class="lb-tab" data-lb="alltime">All Time</button>
     </div>
     <div id="lbContent"><p class="lb-loading">Loading...</p></div>
+    <div class="share-wrap" id="lbShareWrap" style="display:none"><button class="share-btn" id="lbShareBtn">↗ Share</button></div>
   </div>
 
   <button class="help-btn" id="helpBtn">How to Play</button>
@@ -604,6 +619,7 @@
       document.getElementById('solvedBanner').classList.toggle('show', solved);
       setFeedback('');
       renderEquation(); renderOperators(); wireTouchOnBoxes();
+      updateDailyShareBtn();
       if (solved) startCountdown();
     }
 
@@ -728,6 +744,7 @@
       if (correct) {
         solved = true; saveProgress();
         document.getElementById('solvedBanner').classList.add('show'); setFeedback(''); startCountdown();
+        updateDailyShareBtn();
       } else {
         setFeedback('Not quite. Try again!', 'error');
         setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); wireTouchOnBoxes(); } }, 900);
@@ -884,6 +901,11 @@
       clearInterval(timedInterval); timedInterval = null;
       document.getElementById('finalScore').textContent = timedScore;
       showTimedState('finished');
+      const shareBtn = document.getElementById('timedShareBtn');
+      const scoreCopy = timedScore;
+      shareBtn.onclick = () => shareText(
+        `I solved ${scoreCopy} equation${scoreCopy === 1 ? '' : 's'} in 60 seconds on Equations! Can you beat my score? 🧮 play-equations.vercel.app`, shareBtn
+      );
       if (currentSession) await saveTimedScore(timedScore);
       await fetchLeaderboards();
       renderLeaderboard();
@@ -918,7 +940,7 @@
       const rows = lbMode === 'daily' ? lbData.daily : lbData.allTime;
       const myId = currentSession?.user?.id;
       const container = document.getElementById('lbContent');
-      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet — be the first!</p>'; return; }
+      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet — be the first!</p>'; updateLbShareBtn(); return; }
       const table = document.createElement('table'); table.className = 'lb-table';
       rows.forEach((row, i) => {
         const tr = document.createElement('tr');
@@ -928,6 +950,7 @@
         table.appendChild(tr);
       });
       container.innerHTML = ''; container.appendChild(table);
+      updateLbShareBtn();
     }
 
     document.querySelectorAll('.lb-tab').forEach(btn => {
@@ -1025,6 +1048,51 @@
     document.getElementById('helpBtn').addEventListener('click', () => document.getElementById('modalOverlay').classList.add('open'));
     document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
     document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); });
+
+    // ─── Share ───────────────────────────────────────────────────────────────────
+    async function shareText(text, btnEl) {
+      if (navigator.share) {
+        try { await navigator.share({ text }); return; } catch (e) { if (e.name === 'AbortError') return; }
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        const orig = btnEl.textContent; btnEl.textContent = 'Copied!';
+        setTimeout(() => { btnEl.textContent = orig; }, 1800);
+      } catch { btnEl.textContent = 'Copy failed'; }
+    }
+
+    function updateDailyShareBtn() {
+      const btn = document.getElementById('dailyShareBtn');
+      if (solved) {
+        const diff = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+        btn.classList.remove('hidden');
+        btn.onclick = () => shareText(
+          `I solved today's ${diff} Equations puzzle! Can you? 🧮 play-equations.vercel.app`, btn
+        );
+      } else {
+        btn.classList.add('hidden');
+      }
+    }
+
+    function updateLbShareBtn() {
+      const wrap = document.getElementById('lbShareWrap');
+      const btn  = document.getElementById('lbShareBtn');
+      const rows = lbMode === 'daily' ? lbData.daily : lbData.allTime;
+      const label = lbMode === 'daily' ? 'daily' : 'all-time';
+      const myId  = currentSession?.user?.id;
+      const rank  = myId ? rows.findIndex(r => r.user_id === myId) : -1;
+      wrap.style.display = '';
+      if (rank >= 0) {
+        const pos = rank + 1;
+        btn.onclick = () => shareText(
+          `I'm #${pos} on the Equations ${label} leaderboard! Can you beat my score? 🏆 play-equations.vercel.app`, btn
+        );
+      } else {
+        btn.onclick = () => shareText(
+          `Check out the Equations ${label} leaderboard! 🏆 play-equations.vercel.app`, btn
+        );
+      }
+    }
 
     // ─── Init ────────────────────────────────────────────────────────────────────
     (async () => {
