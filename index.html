@@ -256,6 +256,20 @@
     }
     .lb-tab.active { background: #8DC883; color: white; }
     .lb-reset { text-align: center; font-size: 0.95rem; color: #000; font-weight: 700; margin: 0.75rem 0 0; }
+    .lb-badges { display: inline-flex; gap: 0.55rem; vertical-align: middle; margin-left: 0.4rem; }
+    .medal-group { position: relative; display: inline-block; line-height: 1; }
+    .medal-group .medal { font-size: 1.1rem; display: inline-block; }
+    .medal-group .medal-count {
+      position: absolute; top: -6px; right: -10px;
+      background: #fff; color: #222; font-size: 0.62rem; font-weight: 700;
+      border-radius: 10px; padding: 1px 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+      min-width: 14px; text-align: center;
+    }
+    .profile-badges-label { font-size: 0.7rem; color: #888; font-weight: 700; letter-spacing: 0.08em; margin: 0.9rem 0 0.35rem; }
+    .profile-badges-row { display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: center; min-height: 1.5rem; }
+    .profile-badges-row .medal-group .medal { font-size: 1.4rem; }
+    .profile-badges-empty { font-size: 0.8rem; color: #aaa; }
 
     .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
 
@@ -576,6 +590,8 @@
       </div>
       <p class="icon-label">PROFILE ICON</p>
       <div class="icon-picker" id="iconPicker"></div>
+      <p class="profile-badges-label">BADGES</p>
+      <div class="profile-badges-row" id="profileBadges"></div>
       <p class="settings-msg" id="settingsMsg"></p>
       <div class="account-actions">
         <button class="btn-magic" id="btnSaveSettings">Save changes</button>
@@ -1278,6 +1294,16 @@
         picker.appendChild(div);
       });
       document.getElementById('accountOverlay').classList.add('open');
+      renderProfileBadges();
+    }
+
+    async function renderProfileBadges() {
+      const el = document.getElementById('profileBadges');
+      if (!currentSession) { el.innerHTML = '<span class="profile-badges-empty">Sign in to earn badges.</span>'; return; }
+      el.innerHTML = '<span class="profile-badges-empty">Loading...</span>';
+      const counts = (await fetchBadgeCounts([currentSession.user.id]))[currentSession.user.id];
+      const html = renderBadgeGroup(counts);
+      el.innerHTML = html || '<span class="profile-badges-empty">No badges yet — finish in the top 3 of the daily leaderboard!</span>';
     }
 
     async function saveSettings() {
@@ -1605,6 +1631,34 @@
     }
 
     // ─── Leaderboard ────────────────────────────────────────────────────────────
+    const MEDAL_EMOJI = { gold: '🥇', silver: '🥈', bronze: '🥉' };
+
+    async function settleBadges() {
+      try { await db.rpc('settle_past_leaderboard_days'); } catch (e) { /* non-fatal */ }
+    }
+
+    async function fetchBadgeCounts(userIds) {
+      if (!userIds || userIds.length === 0) return {};
+      const { data } = await db.from('badges').select('user_id, medal').in('user_id', userIds);
+      const counts = {};
+      for (const row of (data || [])) {
+        if (!counts[row.user_id]) counts[row.user_id] = { gold: 0, silver: 0, bronze: 0 };
+        counts[row.user_id][row.medal] = (counts[row.user_id][row.medal] || 0) + 1;
+      }
+      return counts;
+    }
+
+    function renderBadgeGroup(counts) {
+      const parts = [];
+      for (const medal of ['gold','silver','bronze']) {
+        const n = counts?.[medal] || 0;
+        if (n <= 0) continue;
+        const countHtml = n > 1 ? `<span class="medal-count">×${n}</span>` : '';
+        parts.push(`<span class="medal-group" title="${n} ${medal}"><span class="medal">${MEDAL_EMOJI[medal]}</span>${countHtml}</span>`);
+      }
+      return parts.join('');
+    }
+
     async function fetchLeaderboards() {
       document.getElementById('lbContent').innerHTML = '<p class="lb-loading">Loading...</p>';
       const today = getEstDateString();
@@ -1616,6 +1670,8 @@
       lbData.daily = Object.values(userBest).sort((a, b) => b.score - a.score).slice(0, 10);
       const { data: allTime } = await db.from('best_scores').select('user_id, display_name, score').order('score', { ascending: false }).limit(10);
       lbData.allTime = allTime || [];
+      const ids = Array.from(new Set([...lbData.daily, ...lbData.allTime].map(r => r.user_id)));
+      lbData.badgeCounts = await fetchBadgeCounts(ids);
     }
 
     function renderLeaderboard() {
@@ -1629,7 +1685,9 @@
           const tr = document.createElement('tr');
           if (row.user_id === myId) tr.classList.add('lb-me');
           const medals = ['🥇','🥈','🥉'];
-          tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}</td><td class="lb-score">${row.score}</td>`;
+          const badgeHtml = renderBadgeGroup(lbData.badgeCounts?.[row.user_id]);
+          const badgeSpan = badgeHtml ? `<span class="lb-badges">${badgeHtml}</span>` : '';
+          tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}${badgeSpan}</td><td class="lb-score">${row.score}</td>`;
           table.appendChild(tr);
         });
         container.innerHTML = ''; container.appendChild(table);
@@ -1652,7 +1710,7 @@
         if (d <= 0) {
           el.textContent = 'Daily leaderboard resets in 0h 00m 00s';
           clearInterval(lbResetTimer); lbResetTimer = null;
-          fetchLeaderboards().then(renderLeaderboard);
+          settleBadges().then(fetchLeaderboards).then(renderLeaderboard);
           return;
         }
         const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
@@ -1971,6 +2029,7 @@
       showUserAvatarBtn();
       puzzleIndex = getDailyIndex(difficulty);
       loadDailyPuzzle();
+      settleBadges();
     })();
   </script>
 </body>
