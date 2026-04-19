@@ -1901,8 +1901,8 @@
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
         currentUsername = profile?.username || currentSession.user.email.split('@')[0];
         currentAvatar   = profile?.avatar   || 'icon1';
-        showUserAvatarBtn();
       }
+      showUserAvatarBtn();
       puzzleIndex = getDailyIndex(difficulty);
       loadDailyPuzzle();
     })();
