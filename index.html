@@ -1827,11 +1827,11 @@
       });
       if (error) { alert('Could not create battle: ' + error.message); return; }
       battleId = id; battleRole = 'host';
-      const url = `${location.origin}${location.pathname}?battle=${id}`;
-      history.replaceState(null, '', url);
-      document.getElementById('battleLink').value = url;
+      const shareUrl = `${location.origin}/invite/${id}`;
+      history.replaceState(null, '', `?battle=${id}`);
+      document.getElementById('battleLink').value = shareUrl;
       populateShareRow(document.getElementById('battleShareRow'),
-        `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${url}`);
+        `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${shareUrl}`);
       showBattleState('waiting');
       startBattlePolling();
     }
@@ -1845,9 +1845,10 @@
       if (row.host_id === currentSession.user.id) {
         battleRole = 'host';
         battleRow = row;
-        document.getElementById('battleLink').value = `${location.origin}${location.pathname}?battle=${id}`;
+        const shareUrlHost = `${location.origin}/invite/${id}`;
+        document.getElementById('battleLink').value = shareUrlHost;
         populateShareRow(document.getElementById('battleShareRow'),
-          `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${location.origin}${location.pathname}?battle=${id}`);
+          `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${shareUrlHost}`);
         if (row.guest_id && row.start_at) {
           enterBattleCountdownOrPlaying(row);
         } else {
