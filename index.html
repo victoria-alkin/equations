@@ -1061,7 +1061,10 @@
       const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
       btn.disabled = false;
       if (error) setAuthMsg(error.message, 'err');
-      else setAuthMsg('Account created! Check your email to verify, then log in.', 'ok');
+      else {
+        document.getElementById('signupForm').classList.add('hidden');
+        setAuthMsg('Account created! Check your email to verify, then log in.', 'ok');
+      }
     });
 
     document.getElementById('btnSignOut').addEventListener('click', async () => { await db.auth.signOut(); });
