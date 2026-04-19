@@ -589,9 +589,24 @@
     let countdownTimer = null;
 
     function currentPuzzle() { return PUZZLES[difficulty][puzzleIndex]; }
-    function getDailyIndex(diff) { return Math.floor(Date.now() / 86400000) % PUZZLES[diff].length; }
 
-    function todayKey(diff) { return `equations_${diff}_${Math.floor(Date.now() / 86400000)}`; }
+    function getEstDayNumber() {
+      const s = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      return Math.floor(new Date(s).getTime() / 86400000);
+    }
+
+    function nextEstMidnightMs() {
+      const now = new Date();
+      const s = now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const [y, m, d] = s.split('-').map(Number);
+      const offsetMs = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' })) -
+                       new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      return Date.UTC(y, m - 1, d + 1) + offsetMs;
+    }
+
+    function getDailyIndex(diff) { return getEstDayNumber() % PUZZLES[diff].length; }
+
+    function todayKey(diff) { return `equations_${diff}_${getEstDayNumber()}`; }
     function saveProgress() { localStorage.setItem(todayKey(difficulty), JSON.stringify({ userAnswers, solved })); }
     function loadProgress() {
       try { const r = localStorage.getItem(todayKey(difficulty)); return r ? JSON.parse(r) : null; }
@@ -602,7 +617,7 @@
       const el = document.getElementById('nextPuzzle');
       if (countdownTimer) clearInterval(countdownTimer);
       function tick() {
-        const now = Date.now(), mid = (Math.floor(now/86400000)+1)*86400000, d = mid-now;
+        const now = Date.now(), mid = nextEstMidnightMs(), d = mid-now;
         const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
         el.textContent = `Next puzzle in ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
       }
