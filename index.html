@@ -1514,14 +1514,20 @@
       rowEl.appendChild(btnFb);
 
       const btnIg = document.createElement('button');
-      btnIg.className = 'share-net-btn share-ig'; btnIg.title = 'Copy for Instagram';
+      btnIg.className = 'share-net-btn share-ig'; btnIg.title = 'Share on Instagram';
       btnIg.innerHTML = _SVG_IG;
       btnIg.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          btnIg.innerHTML = '✓'; btnIg.style.fontSize = '1rem';
-          setTimeout(() => { btnIg.innerHTML = _SVG_IG; btnIg.style.fontSize = ''; }, 2000);
-        } catch { btnIg.innerHTML = '✗'; setTimeout(() => { btnIg.innerHTML = _SVG_IG; }, 2000); }
+        try { await navigator.clipboard.writeText(text); } catch {}
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = 'instagram://';
+        } else {
+          const tip = document.createElement('span');
+          tip.textContent = 'Copied! Paste into Instagram';
+          tip.style.cssText = 'position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:0.5rem 1rem;border-radius:20px;font-size:0.8rem;z-index:999;white-space:nowrap;pointer-events:none';
+          document.body.appendChild(tip);
+          setTimeout(() => tip.remove(), 2800);
+        }
       });
       rowEl.appendChild(btnIg);
 
