@@ -230,6 +230,11 @@
 
     .lb-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
 
+    .lb-heading {
+      font-size: 1rem; font-weight: 700; color: #444; text-align: center;
+      margin: 0 0 0.75rem; letter-spacing: 0.03em;
+    }
+
     .lb-tab {
       flex: 1; padding: 0.4rem; border: none; border-radius: 16px;
       font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; cursor: pointer;
@@ -470,6 +475,7 @@
 
     <!-- Leaderboard (always visible in timed card) -->
     <hr class="lb-divider">
+    <h3 class="lb-heading">Leaderboard</h3>
     <div class="lb-tabs">
       <button class="lb-tab active" data-lb="daily">Today</button>
       <button class="lb-tab" data-lb="alltime">All Time</button>
