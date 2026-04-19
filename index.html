@@ -255,14 +255,25 @@
     .lb-empty  { text-align: center; color: #bbb; font-size: 0.85rem; padding: 1rem 0; }
     .lb-loading { text-align: center; color: #ccc; font-size: 0.85rem; padding: 1rem 0; }
 
-    /* --- User avatar button --- */
-    .user-avatar-btn {
+    /* --- User bar (top-right, signed in) --- */
+    .user-top-bar {
       position: fixed; top: 1rem; right: 1rem; z-index: 50;
-      width: 42px; height: 42px; border-radius: 50%; border: 2.5px solid white;
-      cursor: pointer; overflow: hidden; padding: 0; background: #8DC883;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: transform 0.15s, box-shadow 0.15s;
+      display: flex; align-items: center; gap: 0.65rem;
+      max-width: min(72vw, 260px);
     }
-    .user-avatar-btn:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+    .user-top-name {
+      font-size: 1rem; font-weight: 700; color: #444; text-align: right;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0; flex: 1;
+      text-shadow: 0 0 10px rgba(253, 252, 251, 0.9), 0 0 2px rgba(253, 252, 251, 0.8);
+    }
+    .user-avatar-btn {
+      width: 58px; height: 58px; border-radius: 50%; border: 3px solid white;
+      cursor: pointer; overflow: hidden; padding: 0; background: #8DC883;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18); transition: transform 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+    }
+    .user-avatar-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
     .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     /* --- Icon picker --- */
@@ -350,10 +361,13 @@
 </head>
 <body>
 
-  <!-- User avatar (top-right, shown when signed in) -->
-  <button class="user-avatar-btn hidden" id="userAvatarBtn" title="Account settings">
-    <img src="images/icon1.png" alt="Profile" id="userAvatarImg">
-  </button>
+  <!-- User name + avatar (top-right, shown when signed in) -->
+  <div class="user-top-bar hidden" id="userTopBar">
+    <span class="user-top-name" id="userTopName"></span>
+    <button class="user-avatar-btn" id="userAvatarBtn" title="Account settings">
+      <img src="images/icon1.png" alt="Profile" id="userAvatarImg">
+    </button>
+  </div>
 
   <img src="images/finallogo no bg.png" alt="EQUATIONS" class="logo">
   <p class="subtitle">New Puzzles Daily!</p>
@@ -895,12 +909,22 @@
     let pendingAvatar   = 'icon1';
 
     function showUserAvatarBtn() {
+      const bar = document.getElementById('userTopBar');
       const btn = document.getElementById('userAvatarBtn');
       if (currentSession) {
         document.getElementById('userAvatarImg').src = `images/${currentAvatar}.png`;
-        btn.classList.remove('hidden');
+        const displayName = currentUsername
+          || (currentSession.user.email && currentSession.user.email.split('@')[0])
+          || '';
+        document.getElementById('userTopName').textContent = displayName;
+        btn.title = displayName ? `Account settings (${displayName})` : 'Account settings';
+        btn.setAttribute('aria-label', displayName ? `Account settings for ${displayName}` : 'Account settings');
+        bar.classList.remove('hidden');
       } else {
-        btn.classList.add('hidden');
+        bar.classList.add('hidden');
+        document.getElementById('userTopName').textContent = '';
+        btn.title = 'Account settings';
+        btn.setAttribute('aria-label', 'Account settings');
       }
     }
 
