@@ -51,12 +51,12 @@
 
     /* --- Game card --- */
     .game-card {
-      background: #FDFCFB;
+      background: #000;
       border-radius: 18px;
       padding: 1.8rem 2rem 1.6rem;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
       width: 440px;
       max-width: 95vw;
+      color: #e8e8e8;
     }
 
     .hidden { display: none !important; }
@@ -70,6 +70,9 @@
       background: #E8E8E8; color: #888; transition: background 0.2s, color 0.2s;
     }
     .tab.active { background: #8DC883; color: white; }
+
+    .game-card .tab { background: #2a2a2a; color: #9a9a9a; }
+    .game-card .tab.active { background: #8DC883; color: white; }
 
     /* --- Equation --- */
     .equation {
@@ -89,6 +92,15 @@
       user-select: none;
     }
 
+    .game-card .num { color: #f2f2f2; }
+    .game-card .equals-sign { color: #bbb; }
+    .game-card .box {
+      border-color: #666;
+      background: #141414;
+      color: #9fd494;
+    }
+    .game-card .box.filled { border-color: #888; }
+
     .box.filled   { border-style: solid; border-color: #C0C0C0; cursor: grab; }
     .box.filled:active { cursor: grabbing; }
     .box.drag-over { border-color: #8DC883; background: #F0FAF0; transform: scale(1.08); box-shadow: 0 0 0 3px rgba(141,200,131,0.3); }
@@ -102,6 +114,8 @@
 
     /* --- Operator palette (daily, drag) --- */
     .palette-label { text-align: center; font-size: 0.72rem; color: #bbb; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+    .game-card .palette-label { color: #888; }
 
     .operators { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.4rem; }
     .operators.cols-3 { max-width: 184px; margin-left: auto; margin-right: auto; }
@@ -139,6 +153,8 @@
 
     .next-puzzle { text-align: center; font-size: 0.8rem; color: #aaa; margin-top: 1rem; min-height: 1.1em; letter-spacing: 0.02em; }
 
+    .game-card .next-puzzle { color: #888; }
+
     /* --- Feedback --- */
     .feedback { text-align: center; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem; min-height: 1.2em; }
     .feedback.success { color: #5A9E52; }
@@ -147,11 +163,15 @@
     .solved-banner { display: none; text-align: center; padding: 0.6rem; margin-bottom: 0.8rem; background: #F0FAF0; border-radius: 10px; color: #5A9E52; font-weight: 700; }
     .solved-banner.show { display: block; }
 
+    .game-card .solved-banner { background: rgba(141, 200, 131, 0.18); color: #b8e6ae; }
+
     /* ═══════════════════════════════════════════
        TIMED MODE
     ═══════════════════════════════════════════ */
 
     .timed-tagline { text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 1.4rem; }
+
+    .game-card .timed-tagline { color: #aaa; }
 
     /* Auth */
     .auth-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; background: #EAEAEA; padding: 4px; border-radius: 20px; }
@@ -181,9 +201,17 @@
     .auth-msg.ok  { color: #5A9E52; }
     .auth-msg.err { color: #CC4444; }
 
+    .game-card .auth-tabs { background: #2a2a2a; }
+    .game-card .auth-tab { color: #9a9a9a; }
+    .game-card .auth-tab.active { background: #fff; color: #333; }
+    .game-card .auth-msg { color: #aaa; }
+
     /* User bar */
     .timed-user-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
     .timed-username { font-weight: 700; color: #444; font-size: 0.9rem; }
+
+    .game-card .timed-username { color: #e8e8e8; }
+    .game-card .timed-username strong { color: #fff; }
     .link-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.8rem; text-decoration: underline; }
 
     /* Start button */
@@ -206,6 +234,8 @@
     .score-display { font-size: 1.1rem; font-weight: 700; color: #555; }
     .score-display span { color: #8DC883; }
 
+    .game-card .score-display { color: #ccc; }
+
     /* Timed operator buttons (click-based, bigger targets) */
     .timed-ops { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1.4rem; }
 
@@ -225,6 +255,12 @@
     .finish-num   { font-size: 3.5rem; font-weight: 800; color: #8DC883; line-height: 1.1; }
     .finish-sub   { font-size: 0.95rem; color: #888; margin-bottom: 1.4rem; }
 
+    .game-card .finish-label,
+    .game-card .finish-sub { color: #999; }
+    .game-card .splash-unit { color: #777; }
+    .game-card .splash-headline { color: #eaeaea; }
+    .game-card .splash-auth-note { color: #888; }
+
     /* Leaderboard */
     .lb-divider { border: none; border-top: 1px solid #EEE; margin: 1.4rem 0 1.2rem; }
 
@@ -236,6 +272,10 @@
       background: #E8E8E8; color: #888; transition: background 0.2s, color 0.2s;
     }
     .lb-tab.active { background: #8DC883; color: white; }
+
+    .game-card .lb-divider { border-top-color: #333; }
+    .game-card .lb-tab { background: #2a2a2a; color: #9a9a9a; }
+    .game-card .lb-tab.active { background: #8DC883; color: white; }
 
     .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
 
@@ -252,8 +292,17 @@
     .lb-me    { background: #F6FBF5; }
     .lb-me .lb-name { font-weight: 700; }
 
+    .game-card .lb-table tr { border-bottom-color: #2a2a2a; }
+    .game-card .lb-name { color: #e0e0e0; }
+    .game-card .lb-rank { color: #888; }
+    .game-card .lb-me { background: rgba(141, 200, 131, 0.12); }
+
     .lb-empty  { text-align: center; color: #bbb; font-size: 0.85rem; padding: 1rem 0; }
     .lb-loading { text-align: center; color: #ccc; font-size: 0.85rem; padding: 1rem 0; }
+
+    .game-card .lb-title { color: #888; }
+    .game-card .lb-empty { color: #777; }
+    .game-card .lb-loading { color: #666; }
 
     /* --- User bar (top-right, signed in) --- */
     .user-top-bar {
@@ -312,6 +361,8 @@
       gap: 0.55rem; margin-top: 0.65rem;
     }
     .share-label { font-size: 0.7rem; color: #bbb; font-weight: 700; letter-spacing: 0.08em; margin-right: 0.15rem; }
+
+    .game-card .share-label { color: #777; }
     .share-net-btn {
       width: 34px; height: 34px; border-radius: 50%; border: none;
       display: flex; align-items: center; justify-content: center;
