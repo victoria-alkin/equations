@@ -104,6 +104,7 @@
     .palette-label { text-align: center; font-size: 0.72rem; color: #bbb; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
 
     .operators { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.4rem; }
+    .operators.cols-3 { max-width: 184px; margin-left: auto; margin-right: auto; }
 
     .op-btn {
       width: 56px; height: 56px; border: 2px solid #DDD; border-radius: 10px;
@@ -719,6 +720,7 @@
 
     function renderOperators() {
       const container = document.getElementById('operators'); container.innerHTML = '';
+      container.className = 'operators' + (difficulty !== 'easy' ? ' cols-3' : '');
       OPS[difficulty].forEach(sym => {
         const btn = document.createElement('button'); btn.className = 'op-btn'; btn.textContent = sym; btn.draggable = true;
         btn.addEventListener('dragstart', e => { e.dataTransfer.setData('op', sym); e.dataTransfer.setData('srcBi', ''); e.dataTransfer.effectAllowed = 'copy'; btn.classList.add('dragging'); });
