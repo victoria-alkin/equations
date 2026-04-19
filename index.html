@@ -1204,9 +1204,7 @@
       if (currentSession) {
         document.getElementById('userAvatarImg').src = `images/${currentAvatar}.png`;
         btn.classList.add(avatarBackdropClass(currentAvatar));
-        const displayName = currentUsername
-          || (currentSession.user.email && currentSession.user.email.split('@')[0])
-          || '';
+        const displayName = currentUsername || '';
         document.getElementById('userTopName').textContent = displayName;
         btn.title = displayName ? `Account settings (${displayName})` : 'Account settings';
         btn.setAttribute('aria-label', displayName ? `Account settings for ${displayName}` : 'Account settings');
@@ -1305,7 +1303,7 @@
     async function updateAuthUI() {
       if (currentSession) {
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
-        currentUsername = profile?.username || currentSession.user.email.split('@')[0];
+        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
         currentAvatar   = profile?.avatar   || 'icon1';
         document.getElementById('timedUsername').textContent = currentUsername;
         document.getElementById('splashUserBar').classList.remove('hidden');
@@ -1905,7 +1903,7 @@
       currentSession = session;
       if (currentSession) {
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
-        currentUsername = profile?.username || currentSession.user.email.split('@')[0];
+        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
         currentAvatar   = profile?.avatar   || 'icon1';
       }
       showUserAvatarBtn();
