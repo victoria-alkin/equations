@@ -276,10 +276,13 @@
     }
     .user-avatar-btn {
       width: 58px; height: 58px; border-radius: 50%; border: 3px solid white;
-      cursor: pointer; overflow: hidden; padding: 0; background: #8DC883;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.18); transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer; overflow: hidden; padding: 0;
+      background: #7658b8;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18); transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
       flex-shrink: 0;
     }
+    .user-avatar-btn.avatar-bg-behind-green { background: #8DC883; }
+    .user-avatar-btn.avatar-bg-behind-purple { background: #7658b8; }
     .user-avatar-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
     .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
@@ -293,7 +296,14 @@
       transition: border-color 0.15s, transform 0.1s; flex-shrink: 0;
     }
     .icon-option img     { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .icon-option.chosen  { border-color: #8DC883; box-shadow: 0 0 0 3px rgba(141,200,131,0.25); }
+    .icon-option.icon-option-bg-green  { background: #8DC883; }
+    .icon-option.icon-option-bg-purple { background: #7658b8; }
+    .icon-option.icon-option-bg-green.chosen {
+      border-color: #8DC883; box-shadow: 0 0 0 3px rgba(141,200,131,0.25);
+    }
+    .icon-option.icon-option-bg-purple.chosen {
+      border-color: #6848a8; box-shadow: 0 0 0 3px rgba(118, 88, 184, 0.35);
+    }
     .icon-option:hover   { transform: scale(1.07); }
     .account-actions     { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
     .settings-input {
@@ -930,11 +940,21 @@
     let currentAvatar   = 'icon1';
     let pendingAvatar   = 'icon1';
 
+    function avatarBackdropClass(icon) {
+      return (icon === 'icon2' || icon === 'icon4') ? 'avatar-bg-behind-green' : 'avatar-bg-behind-purple';
+    }
+
+    function iconPickerBackdropClass(icon) {
+      return (icon === 'icon2' || icon === 'icon4') ? 'icon-option-bg-green' : 'icon-option-bg-purple';
+    }
+
     function showUserAvatarBtn() {
       const bar = document.getElementById('userTopBar');
       const btn = document.getElementById('userAvatarBtn');
+      btn.classList.remove('avatar-bg-behind-green', 'avatar-bg-behind-purple');
       if (currentSession) {
         document.getElementById('userAvatarImg').src = `images/${currentAvatar}.png`;
+        btn.classList.add(avatarBackdropClass(currentAvatar));
         const displayName = currentUsername
           || (currentSession.user.email && currentSession.user.email.split('@')[0])
           || '';
@@ -980,7 +1000,7 @@
       const picker = document.getElementById('iconPicker'); picker.innerHTML = '';
       ['icon1','icon2','icon3','icon4'].forEach(icon => {
         const div = document.createElement('div');
-        div.className = 'icon-option' + (icon === pendingAvatar ? ' chosen' : '');
+        div.className = 'icon-option ' + iconPickerBackdropClass(icon) + (icon === pendingAvatar ? ' chosen' : '');
         div.dataset.icon = icon;
         const img = document.createElement('img'); img.src = `images/${icon}.png`; img.alt = icon;
         div.appendChild(img);
