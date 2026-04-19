@@ -278,6 +278,15 @@
     .icon-option.chosen  { border-color: #8DC883; box-shadow: 0 0 0 3px rgba(141,200,131,0.25); }
     .icon-option:hover   { transform: scale(1.07); }
     .account-actions     { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+    .settings-input {
+      width: 100%; padding: 0.65rem 1rem; border: 2px solid #DDD; border-radius: 10px;
+      font-size: 0.95rem; outline: none; transition: border-color 0.15s; background: white;
+      margin-bottom: 0.4rem; box-sizing: border-box;
+    }
+    .settings-input:focus { border-color: #8DC883; }
+    .settings-msg { font-size: 0.82rem; min-height: 1.1em; margin-bottom: 0.8rem; text-align: center; }
+    .settings-msg.ok  { color: #5A9E52; }
+    .settings-msg.err { color: #CC4444; }
 
     /* --- Share --- */
     .share-row {
@@ -455,11 +464,13 @@
     <div class="modal">
       <button class="modal-close" id="accountClose">✕</button>
       <h2>Account Settings</h2>
-      <p class="account-user">@<span id="accountUsername"></span></p>
+      <p class="icon-label" style="margin-bottom:0.5rem">USERNAME</p>
+      <input type="text" class="settings-input" id="accountUsernameInput" placeholder="Username">
       <p class="icon-label">PROFILE ICON</p>
       <div class="icon-picker" id="iconPicker"></div>
+      <p class="settings-msg" id="settingsMsg"></p>
       <div class="account-actions">
-        <button class="btn-magic" id="btnSaveAvatar">Save</button>
+        <button class="btn-magic" id="btnSaveSettings">Save changes</button>
         <button class="link-btn" id="btnSignOutSettings">Sign out</button>
       </div>
     </div>
@@ -893,8 +904,14 @@
       }
     }
 
+    function setSettingsMsg(msg, type) {
+      const el = document.getElementById('settingsMsg');
+      el.textContent = msg; el.className = 'settings-msg ' + (type ?? '');
+    }
+
     function openAccountSettings() {
-      document.getElementById('accountUsername').textContent = currentUsername;
+      document.getElementById('accountUsernameInput').value = currentUsername;
+      setSettingsMsg('');
       pendingAvatar = currentAvatar;
       const picker = document.getElementById('iconPicker'); picker.innerHTML = '';
       ['icon1','icon2','icon3','icon4'].forEach(icon => {
@@ -913,15 +930,40 @@
       document.getElementById('accountOverlay').classList.add('open');
     }
 
-    async function saveAvatar() {
+    async function saveSettings() {
       if (!currentSession) return;
-      const btn = document.getElementById('btnSaveAvatar');
-      btn.disabled = true; btn.textContent = 'Saving...';
-      await db.from('profiles').update({ avatar: pendingAvatar }).eq('id', currentSession.user.id);
+      const btn = document.getElementById('btnSaveSettings');
+      const newUsername = document.getElementById('accountUsernameInput').value.trim();
+
+      if (!newUsername) { setSettingsMsg('Username cannot be empty.', 'err'); return; }
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(newUsername)) { setSettingsMsg('3–20 characters: letters, numbers, or _.', 'err'); return; }
+
+      btn.disabled = true; setSettingsMsg('Saving...');
+
+      // Check username uniqueness (excluding self)
+      if (newUsername !== currentUsername) {
+        const { data: taken } = await db.from('profiles').select('id').eq('username', newUsername).neq('id', currentSession.user.id).maybeSingle();
+        if (taken) { setSettingsMsg('Username already taken.', 'err'); btn.disabled = false; return; }
+      }
+
+      const updates = { avatar: pendingAvatar };
+      if (newUsername !== currentUsername) updates.username = newUsername;
+
+      await db.from('profiles').update(updates).eq('id', currentSession.user.id);
+
+      if (newUsername !== currentUsername) {
+        // Keep leaderboard display names in sync
+        await db.from('best_scores').update({ display_name: newUsername }).eq('user_id', currentSession.user.id);
+        await db.from('timed_scores').update({ display_name: newUsername }).eq('user_id', currentSession.user.id);
+        currentUsername = newUsername;
+        document.getElementById('timedUsername').textContent = currentUsername;
+      }
+
       currentAvatar = pendingAvatar;
       showUserAvatarBtn();
-      btn.disabled = false; btn.textContent = 'Saved!';
-      setTimeout(() => { btn.textContent = 'Save'; }, 1500);
+      btn.disabled = false;
+      setSettingsMsg('Saved!', 'ok');
+      setTimeout(() => setSettingsMsg(''), 2000);
     }
 
     async function updateAuthUI() {
@@ -1191,7 +1233,7 @@
     document.getElementById('userAvatarBtn').addEventListener('click', openAccountSettings);
     document.getElementById('accountClose').addEventListener('click', () => document.getElementById('accountOverlay').classList.remove('open'));
     document.getElementById('accountOverlay').addEventListener('click', e => { if (e.target === document.getElementById('accountOverlay')) document.getElementById('accountOverlay').classList.remove('open'); });
-    document.getElementById('btnSaveAvatar').addEventListener('click', saveAvatar);
+    document.getElementById('btnSaveSettings').addEventListener('click', saveSettings);
     document.getElementById('btnSignOutSettings').addEventListener('click', async () => {
       document.getElementById('accountOverlay').classList.remove('open');
       await db.auth.signOut();
