@@ -956,9 +956,11 @@
 
     function currentPuzzle() { return PUZZLES[difficulty][puzzleIndex]; }
 
+    function getEstDateString() {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    }
     function getEstDayNumber() {
-      const s = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-      return Math.floor(new Date(s).getTime() / 86400000);
+      return Math.floor(new Date(getEstDateString()).getTime() / 86400000);
     }
 
     function nextEstMidnightMs() {
@@ -1580,7 +1582,7 @@
     async function saveTimedScore(score) {
       const userId      = currentSession.user.id;
       const displayName = currentUsername;
-      const today       = new Date().toISOString().split('T')[0];
+      const today       = getEstDateString();
       await db.from('timed_scores').insert({ user_id: userId, display_name: displayName, score, day: today });
       const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
       if (!existing || score > existing.score) {
@@ -1591,7 +1593,7 @@
     // ─── Leaderboard ────────────────────────────────────────────────────────────
     async function fetchLeaderboards() {
       document.getElementById('lbContent').innerHTML = '<p class="lb-loading">Loading...</p>';
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEstDateString();
       const { data: dailyRaw } = await db.from('timed_scores').select('user_id, display_name, score').eq('day', today).order('score', { ascending: false }).limit(200);
       const userBest = {};
       for (const row of (dailyRaw || [])) {
