@@ -840,11 +840,10 @@
     function moveTouchClone(touch) {
       if (!touchClone) return;
       touchClone.style.left = touch.clientX + 'px'; touchClone.style.top = touch.clientY + 'px';
-      touchClone.style.display = 'none';
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      touchClone.style.display = '';
       document.querySelectorAll('#equation .box').forEach(b => b.classList.remove('drag-over'));
-      if (el && el.classList.contains('box') && el.closest('#equation')) { lastDropBox = el; el.classList.add('drag-over'); }
+      const box = el && el.closest('#equation .box');
+      if (box) { lastDropBox = box; box.classList.add('drag-over'); }
       else lastDropBox = null;
     }
 
@@ -1204,16 +1203,11 @@
       if (!timedTouchClone) return;
       timedTouchClone.style.left = touch.clientX + 'px';
       timedTouchClone.style.top = touch.clientY + 'px';
-      timedTouchClone.style.display = 'none';
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      timedTouchClone.style.display = '';
       document.querySelectorAll('#timedEquation .box').forEach(b => b.classList.remove('drag-over'));
-      if (el && el.classList.contains('box') && el.closest('#timedEquation')) {
-        timedLastDropBox = el;
-        el.classList.add('drag-over');
-      } else {
-        timedLastDropBox = null;
-      }
+      const box = el && el.closest('#timedEquation .box');
+      if (box) { timedLastDropBox = box; box.classList.add('drag-over'); }
+      else timedLastDropBox = null;
     }
 
     function onTimedTouchMove(e) { e.preventDefault(); moveTimedTouchClone(e.touches[0]); }
