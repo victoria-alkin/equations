@@ -1002,8 +1002,15 @@
       blankDescs = buildBlankDescs(currentPuzzle());
       stopCountdown();
       const saved = loadProgress();
-      if (saved) { userAnswers = saved.userAnswers; solved = saved.solved; }
-      else { userAnswers = []; solved = false; }
+      if (saved) {
+        userAnswers = saved.userAnswers;
+        solved = saved.solved;
+        // Discard saved state if it doesn't match the current puzzle
+        const p = currentPuzzle();
+        const validSolved = solved && evaluate(p, userAnswers) === p.result;
+        const validLength = userAnswers.length === blankDescs.length;
+        if (!validLength || (solved && !validSolved)) { userAnswers = []; solved = false; }
+      } else { userAnswers = []; solved = false; }
       document.getElementById('solvedBanner').classList.toggle('show', solved);
       setFeedback('');
       renderEquation(); renderOperators(); wireTouchOnBoxes();
