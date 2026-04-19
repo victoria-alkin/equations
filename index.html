@@ -1831,7 +1831,7 @@
       history.replaceState(null, '', url);
       document.getElementById('battleLink').value = url;
       populateShareRow(document.getElementById('battleShareRow'),
-        `Join me for a 1v1 Equations battle! 🧮 ${url}`);
+        `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${url}`);
       showBattleState('waiting');
       startBattlePolling();
     }
@@ -1847,7 +1847,7 @@
         battleRow = row;
         document.getElementById('battleLink').value = `${location.origin}${location.pathname}?battle=${id}`;
         populateShareRow(document.getElementById('battleShareRow'),
-          `Join me for a 1v1 Equations battle! 🧮 ${location.origin}${location.pathname}?battle=${id}`);
+          `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${location.origin}${location.pathname}?battle=${id}`);
         if (row.guest_id && row.start_at) {
           enterBattleCountdownOrPlaying(row);
         } else {
