@@ -849,11 +849,15 @@
 
     function onTouchMove(e) { e.preventDefault(); moveTouchClone(e.touches[0]); }
     function onTouchEnd(e) {
-      e.preventDefault(); cleanupTouch();
-      if (!lastDropBox || solved) return;
-      const bi = parseInt(lastDropBox.dataset.bi);
-      if (touchSrcBi !== null) userAnswers[touchSrcBi] = null;
-      userAnswers[bi] = touchOp; renderEquation(); renderOperators(); wireTouchOnBoxes();
+      e.preventDefault();
+      const dropBox = lastDropBox;
+      const op     = touchOp;
+      const srcBi  = touchSrcBi;
+      cleanupTouch();
+      if (!dropBox || solved) return;
+      const bi = parseInt(dropBox.dataset.bi);
+      if (srcBi !== null) userAnswers[srcBi] = null;
+      userAnswers[bi] = op; renderEquation(); renderOperators(); wireTouchOnBoxes();
     }
     function onTouchCancel() { cleanupTouch(); }
     function cleanupTouch() {
