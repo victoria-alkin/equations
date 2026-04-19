@@ -1214,8 +1214,8 @@
 
     db.auth.onAuthStateChange((_event, session) => {
       currentSession = session;
-      if (document.getElementById('timedCard').classList.contains('hidden')) return;
-      updateAuthUI();
+      showUserAvatarBtn();
+      if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
     });
 
     // ─── Mode switching ──────────────────────────────────────────────────────────
@@ -1328,6 +1328,12 @@
     (async () => {
       const { data: { session } } = await db.auth.getSession();
       currentSession = session;
+      if (currentSession) {
+        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+        currentUsername = profile?.username || currentSession.user.email.split('@')[0];
+        currentAvatar   = profile?.avatar   || 'icon1';
+        showUserAvatarBtn();
+      }
       puzzleIndex = getDailyIndex(difficulty);
       loadDailyPuzzle();
     })();
