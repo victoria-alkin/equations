@@ -428,6 +428,14 @@
     }
     .btn-start-splash:active { transform: scale(0.97); }
     .splash-auth-note { text-align: center; font-size: 0.82rem; color: #aaa; }
+    .battle-invite-banner {
+      background: #f4f8ff; border: 1px solid #cdd9f0; border-radius: 12px;
+      padding: 1rem 1.1rem; margin: 0.75rem auto 1rem; max-width: 420px;
+      text-align: center; color: #2b3a66;
+    }
+    .battle-invite-banner .bi-title { font-weight: 700; margin: 0 0 0.4rem; font-size: 1rem; }
+    .battle-invite-banner .bi-sub   { margin: 0 0 0.75rem; font-size: 0.9rem; color: #4b5b82; }
+    .battle-invite-banner button    { margin: 0.15rem 0.25rem; }
     .splash-back { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; display: inline-block; margin-bottom: 1rem; }
 
     /* --- 1v1 Battle --- */
@@ -629,6 +637,12 @@
     <div id="battleHome">
       <p class="splash-big-num">1v1</p>
       <p class="splash-headline">Challenge a friend<br>to 60 seconds of equations!</p>
+      <div id="battleInviteBanner" class="battle-invite-banner hidden">
+        <p class="bi-title" id="battleInviteTitle">You've been invited to a 1v1 battle!</p>
+        <p class="bi-sub">Who can solve more equations in 60 seconds?</p>
+        <button class="btn-magic" id="btnInviteSignup">Sign up to accept</button>
+        <button class="link-btn" id="btnInviteLogin">I already have an account</button>
+      </div>
       <button class="btn-start-splash" id="btnCreateBattle">Create Battle</button>
       <p id="battleSignInNote" class="splash-auth-note hidden">
         <button class="link-btn" id="btnBattleShowAuth">Log in or sign up</button> to create a battle
@@ -736,6 +750,21 @@
     );
     function track(name, params) {
       try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch {}
+    }
+
+    async function containsProfanity(name) {
+      if (!name) return false;
+      try {
+        const r = await fetch(
+          `https://www.purgomalum.com/service/containsprofanity?text=${encodeURIComponent(name)}`,
+          { method: 'GET' }
+        );
+        if (!r.ok) return false;
+        const txt = (await r.text()).trim().toLowerCase();
+        return txt === 'true';
+      } catch {
+        return false;
+      }
     }
     let currentSession = null;
 
@@ -1437,6 +1466,10 @@
 
       btn.disabled = true; setSettingsMsg('Saving...');
 
+      if (newUsername !== currentUsername && await containsProfanity(newUsername)) {
+        setSettingsMsg('Please choose a different username.', 'err'); btn.disabled = false; return;
+      }
+
       // Check username uniqueness (excluding self)
       if (newUsername !== currentUsername) {
         const { data: taken } = await db.from('profiles').select('id').eq('username', newUsername).neq('id', currentSession.user.id).maybeSingle();
@@ -1800,13 +1833,31 @@
       if (battleCountdownTimer) { clearInterval(battleCountdownTimer); battleCountdownTimer = null; }
     }
 
+    let pendingInviteId = null;
+
+    async function showBattleInviteBanner(id) {
+      const banner = document.getElementById('battleInviteBanner');
+      const title  = document.getElementById('battleInviteTitle');
+      let hostName = null;
+      try {
+        const { data } = await db.from('battles').select('host_name').eq('id', id).maybeSingle();
+        if (data && data.host_name) hostName = data.host_name;
+      } catch {}
+      title.textContent = hostName
+        ? `${hostName} challenged you to a 1v1 battle!`
+        : "You've been invited to a 1v1 battle!";
+      banner.classList.remove('hidden');
+    }
+
     function enterBattleHome() {
       stopBattlePolling(); stopBattleCountdown();
       battleId = null; battleRow = null; battleRole = null;
       gameMode = 'timed';
       const signedIn = !!currentSession;
-      document.getElementById('btnCreateBattle').classList.toggle('hidden', !signedIn);
-      document.getElementById('battleSignInNote').classList.toggle('hidden', signedIn);
+      const hasInvite = !!pendingInviteId && !signedIn;
+      document.getElementById('btnCreateBattle').classList.toggle('hidden', !signedIn || hasInvite);
+      document.getElementById('battleSignInNote').classList.toggle('hidden', signedIn || hasInvite);
+      document.getElementById('battleInviteBanner').classList.toggle('hidden', !hasInvite);
       showBattleState('home');
     }
 
@@ -1924,12 +1975,32 @@
         }
       }
 
-      // Results screen: watch for rematch
-      if (!document.getElementById('battleResults').classList.contains('hidden') && row.rematch_id) {
-        const newId = row.rematch_id;
-        stopBattlePolling();
-        history.replaceState(null, '', `?battle=${newId}`);
-        await joinBattleById(newId);
+      // Results screen: reflect rematch state
+      if (!document.getElementById('battleResults').classList.contains('hidden')) {
+        if (row.rematch_id) {
+          const newId = row.rematch_id;
+          stopBattlePolling();
+          history.replaceState(null, '', `?battle=${newId}`);
+          await joinBattleById(newId);
+          return;
+        }
+        const myReq  = battleRole === 'host' ? !!row.host_rematch  : !!row.guest_rematch;
+        const oppReq = battleRole === 'host' ? !!row.guest_rematch : !!row.host_rematch;
+        const oppName = battleRole === 'host' ? (row.guest_name || 'opponent') : (row.host_name || 'opponent');
+        const status = document.getElementById('battleRematchStatus');
+        const btn = document.getElementById('btnBattleRematch');
+        if (myReq && !oppReq) {
+          status.classList.remove('hidden');
+          status.textContent = `Waiting for ${oppName}...`;
+          btn.disabled = true; btn.textContent = 'Waiting...';
+        } else if (oppReq && !myReq) {
+          status.classList.remove('hidden');
+          status.textContent = `${oppName} wants a rematch!`;
+          btn.disabled = false; btn.textContent = 'Accept rematch';
+        } else if (!myReq && !oppReq) {
+          status.classList.add('hidden');
+          btn.disabled = false; btn.textContent = 'Rematch';
+        }
       }
     }
 
@@ -2022,18 +2093,29 @@
     async function requestRematch() {
       if (!battleId) return;
       const btn = document.getElementById('btnBattleRematch');
+      const status = document.getElementById('battleRematchStatus');
       btn.disabled = true; btn.textContent = 'Requesting...';
-      document.getElementById('battleRematchStatus').classList.remove('hidden');
-      document.getElementById('battleRematchStatus').textContent = 'Waiting for opponent...';
+      status.classList.remove('hidden');
+      status.textContent = 'Requesting rematch...';
       const { data: newId, error } = await db.rpc('request_rematch', { p_id: battleId });
-      if (error || !newId) { btn.disabled = false; btn.textContent = 'Rematch'; return; }
-      stopBattlePolling();
-      history.replaceState(null, '', `?battle=${newId}`);
-      await joinBattleById(newId);
+      if (error) {
+        btn.disabled = false; btn.textContent = 'Rematch';
+        status.classList.add('hidden');
+        return;
+      }
+      if (newId) {
+        stopBattlePolling();
+        history.replaceState(null, '', `?battle=${newId}`);
+        await joinBattleById(newId);
+        return;
+      }
+      // Only one side has requested — polling will update the waiting/accept UI
     }
 
     document.getElementById('btnCreateBattle').addEventListener('click', createBattle);
     document.getElementById('btnBattleShowAuth').addEventListener('click', () => openLoginModal('login'));
+    document.getElementById('btnInviteSignup').addEventListener('click', () => openLoginModal('signup'));
+    document.getElementById('btnInviteLogin').addEventListener('click', () => openLoginModal('login'));
     document.getElementById('btnCopyBattleLink').addEventListener('click', async () => {
       const link = document.getElementById('battleLink');
       link.select();
@@ -2208,6 +2290,9 @@
       if (password !== confirm) { setAuthMsg('Passwords do not match.', 'err'); return; }
 
       btn.disabled = true; setAuthMsg('Checking username...');
+      if (await containsProfanity(username)) {
+        setAuthMsg('Please choose a different username.', 'err'); btn.disabled = false; return;
+      }
       const { data: existing } = await db.from('profiles').select('username').eq('username', username).maybeSingle();
       if (existing) { setAuthMsg('Username already taken — please choose another.', 'err'); btn.disabled = false; return; }
 
@@ -2233,10 +2318,17 @@
 
     document.getElementById('btnPlayAgain').addEventListener('click', startTimedGame);
 
-    db.auth.onAuthStateChange((_event, session) => {
+    db.auth.onAuthStateChange((event, session) => {
       currentSession = session;
       showUserAvatarBtn();
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
+      if (event === 'SIGNED_IN' && session && pendingInviteId) {
+        const id = pendingInviteId;
+        pendingInviteId = null;
+        document.getElementById('loginModal')?.classList.remove('open');
+        setMode('battle');
+        joinBattleById(id);
+      }
     });
 
     // ─── Mode switching ──────────────────────────────────────────────────────────
@@ -2328,6 +2420,7 @@
       if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { setModalAuthMsg('Username: 3–20 chars, letters/numbers/_ only.', 'err'); return; }
       if (password !== confirm) { setModalAuthMsg('Passwords do not match.', 'err'); return; }
       if (password.length < 6)  { setModalAuthMsg('Password must be at least 6 characters.', 'err'); return; }
+      if (await containsProfanity(username)) { setModalAuthMsg('Please choose a different username.', 'err'); return; }
       const { data: existing } = await db.from('profiles').select('id').eq('username', username).maybeSingle();
       if (existing) { setModalAuthMsg('That username is already taken.', 'err'); return; }
       const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
@@ -2464,9 +2557,15 @@
       const params = new URLSearchParams(location.search);
       const bid = params.get('battle');
       if (bid) {
-        setMode('battle');
-        if (currentSession) await joinBattleById(bid);
-        else enterBattleHome();
+        if (currentSession) {
+          setMode('battle');
+          await joinBattleById(bid);
+        } else {
+          pendingInviteId = bid;
+          setMode('battle');
+          await showBattleInviteBanner(bid);
+          enterBattleHome();
+        }
       }
     })();
   </script>
