@@ -297,11 +297,7 @@
     .login-top-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.18); transform: scale(1.04); }
 
     /* --- Login modal --- */
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;
-    }
-    .modal-overlay.hidden { display: none; }
+    #loginModal { z-index: 200; background: rgba(0,0,0,0.45); }
     .modal-box {
       background: white; border-radius: 16px; padding: 1.8rem 2rem 1.5rem;
       width: min(380px, 90vw); box-shadow: 0 8px 40px rgba(0,0,0,0.22);
@@ -424,7 +420,7 @@
   <button class="login-top-btn hidden" id="loginTopBtn">Log in</button>
 
   <!-- Login / Sign-up modal -->
-  <div class="modal-overlay hidden" id="loginModal">
+  <div class="modal-overlay" id="loginModal">
     <div class="modal-box">
       <button class="modal-close" id="loginModalClose" aria-label="Close">×</button>
       <div class="auth-tabs">
@@ -1722,7 +1718,7 @@
     // ── Login modal (top-right button, signed-out state) ─────────────────────
     function openLoginModal(tab) {
       const modal = document.getElementById('loginModal');
-      modal.classList.remove('hidden');
+      modal.classList.add('open');
       document.getElementById('modalAuthMsg').textContent = '';
       // set active tab
       const target = tab || 'login';
@@ -1734,7 +1730,7 @@
       document.getElementById('modalSignupForm').classList.toggle('hidden', target !== 'signup');
     }
     function closeLoginModal() {
-      document.getElementById('loginModal').classList.add('hidden');
+      document.getElementById('loginModal').classList.remove('open');
     }
     function setModalAuthMsg(msg, type) {
       const el = document.getElementById('modalAuthMsg');
