@@ -628,6 +628,7 @@
       setFeedback('');
       renderEquation(); renderOperators(); wireTouchOnBoxes();
       updateDailyShareRow();
+      document.querySelector('.actions').classList.toggle('hidden', solved);
       if (solved) startCountdown();
     }
 
@@ -753,6 +754,7 @@
         solved = true; saveProgress();
         document.getElementById('solvedBanner').classList.add('show'); setFeedback(''); startCountdown();
         updateDailyShareRow();
+        document.querySelector('.actions').classList.add('hidden');
       } else {
         setFeedback('Not quite. Try again!', 'error');
         setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); wireTouchOnBoxes(); } }, 900);
