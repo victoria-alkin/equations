@@ -286,6 +286,33 @@
     .user-avatar-btn:hover { transform: scale(1.06); box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
     .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+    /* --- Login button (top-right, signed out) --- */
+    .login-top-btn {
+      position: fixed; top: 1rem; right: 1rem; z-index: 50;
+      padding: 0.45rem 1.1rem; border-radius: 20px;
+      background: white; color: #444; font-weight: 700; font-size: 0.9rem;
+      border: 2px solid #ccc; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12); transition: box-shadow 0.15s, transform 0.12s;
+    }
+    .login-top-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.18); transform: scale(1.04); }
+
+    /* --- Login modal --- */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: white; border-radius: 16px; padding: 1.8rem 2rem 1.5rem;
+      width: min(380px, 90vw); box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 0.8rem; right: 1rem;
+      background: none; border: none; font-size: 1.4rem; color: #aaa; cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: #666; }
+
     /* --- Icon picker --- */
     .account-user  { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 1.2rem; }
     .icon-label    { font-size: 0.72rem; font-weight: 700; color: #bbb; letter-spacing: 0.08em; margin-bottom: 0.8rem; }
@@ -391,6 +418,33 @@
     <button class="user-avatar-btn" id="userAvatarBtn" title="Account settings">
       <img src="images/icon1.png" alt="Profile" id="userAvatarImg">
     </button>
+  </div>
+
+  <!-- Log in button (top-right, shown when signed out) -->
+  <button class="login-top-btn hidden" id="loginTopBtn">Log in</button>
+
+  <!-- Login / Sign-up modal -->
+  <div class="modal-overlay hidden" id="loginModal">
+    <div class="modal-box">
+      <button class="modal-close" id="loginModalClose" aria-label="Close">×</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-modal-auth="login">Log In</button>
+        <button class="auth-tab" data-modal-auth="signup">Sign Up</button>
+      </div>
+      <div id="modalLoginForm" class="auth-form">
+        <input type="text" id="modalLoginIdentifier" placeholder="Username or email">
+        <input type="password" id="modalLoginPassword" placeholder="Password">
+        <button class="btn-magic" id="btnModalLogin">Log In</button>
+      </div>
+      <div id="modalSignupForm" class="auth-form hidden">
+        <input type="text" id="modalSignupUsername" placeholder="Username (letters, numbers, _)">
+        <input type="email" id="modalSignupEmail" placeholder="Email">
+        <input type="password" id="modalSignupPassword" placeholder="Password (min. 6 characters)">
+        <input type="password" id="modalSignupConfirm" placeholder="Confirm password">
+        <button class="btn-magic" id="btnModalSignup">Create Account</button>
+      </div>
+      <p class="auth-msg" id="modalAuthMsg"></p>
+    </div>
   </div>
 
   <img src="images/finallogo no bg.png" alt="EQUATIONS" class="logo">
@@ -561,6 +615,36 @@
         { atoms:[A(20),A(4)],         binaryOps:[B('÷')],           result:5  },
         { atoms:[A(7),A(3)],          binaryOps:[B('×')],           result:21 },
         { atoms:[A(18),A(6)],         binaryOps:[B('÷')],           result:3  },
+        { atoms:[A(5),A(8)],          binaryOps:[B('+')],           result:13 },
+        { atoms:[A(14),A(6)],         binaryOps:[B('−')],           result:8  },
+        { atoms:[A(9),A(2)],          binaryOps:[B('×')],           result:18 },
+        { atoms:[A(24),A(6)],         binaryOps:[B('÷')],           result:4  },
+        { atoms:[A(4),A(4)],          binaryOps:[B('×')],           result:16 },
+        { atoms:[A(21),A(7)],         binaryOps:[B('÷')],           result:3  },
+        { atoms:[A(6),A(7)],          binaryOps:[B('+')],           result:13 },
+        { atoms:[A(19),A(6)],         binaryOps:[B('−')],           result:13 },
+        { atoms:[A(9),A(3)],          binaryOps:[B('×')],           result:27 },
+        { atoms:[A(36),A(9)],         binaryOps:[B('÷')],           result:4  },
+        { atoms:[A(11),A(6)],         binaryOps:[B('+')],           result:17 },
+        { atoms:[A(16),A(9)],         binaryOps:[B('−')],           result:7  },
+        { atoms:[A(4),A(5)],          binaryOps:[B('×')],           result:20 },
+        { atoms:[A(35),A(7)],         binaryOps:[B('÷')],           result:5  },
+        { atoms:[A(8),A(9)],          binaryOps:[B('+')],           result:17 },
+        { atoms:[A(3),A(5)],          binaryOps:[B('×')],           result:15 },
+        { atoms:[A(24),A(8)],         binaryOps:[B('÷')],           result:3  },
+        { atoms:[A(7),A(8)],          binaryOps:[B('+')],           result:15 },
+        { atoms:[A(6),A(8)],          binaryOps:[B('+')],           result:14 },
+        { atoms:[A(18),A(9)],         binaryOps:[B('÷')],           result:2  },
+        { atoms:[A(5),A(2),A(7)],     binaryOps:[B('+'),B('+')],    result:14 },
+        { atoms:[A(9),A(3),A(4)],     binaryOps:[B('−'),B('+')],    result:10 },
+        { atoms:[A(3),A(4),A(2)],     binaryOps:[B('×'),B('+')],    result:14 },
+        { atoms:[A(8),A(2),A(3)],     binaryOps:[B('÷'),B('+')],    result:7  },
+        { atoms:[A(6),A(3),A(5)],     binaryOps:[B('+'),B('+')],    result:14 },
+        { atoms:[A(4),A(3),A(5)],     binaryOps:[B('×'),B('−')],    result:7  },
+        { atoms:[A(7),A(1),A(4)],     binaryOps:[B('+'),B('+')],    result:12 },
+        { atoms:[A(5),A(3),A(1)],     binaryOps:[B('×'),B('+')],    result:16 },
+        { atoms:[A(2),A(6),A(3)],     binaryOps:[B('+'),B('×')],    result:24 },
+        { atoms:[A(3),A(2),A(5)],     binaryOps:[B('+'),B('×')],    result:25 },
       ],
       medium: [
         { atoms:[A(9,B('√')),A(4)],          binaryOps:[B('+')],  result:7  },
@@ -578,23 +662,83 @@
         { atoms:[A(100,B('√')),A(2)],        binaryOps:[B('÷')],  result:5  },
         { atoms:[A(4,null,B('²')),A(6)],     binaryOps:[B('−')],  result:10 },
         { atoms:[A(64,B('√')),A(3)],         binaryOps:[B('+')],  result:11 },
+        { atoms:[A(4,B('√')),A(6)],          binaryOps:[B('+')],  result:8  },
+        { atoms:[A(2,null,B('²')),A(4)],     binaryOps:[B('×')],  result:16 },
+        { atoms:[A(81,B('√')),A(5)],         binaryOps:[B('−')],  result:4  },
+        { atoms:[A(7,null,B('²')),A(7)],     binaryOps:[B('÷')],  result:7  },
+        { atoms:[A(16,B('√')),A(8)],         binaryOps:[B('+')],  result:12 },
+        { atoms:[A(3,null,B('²')),A(5)],     binaryOps:[B('+')],  result:14 },
+        { atoms:[A(25,B('√')),A(4)],         binaryOps:[B('×')],  result:20 },
+        { atoms:[A(4,null,B('²')),A(2)],     binaryOps:[B('÷')],  result:8  },
+        { atoms:[A(9,B('√')),A(9)],          binaryOps:[B('×')],  result:27 },
+        { atoms:[A(5,null,B('²')),A(2)],     binaryOps:[B('+')],  result:27 },
+        { atoms:[A(4,B('√')),A(9)],          binaryOps:[B('+')],  result:11 },
+        { atoms:[A(8,null,B('²')),A(16)],    binaryOps:[B('÷')],  result:4  },
+        { atoms:[A(36,B('√')),A(9)],         binaryOps:[B('+')],  result:15 },
+        { atoms:[A(2,null,B('²')),A(8)],     binaryOps:[B('+')],  result:12 },
+        { atoms:[A(64,B('√')),A(3)],         binaryOps:[B('−')],  result:5  },
+        { atoms:[A(9,null,B('²')),A(27)],    binaryOps:[B('÷')],  result:3  },
+        { atoms:[A(49,B('√')),A(6)],         binaryOps:[B('+')],  result:13 },
+        { atoms:[A(6,null,B('²')),A(27)],    binaryOps:[B('−')],  result:9  },
+        { atoms:[A(100,B('√')),A(7)],        binaryOps:[B('+')],  result:17 },
+        { atoms:[A(3,null,B('²')),A(7)],     binaryOps:[B('−')],  result:2  },
+        { atoms:[A(81,B('√')),A(3)],         binaryOps:[B('÷')],  result:3  },
+        { atoms:[A(4,null,B('²')),A(9)],     binaryOps:[B('+')],  result:25 },
+        { atoms:[A(16,B('√')),A(3)],         binaryOps:[B('+')],  result:7  },
+        { atoms:[A(7,null,B('²')),A(40)],    binaryOps:[B('−')],  result:9  },
+        { atoms:[A(25,B('√')),A(6)],         binaryOps:[B('×')],  result:30 },
+        { atoms:[A(2,null,B('²')),A(7)],     binaryOps:[B('×')],  result:28 },
+        { atoms:[A(9,B('√')),A(6)],          binaryOps:[B('+')],  result:9  },
+        { atoms:[A(5,null,B('²')),A(5)],     binaryOps:[B('÷')],  result:5  },
+        { atoms:[A(100,B('√')),A(6)],        binaryOps:[B('−')],  result:4  },
+        { atoms:[A(6,null,B('²')),A(6)],     binaryOps:[B('÷')],  result:6  },
       ],
       hard: [
-        { atoms:[A(9,B('√')),A(2,null,B('²'))],     binaryOps:[B('+')],  result:7  },
-        { atoms:[A(2,null,B('³')),A(4)],             binaryOps:[B('−')],  result:4  },
-        { atoms:[A(27,B('∛')),A(2)],                 binaryOps:[B('×')],  result:6  },
-        { atoms:[A(3,null,B('³')),A(3)],             binaryOps:[B('−')],  result:24 },
-        { atoms:[A(4,B('√')),A(2,null,B('³'))],      binaryOps:[B('+')],  result:10 },
-        { atoms:[A(16,B('√')),A(3,null,B('²'))],     binaryOps:[B('+')],  result:13 },
-        { atoms:[A(4,null,B('²')),A(8,B('∛'))],      binaryOps:[B('−')],  result:14 },
-        { atoms:[A(64,B('∛')),A(9,B('√'))],          binaryOps:[B('×')],  result:12 },
-        { atoms:[A(2,null,B('²')),A(3,null,B('³'))], binaryOps:[B('+')],  result:31 },
-        { atoms:[A(25,B('√')),A(8,B('∛'))],          binaryOps:[B('−')],  result:3  },
-        { atoms:[A(3,null,B('²')),A(8,B('∛'))],      binaryOps:[B('×')],  result:18 },
-        { atoms:[A(64,B('√')),A(2,null,B('³'))],     binaryOps:[B('÷')],  result:1  },
-        { atoms:[A(5,null,B('²')),A(4,null,B('²'))], binaryOps:[B('−')],  result:9  },
-        { atoms:[A(27,B('∛')),A(2,null,B('³'))],     binaryOps:[B('+')],  result:11 },
-        { atoms:[A(4,null,B('²')),A(9,B('√'))],      binaryOps:[B('+')],  result:19 },
+        { atoms:[A(9,B('√')),A(2,null,B('²'))],      binaryOps:[B('+')],  result:7  },
+        { atoms:[A(2,null,B('³')),A(4)],              binaryOps:[B('−')],  result:4  },
+        { atoms:[A(27,B('∛')),A(2)],                  binaryOps:[B('×')],  result:6  },
+        { atoms:[A(3,null,B('³')),A(3)],              binaryOps:[B('−')],  result:24 },
+        { atoms:[A(4,B('√')),A(2,null,B('³'))],       binaryOps:[B('+')],  result:10 },
+        { atoms:[A(16,B('√')),A(3,null,B('²'))],      binaryOps:[B('+')],  result:13 },
+        { atoms:[A(4,null,B('²')),A(8,B('∛'))],       binaryOps:[B('−')],  result:14 },
+        { atoms:[A(64,B('∛')),A(9,B('√'))],           binaryOps:[B('×')],  result:12 },
+        { atoms:[A(2,null,B('²')),A(3,null,B('³'))],  binaryOps:[B('+')],  result:31 },
+        { atoms:[A(25,B('√')),A(8,B('∛'))],           binaryOps:[B('−')],  result:3  },
+        { atoms:[A(3,null,B('²')),A(8,B('∛'))],       binaryOps:[B('×')],  result:18 },
+        { atoms:[A(64,B('√')),A(2,null,B('³'))],      binaryOps:[B('÷')],  result:1  },
+        { atoms:[A(5,null,B('²')),A(4,null,B('²'))],  binaryOps:[B('−')],  result:9  },
+        { atoms:[A(27,B('∛')),A(2,null,B('³'))],      binaryOps:[B('+')],  result:11 },
+        { atoms:[A(4,null,B('²')),A(9,B('√'))],       binaryOps:[B('+')],  result:19 },
+        { atoms:[A(8,B('∛')),A(2,null,B('²'))],       binaryOps:[B('+')],  result:6  },
+        { atoms:[A(2,null,B('³')),A(9,B('√'))],       binaryOps:[B('+')],  result:11 },
+        { atoms:[A(36,B('√')),A(8,B('∛'))],           binaryOps:[B('×')],  result:12 },
+        { atoms:[A(3,null,B('³')),A(9)],               binaryOps:[B('÷')],  result:3  },
+        { atoms:[A(64,B('∛')),A(2,null,B('²'))],      binaryOps:[B('+')],  result:8  },
+        { atoms:[A(81,B('√')),A(2,null,B('³'))],      binaryOps:[B('−')],  result:1  },
+        { atoms:[A(4,null,B('²')),A(8,B('∛'))],       binaryOps:[B('+')],  result:18 },
+        { atoms:[A(27,B('∛')),A(16,B('√'))],          binaryOps:[B('×')],  result:12 },
+        { atoms:[A(2,null,B('³')),A(8,B('∛'))],       binaryOps:[B('×')],  result:16 },
+        { atoms:[A(49,B('√')),A(3,null,B('²'))],      binaryOps:[B('+')],  result:16 },
+        { atoms:[A(4,null,B('³')),A(16)],              binaryOps:[B('÷')],  result:4  },
+        { atoms:[A(125,B('∛')),A(2,null,B('²'))],     binaryOps:[B('+')],  result:9  },
+        { atoms:[A(64,B('√')),A(27,B('∛'))],          binaryOps:[B('+')],  result:11 },
+        { atoms:[A(3,null,B('³')),A(4,null,B('²'))],  binaryOps:[B('−')],  result:11 },
+        { atoms:[A(8,B('∛')),A(25,B('√'))],           binaryOps:[B('×')],  result:10 },
+        { atoms:[A(2,null,B('³')),A(8,B('∛'))],       binaryOps:[B('÷')],  result:4  },
+        { atoms:[A(100,B('√')),A(27,B('∛'))],         binaryOps:[B('−')],  result:7  },
+        { atoms:[A(4,null,B('²')),A(27,B('∛'))],      binaryOps:[B('−')],  result:13 },
+        { atoms:[A(64,B('∛')),A(4,B('√'))],           binaryOps:[B('×')],  result:8  },
+        { atoms:[A(3,null,B('²')),A(64,B('∛'))],      binaryOps:[B('+')],  result:13 },
+        { atoms:[A(2,null,B('³')),A(9,B('√'))],       binaryOps:[B('−')],  result:5  },
+        { atoms:[A(36,B('√')),A(2,null,B('³'))],      binaryOps:[B('+')],  result:14 },
+        { atoms:[A(8,B('∛')),A(49,B('√'))],           binaryOps:[B('+')],  result:9  },
+        { atoms:[A(5,null,B('²')),A(25,B('√'))],      binaryOps:[B('÷')],  result:5  },
+        { atoms:[A(27,B('∛')),A(36,B('√'))],          binaryOps:[B('+')],  result:9  },
+        { atoms:[A(4,null,B('²')),A(64,B('∛'))],      binaryOps:[B('÷')],  result:4  },
+        { atoms:[A(81,B('√')),A(8,B('∛'))],           binaryOps:[B('+')],  result:11 },
+        { atoms:[A(3,null,B('²')),A(27,B('∛'))],      binaryOps:[B('×')],  result:27 },
+        { atoms:[A(125,B('∛')),A(2,null,B('²'))],     binaryOps:[B('−')],  result:1  },
+        { atoms:[A(100,B('√')),A(8,B('∛'))],          binaryOps:[B('×')],  result:20 },
       ],
     };
 
@@ -656,6 +800,107 @@
       { atoms:[A(6),A(4),A(2)],   binaryOps:[B('+'),B('×')],  result:14 },
       { atoms:[A(9),A(3),A(6)],   binaryOps:[B('÷'),B('+')],  result:9  },
       { atoms:[A(3),A(5),A(4)],   binaryOps:[B('×'),B('−')],  result:11 },
+      // — 100 additional timed puzzles —
+      { atoms:[A(11),A(5)],       binaryOps:[B('+')],          result:16 },
+      { atoms:[A(16),A(8)],       binaryOps:[B('−')],          result:8  },
+      { atoms:[A(4),A(7)],        binaryOps:[B('×')],          result:28 },
+      { atoms:[A(27),A(9)],       binaryOps:[B('÷')],          result:3  },
+      { atoms:[A(9),A(8)],        binaryOps:[B('+')],          result:17 },
+      { atoms:[A(6),A(6)],        binaryOps:[B('×')],          result:36 },
+      { atoms:[A(45),A(9)],       binaryOps:[B('÷')],          result:5  },
+      { atoms:[A(7),A(9)],        binaryOps:[B('+')],          result:16 },
+      { atoms:[A(22),A(9)],       binaryOps:[B('−')],          result:13 },
+      { atoms:[A(3),A(9)],        binaryOps:[B('×')],          result:27 },
+      { atoms:[A(32),A(8)],       binaryOps:[B('÷')],          result:4  },
+      { atoms:[A(4),A(9)],        binaryOps:[B('+')],          result:13 },
+      { atoms:[A(9),A(7)],        binaryOps:[B('×')],          result:63 },
+      { atoms:[A(48),A(6)],       binaryOps:[B('÷')],          result:8  },
+      { atoms:[A(3),A(12)],       binaryOps:[B('+')],          result:15 },
+      { atoms:[A(25),A(16)],      binaryOps:[B('−')],          result:9  },
+      { atoms:[A(7),A(6)],        binaryOps:[B('×')],          result:42 },
+      { atoms:[A(42),A(7)],       binaryOps:[B('÷')],          result:6  },
+      { atoms:[A(5),A(9)],        binaryOps:[B('+')],          result:14 },
+      { atoms:[A(23),A(7)],       binaryOps:[B('−')],          result:16 },
+      { atoms:[A(12),A(6)],       binaryOps:[B('÷')],          result:2  },
+      { atoms:[A(5),A(8)],        binaryOps:[B('+')],          result:13 },
+      { atoms:[A(11),A(3)],       binaryOps:[B('×')],          result:33 },
+      { atoms:[A(4),A(14)],       binaryOps:[B('+')],          result:18 },
+      { atoms:[A(19),A(6)],       binaryOps:[B('−')],          result:13 },
+      { atoms:[A(7),A(3),A(5)],   binaryOps:[B('+'),B('+')],   result:15 },
+      { atoms:[A(12),A(4),A(3)],  binaryOps:[B('÷'),B('+')],   result:6  },
+      { atoms:[A(5),A(4),A(3)],   binaryOps:[B('×'),B('+')],   result:23 },
+      { atoms:[A(10),A(5),A(3)],  binaryOps:[B('÷'),B('+')],   result:5  },
+      { atoms:[A(3),A(3),A(4)],   binaryOps:[B('+'),B('+')],   result:10 },
+      { atoms:[A(6),A(4),A(3)],   binaryOps:[B('+'),B('×')],   result:30 },
+      { atoms:[A(8),A(2),A(5)],   binaryOps:[B('÷'),B('+')],   result:9  },
+      { atoms:[A(5),A(5),A(4)],   binaryOps:[B('+'),B('+')],   result:14 },
+      { atoms:[A(7),A(3),A(4)],   binaryOps:[B('×'),B('−')],   result:17 },
+      { atoms:[A(4),A(5),A(6)],   binaryOps:[B('+'),B('+')],   result:15 },
+      { atoms:[A(6),A(2),A(7)],   binaryOps:[B('×'),B('+')],   result:19 },
+      { atoms:[A(9),A(3),A(1)],   binaryOps:[B('÷'),B('+')],   result:4  },
+      { atoms:[A(3),A(2),A(6)],   binaryOps:[B('+'),B('×')],   result:30 },
+      { atoms:[A(8),A(3),A(4)],   binaryOps:[B('−'),B('+')],   result:9  },
+      { atoms:[A(5),A(1),A(4)],   binaryOps:[B('+'),B('×')],   result:24 },
+      { atoms:[A(7),A(2),A(4)],   binaryOps:[B('+'),B('×')],   result:36 },
+      { atoms:[A(4),A(6),A(2)],   binaryOps:[B('+'),B('×')],   result:20 },
+      { atoms:[A(9),A(4),A(3)],   binaryOps:[B('−'),B('+')],   result:8  },
+      { atoms:[A(6),A(3),A(2)],   binaryOps:[B('+'),B('×')],   result:18 },
+      { atoms:[A(3),A(7),A(2)],   binaryOps:[B('+'),B('×')],   result:20 },
+      { atoms:[A(4),A(8),A(2)],   binaryOps:[B('+'),B('÷')],   result:6  },
+      { atoms:[A(5),A(3),A(6)],   binaryOps:[B('+'),B('×')],   result:48 },
+      { atoms:[A(2),A(7),A(3)],   binaryOps:[B('+'),B('×')],   result:27 },
+      { atoms:[A(10),A(4),A(5)],  binaryOps:[B('−'),B('+')],   result:11 },
+      { atoms:[A(8),A(6),A(4)],   binaryOps:[B('+'),B('+')],   result:18 },
+      { atoms:[A(6),A(1),A(3)],   binaryOps:[B('+'),B('×')],   result:21 },
+      { atoms:[A(5),A(2),A(8)],   binaryOps:[B('×'),B('−')],   result:2  },
+      { atoms:[A(4),A(1),A(5)],   binaryOps:[B('+'),B('×')],   result:25 },
+      { atoms:[A(6),A(3),A(3)],   binaryOps:[B('×'),B('−')],   result:15 },
+      { atoms:[A(8),A(7),A(3)],   binaryOps:[B('+'),B('÷')],   result:5  },
+      { atoms:[A(7),A(5),A(2)],   binaryOps:[B('+'),B('×')],   result:24 },
+      { atoms:[A(5),A(4),A(3)],   binaryOps:[B('×'),B('−')],   result:17 },
+      { atoms:[A(6),A(3),A(8)],   binaryOps:[B('÷'),B('+')],   result:10 },
+      { atoms:[A(8),A(4),A(3)],   binaryOps:[B('÷'),B('×')],   result:6  },
+      { atoms:[A(2),A(8),A(3)],   binaryOps:[B('+'),B('×')],   result:30 },
+      { atoms:[A(4),A(2),A(3)],   binaryOps:[B('+'),B('×')],   result:18 },
+      { atoms:[A(5),A(6),A(2)],   binaryOps:[B('+'),B('×')],   result:22 },
+      { atoms:[A(9),A(5),A(4)],   binaryOps:[B('−'),B('+')],   result:8  },
+      { atoms:[A(3),A(3),A(6)],   binaryOps:[B('×'),B('+')],   result:15 },
+      { atoms:[A(6),A(2),A(3)],   binaryOps:[B('+'),B('×')],   result:24 },
+      { atoms:[A(7),A(7),A(1)],   binaryOps:[B('×'),B('−')],   result:48 },
+      { atoms:[A(5),A(3),A(4)],   binaryOps:[B('−'),B('+')],   result:6  },
+      { atoms:[A(4),A(4),A(4)],   binaryOps:[B('+'),B('+')],   result:12 },
+      { atoms:[A(9),A(1),A(8)],   binaryOps:[B('+'),B('+')],   result:18 },
+      { atoms:[A(6),A(6),A(6)],   binaryOps:[B('+'),B('+')],   result:18 },
+      { atoms:[A(2),A(4),A(5)],   binaryOps:[B('+'),B('×')],   result:30 },
+      { atoms:[A(5),A(3),A(7)],   binaryOps:[B('×'),B('−')],   result:8  },
+      { atoms:[A(4),A(1),A(7)],   binaryOps:[B('+'),B('×')],   result:35 },
+      { atoms:[A(9),A(2),A(4)],   binaryOps:[B('×'),B('−')],   result:14 },
+      { atoms:[A(3),A(4),A(8)],   binaryOps:[B('+'),B('×')],   result:56 },
+      { atoms:[A(6),A(4),A(2)],   binaryOps:[B('+'),B('÷')],   result:5  },
+      { atoms:[A(4),A(3),A(1)],   binaryOps:[B('×'),B('+')],   result:13 },
+      { atoms:[A(5),A(4),A(2)],   binaryOps:[B('×'),B('+')],   result:22 },
+      { atoms:[A(4),A(3),A(5)],   binaryOps:[B('+'),B('×')],   result:35 },
+      { atoms:[A(3),A(5),A(2)],   binaryOps:[B('+'),B('×')],   result:16 },
+      { atoms:[A(6),A(2),A(4)],   binaryOps:[B('−'),B('×')],   result:16 },
+      { atoms:[A(5),A(2),A(4)],   binaryOps:[B('×'),B('+')],   result:14 },
+      { atoms:[A(9),A(6),A(3)],   binaryOps:[B('−'),B('×')],   result:9  },
+      { atoms:[A(4),A(2),A(9)],   binaryOps:[B('÷'),B('+')],   result:11 },
+      { atoms:[A(6),A(3),A(9)],   binaryOps:[B('÷'),B('+')],   result:11 },
+      { atoms:[A(8),A(1),A(5)],   binaryOps:[B('+'),B('×')],   result:45 },
+      { atoms:[A(7),A(8),A(5)],   binaryOps:[B('+'),B('÷')],   result:3  },
+      { atoms:[A(4),A(5),A(3)],   binaryOps:[B('+'),B('×')],   result:27 },
+      { atoms:[A(3),A(2),A(4)],   binaryOps:[B('+'),B('×')],   result:20 },
+      { atoms:[A(8),A(2),A(4)],   binaryOps:[B('÷'),B('+')],   result:8  },
+      { atoms:[A(5),A(5),A(2)],   binaryOps:[B('×'),B('−')],   result:23 },
+      { atoms:[A(4),A(3),A(6)],   binaryOps:[B('+'),B('×')],   result:42 },
+      { atoms:[A(3),A(6),A(4)],   binaryOps:[B('+'),B('×')],   result:36 },
+      { atoms:[A(7),A(3),A(2)],   binaryOps:[B('×'),B('+')],   result:23 },
+      { atoms:[A(2),A(3),A(5)],   binaryOps:[B('+'),B('×')],   result:25 },
+      { atoms:[A(6),A(5),A(4)],   binaryOps:[B('−'),B('×')],   result:4  },
+      { atoms:[A(7),A(4),A(2)],   binaryOps:[B('+'),B('×')],   result:22 },
+      { atoms:[A(2),A(4),A(9)],   binaryOps:[B('+'),B('×')],   result:54 },
+      { atoms:[A(3),A(8),A(2)],   binaryOps:[B('+'),B('×')],   result:22 },
+      { atoms:[A(5),A(4),A(8)],   binaryOps:[B('+'),B('×')],   result:72 },
     ];
 
     function shuffle(arr) {
@@ -951,6 +1196,7 @@
     function showUserAvatarBtn() {
       const bar = document.getElementById('userTopBar');
       const btn = document.getElementById('userAvatarBtn');
+      const loginBtn = document.getElementById('loginTopBtn');
       btn.classList.remove('avatar-bg-behind-green', 'avatar-bg-behind-purple');
       if (currentSession) {
         document.getElementById('userAvatarImg').src = `images/${currentAvatar}.png`;
@@ -962,8 +1208,10 @@
         btn.title = displayName ? `Account settings (${displayName})` : 'Account settings';
         btn.setAttribute('aria-label', displayName ? `Account settings for ${displayName}` : 'Account settings');
         bar.classList.remove('hidden');
+        loginBtn.classList.add('hidden');
       } else {
         bar.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
         document.getElementById('userTopName').textContent = '';
         btn.title = 'Account settings';
         btn.setAttribute('aria-label', 'Account settings');
@@ -1470,6 +1718,77 @@
 
     // ─── Account settings ────────────────────────────────────────────────────────
     document.getElementById('userAvatarBtn').addEventListener('click', openAccountSettings);
+
+    // ── Login modal (top-right button, signed-out state) ─────────────────────
+    function openLoginModal(tab) {
+      const modal = document.getElementById('loginModal');
+      modal.classList.remove('hidden');
+      document.getElementById('modalAuthMsg').textContent = '';
+      // set active tab
+      const target = tab || 'login';
+      document.querySelectorAll('#loginModal .auth-tab').forEach(t => {
+        const isTarget = t.dataset.modalAuth === target;
+        t.classList.toggle('active', isTarget);
+      });
+      document.getElementById('modalLoginForm').classList.toggle('hidden', target !== 'login');
+      document.getElementById('modalSignupForm').classList.toggle('hidden', target !== 'signup');
+    }
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.add('hidden');
+    }
+    function setModalAuthMsg(msg, type) {
+      const el = document.getElementById('modalAuthMsg');
+      el.textContent = msg; el.className = 'auth-msg ' + (type ?? '');
+    }
+
+    document.getElementById('loginTopBtn').addEventListener('click', () => openLoginModal('login'));
+    document.getElementById('loginModalClose').addEventListener('click', closeLoginModal);
+    document.getElementById('loginModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('loginModal')) closeLoginModal();
+    });
+
+    document.querySelectorAll('#loginModal .auth-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#loginModal .auth-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.dataset.modalAuth;
+        document.getElementById('modalLoginForm').classList.toggle('hidden', mode !== 'login');
+        document.getElementById('modalSignupForm').classList.toggle('hidden', mode !== 'signup');
+        setModalAuthMsg('');
+      });
+    });
+
+    document.getElementById('btnModalLogin').addEventListener('click', async () => {
+      const identifier = document.getElementById('modalLoginIdentifier').value.trim();
+      const password   = document.getElementById('modalLoginPassword').value;
+      if (!identifier || !password) { setModalAuthMsg('Please fill in all fields.', 'err'); return; }
+      let email = identifier;
+      if (!identifier.includes('@')) {
+        const { data: rows } = await db.from('profiles').select('email').eq('username', identifier).maybeSingle();
+        if (!rows?.email) { setModalAuthMsg('Username not found.', 'err'); return; }
+        email = rows.email;
+      }
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) { setModalAuthMsg(error.message, 'err'); return; }
+      closeLoginModal();
+    });
+
+    document.getElementById('btnModalSignup').addEventListener('click', async () => {
+      const username = document.getElementById('modalSignupUsername').value.trim();
+      const email    = document.getElementById('modalSignupEmail').value.trim();
+      const password = document.getElementById('modalSignupPassword').value;
+      const confirm  = document.getElementById('modalSignupConfirm').value;
+      if (!username || !email || !password || !confirm) { setModalAuthMsg('Please fill in all fields.', 'err'); return; }
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { setModalAuthMsg('Username: 3–20 chars, letters/numbers/_ only.', 'err'); return; }
+      if (password !== confirm) { setModalAuthMsg('Passwords do not match.', 'err'); return; }
+      if (password.length < 6)  { setModalAuthMsg('Password must be at least 6 characters.', 'err'); return; }
+      const { data: existing } = await db.from('profiles').select('id').eq('username', username).maybeSingle();
+      if (existing) { setModalAuthMsg('That username is already taken.', 'err'); return; }
+      const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
+      if (error) { setModalAuthMsg(error.message, 'err'); return; }
+      setModalAuthMsg('Account created! You are now signed in.', 'ok');
+      setTimeout(closeLoginModal, 1800);
+    });
     function closeAccountOverlay() {
       document.getElementById('accountOverlay').classList.remove('open');
       lockAccountUsernameField();
