@@ -274,6 +274,39 @@
     .share-fb { background: #1877F2; }
     .share-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
 
+    /* --- Splash --- */
+    .splash-big-num {
+      font-size: 5.5rem; font-weight: 800; color: #8DC883;
+      text-align: center; line-height: 1; margin-bottom: 0;
+      animation: splashPulse 2.4s ease-in-out infinite;
+    }
+    .splash-unit {
+      text-align: center; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.2em; color: #ccc; margin-bottom: 1rem;
+    }
+    .splash-headline {
+      text-align: center; font-size: 1.15rem; font-weight: 700;
+      color: #333; margin-bottom: 1.6rem; line-height: 1.4;
+    }
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.07); }
+    }
+    .btn-start-splash {
+      display: block; width: 100%; padding: 0.95rem; background: #8DC883;
+      color: white; border: none; border-radius: 14px; font-size: 1.25rem;
+      font-weight: 800; cursor: pointer; letter-spacing: 0.05em;
+      margin-bottom: 1rem; transition: transform 0.1s;
+      animation: splashGlow 2s ease-in-out infinite;
+    }
+    .btn-start-splash:active { transform: scale(0.97); animation: none; }
+    @keyframes splashGlow {
+      0%, 100% { box-shadow: 0 4px 16px rgba(141,200,131,0.3); }
+      50%       { box-shadow: 0 4px 32px rgba(141,200,131,0.7); }
+    }
+    .splash-auth-note { text-align: center; font-size: 0.82rem; color: #aaa; }
+    .splash-back { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; display: inline-block; margin-bottom: 1rem; }
+
     /* --- Help --- */
     .help-btn { margin-top: 1rem; background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
 
@@ -322,21 +355,33 @@
   <!-- ═══ TIMED MODE ═══ -->
   <div class="game-card hidden" id="timedCard">
 
-    <!-- Auth (not logged in) -->
-    <div id="timedAuth">
-      <p class="timed-tagline">How many can you solve in 60 seconds?</p>
+    <!-- Splash (all users see this first) -->
+    <div id="timedSplash">
+      <p class="splash-big-num">60</p>
+      <p class="splash-unit">SECONDS</p>
+      <p class="splash-headline">How many equations<br>can you solve?</p>
+      <button class="btn-start-splash" id="btnStartGame">Start!</button>
+      <div id="splashUserBar" class="timed-user-bar hidden">
+        <span class="timed-username">Playing as <strong id="timedUsername"></strong></span>
+        <button class="link-btn" id="btnSignOut">Sign out</button>
+      </div>
+      <p id="splashAuthNote" class="splash-auth-note hidden">
+        <button class="link-btn" id="btnShowAuth">Log in or sign up</button> to save your score
+      </p>
+    </div>
 
+    <!-- Auth form -->
+    <div id="timedAuth" class="hidden">
+      <button class="splash-back" id="btnBackToSplash">← Back</button>
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth="login">Log In</button>
         <button class="auth-tab" data-auth="signup">Sign Up</button>
       </div>
-
       <div id="loginForm" class="auth-form">
         <input type="text" id="loginIdentifier" placeholder="Username or email">
         <input type="password" id="loginPassword" placeholder="Password">
         <button class="btn-magic" id="btnLogin">Log In</button>
       </div>
-
       <div id="signupForm" class="auth-form hidden">
         <input type="text" id="signupUsername" placeholder="Username (letters, numbers, _)">
         <input type="email" id="signupEmail" placeholder="Email">
@@ -344,42 +389,27 @@
         <input type="password" id="signupConfirm" placeholder="Confirm password">
         <button class="btn-magic" id="btnSignup">Create Account</button>
       </div>
-
       <p class="auth-msg" id="authMsg"></p>
     </div>
 
-    <!-- Logged in -->
-    <div id="timedLoggedIn" class="hidden">
-
-      <!-- Idle -->
-      <div id="timedIdle">
-        <div class="timed-user-bar">
-          <span class="timed-username" id="timedUsername"></span>
-          <button class="link-btn" id="btnSignOut">Sign out</button>
-        </div>
-        <p class="timed-tagline">How many can you solve in 60 seconds?</p>
-        <button class="btn-start" id="btnStartGame">Start</button>
+    <!-- Playing -->
+    <div id="timedPlaying" class="hidden">
+      <div class="timed-header">
+        <div class="timer" id="timedTimer">60</div>
+        <div class="score-display">Score: <span id="timedScore">0</span></div>
       </div>
+      <div class="equation" id="timedEquation"></div>
+      <div class="timed-ops" id="timedOps"></div>
+    </div>
 
-      <!-- Playing -->
-      <div id="timedPlaying" class="hidden">
-        <div class="timed-header">
-          <div class="timer" id="timedTimer">60</div>
-          <div class="score-display">Score: <span id="timedScore">0</span></div>
-        </div>
-        <div class="equation" id="timedEquation"></div>
-        <div class="timed-ops" id="timedOps"></div>
-      </div>
-
-      <!-- Finished -->
-      <div id="timedFinished" class="hidden">
-        <div class="finish-card">
-          <p class="finish-label">You solved</p>
-          <p class="finish-num" id="finalScore">0</p>
-          <p class="finish-sub">puzzles in 60 seconds!</p>
-          <div class="share-row hidden" id="timedShareRow"></div>
-          <button class="btn-start" style="margin-top:1rem" id="btnPlayAgain">Play Again</button>
-        </div>
+    <!-- Finished -->
+    <div id="timedFinished" class="hidden">
+      <div class="finish-card">
+        <p class="finish-label">You solved</p>
+        <p class="finish-num" id="finalScore">0</p>
+        <p class="finish-sub">puzzles in 60 seconds!</p>
+        <div class="share-row hidden" id="timedShareRow"></div>
+        <button class="btn-start" style="margin-top:1rem" id="btnPlayAgain">Play Again</button>
       </div>
     </div>
 
@@ -801,20 +831,11 @@
     let lbData        = { daily: [], allTime: [] };
 
     function showTimedState(state) {
-      ['timedAuth','timedLoggedIn','timedIdle','timedPlaying','timedFinished'].forEach(id => {
+      ['timedSplash','timedAuth','timedPlaying','timedFinished'].forEach(id => {
         const el = document.getElementById(id); if (el) el.classList.add('hidden');
       });
-      if (state === 'auth') {
-        document.getElementById('timedAuth').classList.remove('hidden');
-      } else {
-        document.getElementById('timedLoggedIn').classList.remove('hidden');
-        document.getElementById('timedIdle').classList.add('hidden');
-        document.getElementById('timedPlaying').classList.add('hidden');
-        document.getElementById('timedFinished').classList.add('hidden');
-        if (state === 'idle')     document.getElementById('timedIdle').classList.remove('hidden');
-        if (state === 'playing')  document.getElementById('timedPlaying').classList.remove('hidden');
-        if (state === 'finished') document.getElementById('timedFinished').classList.remove('hidden');
-      }
+      const map = { splash:'timedSplash', auth:'timedAuth', playing:'timedPlaying', finished:'timedFinished' };
+      if (map[state]) document.getElementById(map[state]).classList.remove('hidden');
     }
 
     let currentUsername = '';
@@ -824,11 +845,14 @@
         const { data: profile } = await db.from('profiles').select('username').eq('id', currentSession.user.id).maybeSingle();
         currentUsername = profile?.username || currentSession.user.email.split('@')[0];
         document.getElementById('timedUsername').textContent = currentUsername;
-        showTimedState('idle');
+        document.getElementById('splashUserBar').classList.remove('hidden');
+        document.getElementById('splashAuthNote').classList.add('hidden');
       } else {
         currentUsername = '';
-        showTimedState('auth');
+        document.getElementById('splashUserBar').classList.add('hidden');
+        document.getElementById('splashAuthNote').classList.remove('hidden');
       }
+      showTimedState('splash');
     }
 
     function startTimedGame() {
@@ -1047,7 +1071,12 @@
 
     document.getElementById('btnSignOut').addEventListener('click', async () => { await db.auth.signOut(); });
 
-    document.getElementById('btnStartGame').addEventListener('click', startTimedGame);
+    document.getElementById('btnStartGame').addEventListener('click', () => {
+      if (currentSession) startTimedGame(); else showTimedState('auth');
+    });
+
+    document.getElementById('btnBackToSplash').addEventListener('click', () => showTimedState('splash'));
+    document.getElementById('btnShowAuth').addEventListener('click', () => showTimedState('auth'));
 
     document.getElementById('btnPlayAgain').addEventListener('click', startTimedGame);
 
