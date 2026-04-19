@@ -1765,13 +1765,16 @@
       const identifier = document.getElementById('modalLoginIdentifier').value.trim();
       const password   = document.getElementById('modalLoginPassword').value;
       if (!identifier || !password) { setModalAuthMsg('Please fill in all fields.', 'err'); return; }
+      const btn = document.getElementById('btnModalLogin');
+      btn.disabled = true; setModalAuthMsg('Logging in...');
       let email = identifier;
       if (!identifier.includes('@')) {
-        const { data: rows } = await db.from('profiles').select('email').eq('username', identifier).maybeSingle();
-        if (!rows?.email) { setModalAuthMsg('Username not found.', 'err'); return; }
-        email = rows.email;
+        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
+        if (!lookedUp) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+        email = lookedUp;
       }
       const { error } = await db.auth.signInWithPassword({ email, password });
+      btn.disabled = false;
       if (error) { setModalAuthMsg(error.message, 'err'); return; }
       closeLoginModal();
     });
