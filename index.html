@@ -243,6 +243,7 @@
       background: #E8E8E8; color: #888; transition: background 0.2s, color 0.2s;
     }
     .lb-tab.active { background: #8DC883; color: white; }
+    .lb-reset { text-align: center; font-size: 0.78rem; color: #888; margin: 0.75rem 0 0; }
 
     .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
 
@@ -545,6 +546,7 @@
       <button class="lb-tab" data-lb="alltime">All Time</button>
     </div>
     <div id="lbContent"><p class="lb-loading">Loading...</p></div>
+    <p class="lb-reset hidden" id="lbReset"></p>
     <div class="share-row hidden" id="lbShareRow"></div>
   </div>
 
@@ -1608,17 +1610,45 @@
       const rows = lbMode === 'daily' ? lbData.daily : lbData.allTime;
       const myId = currentSession?.user?.id;
       const container = document.getElementById('lbContent');
-      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet — be the first!</p>'; updateLbShareRow(); return; }
-      const table = document.createElement('table'); table.className = 'lb-table';
-      rows.forEach((row, i) => {
-        const tr = document.createElement('tr');
-        if (row.user_id === myId) tr.classList.add('lb-me');
-        const medals = ['🥇','🥈','🥉'];
-        tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}</td><td class="lb-score">${row.score}</td>`;
-        table.appendChild(tr);
-      });
-      container.innerHTML = ''; container.appendChild(table);
+      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet — be the first!</p>'; }
+      else {
+        const table = document.createElement('table'); table.className = 'lb-table';
+        rows.forEach((row, i) => {
+          const tr = document.createElement('tr');
+          if (row.user_id === myId) tr.classList.add('lb-me');
+          const medals = ['🥇','🥈','🥉'];
+          tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}</td><td class="lb-score">${row.score}</td>`;
+          table.appendChild(tr);
+        });
+        container.innerHTML = ''; container.appendChild(table);
+      }
       updateLbShareRow();
+      updateLbResetCountdown();
+    }
+
+    let lbResetTimer = null;
+    function updateLbResetCountdown() {
+      const el = document.getElementById('lbReset');
+      if (lbMode !== 'daily') {
+        el.classList.add('hidden');
+        if (lbResetTimer) { clearInterval(lbResetTimer); lbResetTimer = null; }
+        return;
+      }
+      el.classList.remove('hidden');
+      function tick() {
+        const d = nextEstMidnightMs() - Date.now();
+        if (d <= 0) {
+          el.textContent = 'Daily leaderboard resets in 0h 00m 00s';
+          clearInterval(lbResetTimer); lbResetTimer = null;
+          fetchLeaderboards().then(renderLeaderboard);
+          return;
+        }
+        const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
+        el.textContent = `Daily leaderboard resets in ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+      }
+      tick();
+      if (lbResetTimer) clearInterval(lbResetTimer);
+      lbResetTimer = setInterval(tick, 1000);
     }
 
     document.querySelectorAll('.lb-tab').forEach(btn => {
