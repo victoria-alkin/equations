@@ -734,6 +734,9 @@
       'https://pcyymbfaxacvmkxrvmhx.supabase.co',
       'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u'
     );
+    function track(name, params) {
+      try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch {}
+    }
     let currentSession = null;
 
     // ─── Puzzle helpers ──────────────────────────────────────────────────────────
@@ -1292,6 +1295,8 @@
       renderEquation(markings);
       if (correct) {
         solved = true; saveProgress();
+        track('daily_solved', { difficulty });
+        track('puzzle_solved', { mode: 'daily', difficulty });
         document.getElementById('solvedBanner').classList.add('show'); setFeedback(''); startCountdown();
         updateDailyShareRow();
         document.querySelector('.actions').classList.add('hidden');
@@ -1479,6 +1484,7 @@
 
     function startTimedGame() {
       gameMode = 'timed';
+      track('timed_started');
       timedScore = 0; timedSeconds = 60;
       timedQueue = shuffle(TIMED_PUZZLES); timedQueueIdx = 0;
       document.getElementById('timedScore').textContent = '0';
@@ -1528,6 +1534,7 @@
       if (Math.abs(val - p.result) < 1e-9) {
         timedScore++;
         document.getElementById('timedScore').textContent = timedScore;
+        track('puzzle_solved', { mode: gameMode });
         if (gameMode === 'battle') {
           document.getElementById('battleMyScore').textContent = timedScore;
           pushBattleScore(timedScore, false);
@@ -1730,6 +1737,7 @@
     async function endTimedGame() {
       clearInterval(timedInterval); timedInterval = null;
       if (gameMode === 'battle') { endBattleRound(); return; }
+      track('timed_finished', { score: timedScore });
       document.getElementById('finalScore').textContent = timedScore;
       showTimedState('finished');
       const scoreCopy = timedScore;
@@ -1833,6 +1841,7 @@
         host_name: currentUsername || 'Host',
       });
       if (error) { alert('Could not create battle: ' + error.message); return; }
+      track('battle_created');
       battleId = id; battleRole = 'host';
       const shareUrl = `${location.origin}/invite/${id}`;
       history.replaceState(null, '', `?battle=${id}`);
@@ -1871,6 +1880,7 @@
       if (!row.guest_id) {
         const { error } = await db.rpc('join_battle', { p_id: id, p_name: currentUsername || 'Guest' });
         if (error) { alert('Could not join: ' + error.message); enterBattleHome(); return; }
+        track('battle_joined');
       }
       battleRole = 'guest';
       // Once joined, ask to start (sets start_at if not yet set)
@@ -1997,10 +2007,11 @@
       document.getElementById('battleResultOppName').textContent = oppName;
       document.getElementById('battleResultMyScore').textContent = myScore;
       document.getElementById('battleResultOppScore').textContent = oppScore;
-      let title;
-      if (myScore > oppScore) title = 'You win! 🏆';
-      else if (myScore < oppScore) title = 'You lose.';
-      else title = "It's a tie!";
+      let title, outcome;
+      if (myScore > oppScore)      { title = 'You win! 🏆';  outcome = 'win'; }
+      else if (myScore < oppScore) { title = 'You lose.';    outcome = 'lose'; }
+      else                         { title = "It's a tie!"; outcome = 'tie'; }
+      track('battle_finished', { outcome, score: myScore, opp_score: oppScore });
       document.getElementById('battleResultTitle').textContent = title;
       document.getElementById('battleRematchStatus').classList.add('hidden');
       document.getElementById('btnBattleRematch').disabled = false;
@@ -2175,6 +2186,7 @@
       const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
       if (error) setAuthMsg(error.message, 'err');
+      else track('login', { surface: 'timed' });
     });
     ['loginIdentifier', 'loginPassword'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
@@ -2204,6 +2216,7 @@
       btn.disabled = false;
       if (error) setAuthMsg(error.message, 'err');
       else {
+        track('signup', { surface: 'timed' });
         document.getElementById('signupForm').classList.add('hidden');
         setAuthMsg('Welcome to Equations! You can log in now.', 'ok');
       }
@@ -2297,6 +2310,7 @@
       const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
       if (error) { setModalAuthMsg(error.message, 'err'); return; }
+      track('login', { surface: 'modal' });
       closeLoginModal();
     });
     ['modalLoginIdentifier', 'modalLoginPassword'].forEach(id => {
@@ -2318,6 +2332,7 @@
       if (existing) { setModalAuthMsg('That username is already taken.', 'err'); return; }
       const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
       if (error) { setModalAuthMsg(error.message, 'err'); return; }
+      track('signup', { surface: 'modal' });
       setModalAuthMsg('Account created! You are now signed in.', 'ok');
       setTimeout(closeLoginModal, 1800);
     });
