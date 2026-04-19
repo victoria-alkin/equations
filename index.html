@@ -295,6 +295,13 @@
       margin-bottom: 0.4rem; box-sizing: border-box;
     }
     .settings-input:focus { border-color: #8DC883; }
+    .settings-input:read-only {
+      background: #F3F3F3; color: #555; cursor: default; border-color: #E4E4E4;
+    }
+    .settings-input:read-only:focus { border-color: #E4E4E4; }
+    .username-settings-block { margin-bottom: 0.75rem; }
+    .username-settings-block .settings-input { margin-bottom: 0.35rem; }
+    .edit-username-link { display: block; text-align: left; margin: 0; padding: 0; font-size: 0.82rem; }
     .settings-msg { font-size: 0.82rem; min-height: 1.1em; margin-bottom: 0.8rem; text-align: center; }
     .settings-msg.ok  { color: #5A9E52; }
     .settings-msg.err { color: #CC4444; }
@@ -479,7 +486,10 @@
       <button class="modal-close" id="accountClose">✕</button>
       <h2>Account Settings</h2>
       <p class="icon-label" style="margin-bottom:0.5rem">USERNAME</p>
-      <input type="text" class="settings-input" id="accountUsernameInput" placeholder="Username">
+      <div class="username-settings-block">
+        <input type="text" class="settings-input" id="accountUsernameInput" placeholder="Username" readonly autocomplete="username">
+        <button type="button" class="link-btn edit-username-link" id="btnEditUsername">Edit username</button>
+      </div>
       <p class="icon-label">PROFILE ICON</p>
       <div class="icon-picker" id="iconPicker"></div>
       <p class="settings-msg" id="settingsMsg"></p>
@@ -933,8 +943,26 @@
       el.textContent = msg; el.className = 'settings-msg ' + (type ?? '');
     }
 
+    function lockAccountUsernameField() {
+      const inp = document.getElementById('accountUsernameInput');
+      const editBtn = document.getElementById('btnEditUsername');
+      inp.readOnly = true;
+      inp.value = currentUsername;
+      editBtn.classList.remove('hidden');
+    }
+
+    function unlockAccountUsernameField() {
+      const inp = document.getElementById('accountUsernameInput');
+      const editBtn = document.getElementById('btnEditUsername');
+      inp.readOnly = false;
+      editBtn.classList.add('hidden');
+      inp.focus();
+      inp.select();
+    }
+
     function openAccountSettings() {
       document.getElementById('accountUsernameInput').value = currentUsername;
+      lockAccountUsernameField();
       setSettingsMsg('');
       pendingAvatar = currentAvatar;
       const picker = document.getElementById('iconPicker'); picker.innerHTML = '';
@@ -986,6 +1014,7 @@
       currentAvatar = pendingAvatar;
       showUserAvatarBtn();
       btn.disabled = false;
+      lockAccountUsernameField();
       setSettingsMsg('Saved!', 'ok');
       setTimeout(() => setSettingsMsg(''), 2000);
     }
@@ -1255,11 +1284,16 @@
 
     // ─── Account settings ────────────────────────────────────────────────────────
     document.getElementById('userAvatarBtn').addEventListener('click', openAccountSettings);
-    document.getElementById('accountClose').addEventListener('click', () => document.getElementById('accountOverlay').classList.remove('open'));
-    document.getElementById('accountOverlay').addEventListener('click', e => { if (e.target === document.getElementById('accountOverlay')) document.getElementById('accountOverlay').classList.remove('open'); });
+    function closeAccountOverlay() {
+      document.getElementById('accountOverlay').classList.remove('open');
+      lockAccountUsernameField();
+    }
+    document.getElementById('accountClose').addEventListener('click', closeAccountOverlay);
+    document.getElementById('accountOverlay').addEventListener('click', e => { if (e.target === document.getElementById('accountOverlay')) closeAccountOverlay(); });
+    document.getElementById('btnEditUsername').addEventListener('click', () => unlockAccountUsernameField());
     document.getElementById('btnSaveSettings').addEventListener('click', saveSettings);
     document.getElementById('btnSignOutSettings').addEventListener('click', async () => {
-      document.getElementById('accountOverlay').classList.remove('open');
+      closeAccountOverlay();
       await db.auth.signOut();
     });
 
