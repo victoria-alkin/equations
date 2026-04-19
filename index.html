@@ -1303,7 +1303,7 @@
       el.innerHTML = '<span class="profile-badges-empty">Loading...</span>';
       const counts = (await fetchBadgeCounts([currentSession.user.id]))[currentSession.user.id];
       const html = renderBadgeGroup(counts);
-      el.innerHTML = html || '<span class="profile-badges-empty">No badges yet — finish in the top 3 of the daily leaderboard!</span>';
+      el.innerHTML = html || '<span class="profile-badges-empty">No badges yet. Finish in the top 3 of the daily leaderboard!</span>';
     }
 
     async function saveSettings() {
