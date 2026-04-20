@@ -265,7 +265,7 @@
     .lb-reset { text-align: center; font-size: 0.95rem; color: #000; font-weight: 700; margin: 0.75rem 0 0; }
     .lb-badges { display: inline-flex; gap: 0.55rem; vertical-align: middle; margin-left: 0.4rem; }
     .medal-group { position: relative; display: inline-block; line-height: 1; }
-    .medal-group .medal { font-size: 1.1rem; display: inline-block; }
+    .medal-group .medal { height: 1.4rem; width: auto; display: inline-block; vertical-align: middle; }
     .medal-group .medal-count {
       position: absolute; top: -6px; right: -10px;
       background: #fff; color: #222; font-size: 0.62rem; font-weight: 700;
@@ -276,7 +276,7 @@
     .profile-badges-label { font-size: 0.7rem; color: #888; font-weight: 700; letter-spacing: 0.08em; margin: 0.9rem 0 0.2rem; }
     .profile-badges-hint { font-size: 0.78rem; color: #777; margin: 0 0 0.4rem; }
     .profile-badges-row { display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: center; min-height: 1.5rem; }
-    .profile-badges-row .medal-group .medal { font-size: 1.4rem; }
+    .profile-badges-row .medal-group .medal { height: 2rem; }
     .profile-badges-empty { font-size: 0.8rem; color: #aaa; }
 
     .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
@@ -2191,10 +2191,11 @@
     });
 
     // ─── Leaderboard ────────────────────────────────────────────────────────────
-    const MEDAL_EMOJI = { gold: '🥇', silver: '🥈', bronze: '🥉' };
+    const MEDAL_IMG = { gold: 'images/1.png', silver: 'images/2.png', bronze: 'images/3.png' };
 
     async function settleBadges() {
-      try { await db.rpc('settle_past_leaderboard_days'); } catch (e) { /* non-fatal */ }
+      const { error } = await db.rpc('settle_past_leaderboard_days');
+      if (error) console.error('settle_past_leaderboard_days error:', error);
     }
 
     async function fetchBadgeCounts(userIds) {
@@ -2214,7 +2215,7 @@
         const n = counts?.[medal] || 0;
         if (n <= 0) continue;
         const countHtml = n > 1 ? `<span class="medal-count">×${n}</span>` : '';
-        parts.push(`<span class="medal-group" title="${n} ${medal}"><span class="medal">${MEDAL_EMOJI[medal]}</span>${countHtml}</span>`);
+        parts.push(`<span class="medal-group" title="${n} ${medal}"><img class="medal" src="${MEDAL_IMG[medal]}" alt="${medal} medal">${countHtml}</span>`);
       }
       return parts.join('');
     }
