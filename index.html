@@ -1253,6 +1253,40 @@
       catch { return null; }
     }
 
+    let serverSolvedToday = { easy: false, medium: false, hard: false };
+    let serverSolvedDay = null;
+
+    async function fetchServerSolvedToday() {
+      const today = getEstDateString();
+      if (!currentSession) {
+        serverSolvedToday = { easy: false, medium: false, hard: false };
+        serverSolvedDay = today;
+        return;
+      }
+      const { data } = await db.from('daily_solves')
+        .select('difficulty')
+        .eq('user_id', currentSession.user.id)
+        .eq('day', today);
+      serverSolvedToday = { easy: false, medium: false, hard: false };
+      for (const row of (data || [])) {
+        if (row.difficulty in serverSolvedToday) serverSolvedToday[row.difficulty] = true;
+      }
+      serverSolvedDay = today;
+    }
+
+    async function recordDailySolve(diff) {
+      if (!currentSession) return;
+      const today = getEstDateString();
+      try {
+        await db.from('daily_solves').upsert(
+          { user_id: currentSession.user.id, day: today, difficulty: diff },
+          { onConflict: 'user_id,day,difficulty', ignoreDuplicates: true }
+        );
+        serverSolvedToday[diff] = true;
+        serverSolvedDay = today;
+      } catch (e) { console.error('recordDailySolve error:', e); }
+    }
+
     function startCountdown() {
       const el = document.getElementById('nextPuzzle');
       if (countdownTimer) clearInterval(countdownTimer);
@@ -1286,6 +1320,13 @@
         const validLength = userAnswers.length === blankDescs.length;
         if (!validLength || (solved && !validSolved)) { userAnswers = []; solved = false; }
       } else { userAnswers = []; solved = false; }
+      // Server-solved on another device: hydrate with canonical answers
+      const today = getEstDateString();
+      if (!solved && serverSolvedDay === today && serverSolvedToday[difficulty]) {
+        userAnswers = blankDescs.map(d => d.answer);
+        solved = true;
+        saveProgress();
+      }
       document.getElementById('solvedBanner').classList.toggle('show', solved);
       setFeedback('');
       renderEquation(); renderOperators(); wireTouchOnBoxes();
@@ -1423,6 +1464,7 @@
         document.getElementById('solvedBanner').classList.add('show'); setFeedback(''); startCountdown();
         updateDailyShareRow();
         document.querySelector('.actions').classList.add('hidden');
+        recordDailySolve(difficulty);
         if (currentSession) {
           db.rpc('advance_streak')
             .then(() => renderDailyStreakChip())
@@ -2540,6 +2582,9 @@
       currentSession = session;
       showUserAvatarBtn();
       renderDailyStreakChip();
+      fetchServerSolvedToday().then(() => {
+        if (!document.getElementById('dailyCard').classList.contains('hidden')) loadDailyPuzzle();
+      });
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
       if (event === 'SIGNED_IN' && session && pendingInviteId) {
         const id = pendingInviteId;
@@ -2829,6 +2874,7 @@
       }
       showUserAvatarBtn();
       puzzleIndex = getDailyIndex(difficulty);
+      await fetchServerSolvedToday();
       loadDailyPuzzle();
       settleBadges();
 
