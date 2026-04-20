@@ -282,15 +282,13 @@
     .streak-current { font-weight: 700; }
     .streak-flame { font-size: 1.05rem; margin-right: 0.15rem; }
     .streak-longest { color: #888; font-size: 0.82rem; }
-    .lb-streak { margin-left: 0.4rem; color: #E67E22; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    #dailyCard { position: relative; }
     .daily-streak-chip {
-      display: inline-flex; align-items: center; gap: 0.3rem;
-      background: #FFF4E8; color: #C0651B; border: 1.5px solid #F4C38A;
-      padding: 0.28rem 0.75rem; border-radius: 999px;
-      font-size: 0.82rem; font-weight: 600;
-      margin: 0 auto 0.85rem; width: fit-content;
+      position: absolute; top: 0.75rem; right: 1rem;
+      font-size: 0.72rem; font-weight: 600; color: #C0651B;
+      white-space: nowrap;
     }
-    .daily-streak-chip.longest { background: #FFF; color: #888; border-color: #E4E4E4; font-weight: 500; }
+    .daily-streak-chip.longest { color: #888; font-weight: 500; }
 
     .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
 
@@ -2373,22 +2371,6 @@
       return counts;
     }
 
-    async function fetchStreaks(userIds) {
-      if (!userIds || userIds.length === 0) return {};
-      const { data } = await db.from('profiles').select('id, current_streak, last_play_date').in('id', userIds);
-      const today = getEstDateString();
-      const yesterdayMs = nextEstMidnightMs() - 2 * 86400000 + 1;
-      const yesterday = new Date(yesterdayMs).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-      const out = {};
-      for (const row of (data || [])) {
-        const cur = Number(row.current_streak) || 0;
-        const last = row.last_play_date;
-        const active = (last === today || last === yesterday);
-        out[row.id] = active ? cur : 0;
-      }
-      return out;
-    }
-
     function renderBadgeGroup(counts) {
       const parts = [];
       for (const medal of ['gold','silver','bronze']) {
@@ -2412,9 +2394,7 @@
       const { data: allTime } = await db.from('best_scores').select('user_id, display_name, score').order('score', { ascending: false }).limit(10);
       lbData.allTime = allTime || [];
       const ids = Array.from(new Set([...lbData.daily, ...lbData.allTime].map(r => r.user_id)));
-      const [badgeCounts, streaks] = await Promise.all([fetchBadgeCounts(ids), fetchStreaks(ids)]);
-      lbData.badgeCounts = badgeCounts;
-      lbData.streaks = streaks;
+      lbData.badgeCounts = await fetchBadgeCounts(ids);
     }
 
     function renderLeaderboard() {
@@ -2430,9 +2410,7 @@
           const medals = ['🥇','🥈','🥉'];
           const badgeHtml = renderBadgeGroup(lbData.badgeCounts?.[row.user_id]);
           const badgeSpan = badgeHtml ? `<span class="lb-badges">${badgeHtml}</span>` : '';
-          const streak = lbData.streaks?.[row.user_id] || 0;
-          const streakSpan = streak > 0 ? `<span class="lb-streak" title="${streak}-day streak">🔥${streak}</span>` : '';
-          tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}${streakSpan}${badgeSpan}</td><td class="lb-score">${row.score}</td>`;
+          tr.innerHTML = `<td class="lb-rank">${medals[i] ?? i+1}</td><td class="lb-name">${row.display_name}${badgeSpan}</td><td class="lb-score">${row.score}</td>`;
           table.appendChild(tr);
         });
         container.innerHTML = ''; container.appendChild(table);
