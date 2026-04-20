@@ -475,7 +475,9 @@
     .battle-rematch-status { text-align: center; font-size: 0.9rem; color: #666; margin: 0.5rem 0; }
 
     /* --- Help --- */
-    .help-btn { margin-top: 1rem; background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; }
+    .footer-links { margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+    .help-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; padding: 0; font-family: inherit; }
+    .help-sep { color: #aaa; font-size: 0.82rem; }
 
     /* --- Modal --- */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 100; align-items: center; justify-content: center; }
@@ -735,7 +737,11 @@
     </div>
   </div>
 
-  <button class="help-btn" id="helpBtn">How to Play</button>
+  <div class="footer-links">
+    <button class="help-btn" id="helpBtn">How to Play</button>
+    <span class="help-sep">·</span>
+    <a class="help-btn" href="mailto:equationsgame.contact@gmail.com">Contact</a>
+  </div>
 
   <!-- Account settings modal -->
   <div class="modal-overlay" id="accountOverlay">
