@@ -1948,6 +1948,7 @@
       if (!currentSession) { openLoginModal('login'); return; }
       await ensureCurrentUsername();
       battleId = id;
+      battleRow = null;
       // Peek at the row to figure out our role
       const { data: row } = await db.from('battles').select('*').eq('id', id).maybeSingle();
       if (!row) { alert('Battle not found.'); enterBattleHome(); history.replaceState(null, '', location.pathname); return; }
@@ -1978,6 +1979,13 @@
       battleRole = 'guest';
       // Once joined, ask to start (sets start_at if not yet set)
       await db.rpc('start_battle', { p_id: id });
+      const { data: fresh } = await db.from('battles').select('*').eq('id', id).maybeSingle();
+      if (fresh && fresh.guest_id && fresh.start_at) {
+        battleRow = fresh;
+        enterBattleCountdownOrPlaying(fresh);
+      } else {
+        showBattleState('waiting');
+      }
       startBattlePolling();
     }
 
