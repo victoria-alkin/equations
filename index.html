@@ -783,6 +783,10 @@
       try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch {}
     }
 
+    function escapeIlike(s) {
+      return String(s).replace(/[\\%_]/g, c => '\\' + c);
+    }
+
     async function containsProfanity(name) {
       if (!name) return false;
       try {
@@ -1503,7 +1507,7 @@
 
       // Check username uniqueness (excluding self)
       if (newUsername !== currentUsername) {
-        const { data: taken } = await db.from('profiles').select('id').eq('username', newUsername).neq('id', currentSession.user.id).maybeSingle();
+        const { data: taken } = await db.from('profiles').select('id').ilike('username', escapeIlike(newUsername)).neq('id', currentSession.user.id).maybeSingle();
         if (taken) { setSettingsMsg('Username already taken.', 'err'); btn.disabled = false; return; }
       }
 
@@ -2349,7 +2353,7 @@
       if (await containsProfanity(username)) {
         setAuthMsg('Please choose a different username.', 'err'); btn.disabled = false; return;
       }
-      const { data: existing } = await db.from('profiles').select('username').eq('username', username).maybeSingle();
+      const { data: existing } = await db.from('profiles').select('username').ilike('username', escapeIlike(username)).maybeSingle();
       if (existing) { setAuthMsg('Username already taken — please choose another.', 'err'); btn.disabled = false; return; }
 
       setAuthMsg('Creating account...');
@@ -2477,7 +2481,7 @@
       if (password !== confirm) { setModalAuthMsg('Passwords do not match.', 'err'); return; }
       if (password.length < 6)  { setModalAuthMsg('Password must be at least 6 characters.', 'err'); return; }
       if (await containsProfanity(username)) { setModalAuthMsg('Please choose a different username.', 'err'); return; }
-      const { data: existing } = await db.from('profiles').select('id').eq('username', username).maybeSingle();
+      const { data: existing } = await db.from('profiles').select('id').ilike('username', escapeIlike(username)).maybeSingle();
       if (existing) { setModalAuthMsg('That username is already taken.', 'err'); return; }
       const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
       if (error) { setModalAuthMsg(error.message, 'err'); return; }
