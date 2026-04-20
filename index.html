@@ -441,6 +441,17 @@
     /* --- 1v1 Battle --- */
     .battle-status { text-align: center; font-size: 1.15rem; font-weight: 700; margin-top: 0.5rem; }
     .battle-hint { text-align: center; font-size: 0.82rem; color: #888; margin: 0.8rem 0 0.4rem; }
+    .battle-duration-block { margin-top: 1.1rem; }
+    .battle-duration-label { font-size: 0.82rem; color: #666; margin-bottom: 0.45rem; text-align: center; letter-spacing: 0.03em; text-transform: uppercase; }
+    .battle-duration-buttons { display: flex; gap: 0.45rem; justify-content: center; flex-wrap: wrap; }
+    .battle-duration-btn {
+      background: #FDFCFB; border: 2px solid #DDD; border-radius: 999px;
+      padding: 0.4rem 0.95rem; font-size: 0.88rem; color: #555; cursor: pointer;
+      font-family: inherit; transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .battle-duration-btn:hover { border-color: #8DC883; }
+    .battle-duration-btn.selected { background: #8DC883; border-color: #8DC883; color: white; }
+    .battle-duration-btn:disabled { opacity: 0.5; cursor: default; }
     .battle-link-row { display: flex; gap: 0.4rem; align-items: center; margin: 0 auto; max-width: 22rem; }
     .battle-link-row input {
       flex: 1; padding: 0.55rem 0.7rem; border: 1px solid #ddd; border-radius: 10px;
@@ -695,6 +706,15 @@
         <button class="btn-magic" id="btnCopyBattleLink">Copy</button>
       </div>
       <div class="battle-share-row" id="battleShareRow"></div>
+      <div class="battle-duration-block" id="battleDurationBlock">
+        <p class="battle-duration-label">Battle length</p>
+        <div class="battle-duration-buttons" id="battleDurationButtons">
+          <button type="button" class="battle-duration-btn" data-sec="30">30s</button>
+          <button type="button" class="battle-duration-btn" data-sec="60">60s</button>
+          <button type="button" class="battle-duration-btn" data-sec="90">90s</button>
+          <button type="button" class="battle-duration-btn" data-sec="120">2 min</button>
+        </div>
+      </div>
       <button class="link-btn" id="btnCancelBattle" style="margin-top:1rem">Cancel</button>
     </div>
 
@@ -1883,6 +1903,8 @@
       ['battleHome','battleWaiting','battleCountdown','battlePlaying','battleResults'].forEach(id => {
         document.getElementById(id).classList.toggle('hidden', id !== 'battle' + s.charAt(0).toUpperCase() + s.slice(1));
       });
+      const durBlock = document.getElementById('battleDurationBlock');
+      if (durBlock) durBlock.classList.toggle('hidden', s !== 'waiting' || battleRole !== 'host');
     }
 
     function stopBattlePolling() {
@@ -1941,6 +1963,25 @@
       if (pa && pa.parentElement !== timedPlaying) timedPlaying.appendChild(pa);
     }
 
+    function formatDuration(secs) {
+      const n = Number(secs) || 60;
+      if (n >= 120 && n % 60 === 0) return `${n / 60} min`;
+      return `${n}s`;
+    }
+
+    function renderHostShareRow(id, durationSeconds) {
+      const shareUrl = `${location.origin}/invite/${id}`;
+      document.getElementById('battleLink').value = shareUrl;
+      populateShareRow(document.getElementById('battleShareRow'),
+        `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in ${formatDuration(durationSeconds)}? 🧮 ${shareUrl}`);
+    }
+
+    function updateDurationButtons(selectedSec) {
+      document.querySelectorAll('#battleDurationButtons .battle-duration-btn').forEach(b => {
+        b.classList.toggle('selected', Number(b.dataset.sec) === Number(selectedSec));
+      });
+    }
+
     async function createBattle() {
       if (!currentSession) { openLoginModal('login'); return; }
       await ensureCurrentUsername();
@@ -1950,15 +1991,14 @@
         id, seed,
         host_id: currentSession.user.id,
         host_name: currentUsername || 'Host',
+        duration_seconds: 60,
       });
       if (error) { alert('Could not create battle: ' + error.message); return; }
       track('battle_created');
       battleId = id; battleRole = 'host';
-      const shareUrl = `${location.origin}/invite/${id}`;
       history.replaceState(null, '', `?battle=${id}`);
-      document.getElementById('battleLink').value = shareUrl;
-      populateShareRow(document.getElementById('battleShareRow'),
-        `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${shareUrl}`);
+      renderHostShareRow(id, 60);
+      updateDurationButtons(60);
       showBattleState('waiting');
       startBattlePolling();
     }
@@ -1983,10 +2023,8 @@
       if (row.host_id === currentSession.user.id) {
         battleRole = 'host';
         battleRow = row;
-        const shareUrlHost = `${location.origin}/invite/${id}`;
-        document.getElementById('battleLink').value = shareUrlHost;
-        populateShareRow(document.getElementById('battleShareRow'),
-          `${currentUsername || 'A friend'} has invited you to a 1v1 Equations battle! Who can solve more equations in 60 seconds? 🧮 ${shareUrlHost}`);
+        renderHostShareRow(id, row.duration_seconds || 60);
+        updateDurationButtons(row.duration_seconds || 60);
         if (row.guest_id && row.start_at) {
           enterBattleCountdownOrPlaying(row);
         } else {
@@ -2029,6 +2067,12 @@
       if (!row) return;
       const prev = battleRow; battleRow = row;
 
+      // Host: sync duration UI if changed elsewhere (e.g., another tab)
+      if (battleRole === 'host' && !row.start_at && (!prev || prev.duration_seconds !== row.duration_seconds)) {
+        updateDurationButtons(row.duration_seconds || 60);
+        renderHostShareRow(battleId, row.duration_seconds || 60);
+      }
+
       // Host triggers start once guest joins
       if (battleRole === 'host' && row.guest_id && !row.start_at) {
         await db.rpc('start_battle', { p_id: battleId });
@@ -2048,7 +2092,8 @@
         // If both finished (or timer passed), show results
         const elapsed = battleStartMs ? (Date.now() - battleStartMs) / 1000 : 0;
         const myFinished = battleRole === 'host' ? row.host_finished : row.guest_finished;
-        if ((myFinished && oppFinished) || elapsed >= 62) {
+        const maxElapsed = (Number(row.duration_seconds) || 60) + 2;
+        if ((myFinished && oppFinished) || elapsed >= maxElapsed) {
           showBattleResults(row);
         }
       }
@@ -2113,10 +2158,11 @@
       gameMode = 'battle';
       movePlayAreaToBattle();
       showBattleState('playing');
-      timedScore = 0; timedSeconds = 60;
+      const duration = Number(row.duration_seconds) || 60;
+      timedScore = 0; timedSeconds = duration;
       timedQueue = seededShuffle(TIMED_PUZZLES, Number(row.seed)); timedQueueIdx = 0;
       document.getElementById('battleMyScore').textContent = '0';
-      document.getElementById('battleTimer').textContent = '60';
+      document.getElementById('battleTimer').textContent = String(duration);
       document.getElementById('battleTimer').classList.remove('urgent');
       loadTimedPuzzle();
       if (timedInterval) clearInterval(timedInterval);
@@ -2206,6 +2252,22 @@
       const btn = document.getElementById('btnCopyBattleLink');
       const orig = btn.textContent; btn.textContent = 'Copied!';
       setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+    document.querySelectorAll('#battleDurationButtons .battle-duration-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!battleId || battleRole !== 'host') return;
+        if (battleRow && battleRow.start_at) return;
+        const sec = Number(btn.dataset.sec);
+        updateDurationButtons(sec);
+        renderHostShareRow(battleId, sec);
+        const { error } = await db.from('battles').update({ duration_seconds: sec }).eq('id', battleId);
+        if (error) {
+          alert('Could not update duration: ' + error.message);
+          const prev = battleRow?.duration_seconds || 60;
+          updateDurationButtons(prev);
+          renderHostShareRow(battleId, prev);
+        }
+      });
     });
     document.getElementById('btnCancelBattle').addEventListener('click', async () => {
       if (battleId && battleRole === 'host') { try { await db.from('battles').delete().eq('id', battleId); } catch {} }
