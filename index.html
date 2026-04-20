@@ -477,6 +477,10 @@
     /* --- Help --- */
     .footer-links { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
     .help-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.82rem; text-decoration: underline; padding: 0; font-family: inherit; }
+    .contact-form { display: flex; flex-direction: column; }
+    .contact-textarea { resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.45; margin-bottom: 0.4rem; }
+    .contact-email-line { font-size: 0.8rem; color: #888; text-align: center; margin-top: 0.9rem; margin-bottom: 0; }
+    .contact-email-line a { color: #888; text-decoration: underline; }
 
     /* --- Modal --- */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 100; align-items: center; justify-content: center; }
@@ -738,7 +742,7 @@
 
   <div class="footer-links">
     <button class="help-btn" id="helpBtn">How to Play</button>
-    <a class="help-btn" href="mailto:equationsgame.contact@gmail.com">Contact</a>
+    <button class="help-btn" id="contactBtn">Contact</button>
   </div>
 
   <!-- Account settings modal -->
@@ -773,6 +777,21 @@
       <p><strong>Battle:</strong> Challenge a friend! Create a battle, send them the link, and once you both join you'll race through the same puzzles in the same order for 60 seconds. Highest score wins!</p>
       <p><strong>Badges:</strong> Finish the day in the top 3 of the daily leaderboard to earn a medal. <img class="inline-medal" src="images/1.png" alt="gold"> for 1st, <img class="inline-medal" src="images/2.png" alt="silver"> for 2nd, <img class="inline-medal" src="images/3.png" alt="bronze"> for 3rd. Badges appear next to your name on the leaderboard and on your profile.</p>
       <p><strong>Reset</strong> clears your answers. A new set of daily puzzles arrives every day!</p>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="contactOverlay">
+    <div class="modal">
+      <button class="modal-close" id="contactClose">✕</button>
+      <h2>Contact Us</h2>
+      <form id="contactForm" class="contact-form">
+        <input type="text" class="settings-input" id="contactName" name="name" placeholder="Your name (optional)" autocomplete="name">
+        <input type="email" class="settings-input" id="contactEmail" name="email" placeholder="Your email" autocomplete="email" required>
+        <textarea class="settings-input contact-textarea" id="contactMessage" name="message" placeholder="Your message" rows="5" required></textarea>
+        <p class="settings-msg" id="contactMsg"></p>
+        <button type="submit" class="btn-magic" id="contactSubmit">Send</button>
+      </form>
+      <p class="contact-email-line">Or email us directly at <a href="mailto:equationsgame.contact@gmail.com">equationsgame.contact@gmail.com</a></p>
     </div>
   </div>
 
@@ -2511,6 +2530,65 @@
     document.getElementById('helpBtn').addEventListener('click', () => document.getElementById('modalOverlay').classList.add('open'));
     document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
     document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); });
+
+    // ─── Contact form ────────────────────────────────────────────────────────────
+    const contactOverlay = document.getElementById('contactOverlay');
+    const contactMsgEl = document.getElementById('contactMsg');
+    function openContactOverlay() {
+      contactMsgEl.textContent = '';
+      contactMsgEl.style.color = '';
+      contactOverlay.classList.add('open');
+    }
+    function closeContactOverlay() { contactOverlay.classList.remove('open'); }
+    document.getElementById('contactBtn').addEventListener('click', openContactOverlay);
+    document.getElementById('contactClose').addEventListener('click', closeContactOverlay);
+    contactOverlay.addEventListener('click', e => { if (e.target === contactOverlay) closeContactOverlay(); });
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('contactSubmit');
+      const name = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const message = document.getElementById('contactMessage').value.trim();
+      if (!email || !message) {
+        contactMsgEl.textContent = 'Email and message are required.';
+        contactMsgEl.style.color = '#C0392B';
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      contactMsgEl.textContent = '';
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            access_key: '2411e59b-7af4-45b2-8cbc-8881081d2a59',
+            subject: 'New contact form message — Equations Game',
+            from_name: name || 'Equations Game contact form',
+            name: name || '(not provided)',
+            email,
+            message
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          contactMsgEl.textContent = 'Message sent. Thanks for reaching out!';
+          contactMsgEl.style.color = '#2E7D32';
+          document.getElementById('contactForm').reset();
+          track('contact_sent');
+          setTimeout(closeContactOverlay, 1800);
+        } else {
+          contactMsgEl.textContent = data.message || 'Could not send. Please try again.';
+          contactMsgEl.style.color = '#C0392B';
+        }
+      } catch (err) {
+        contactMsgEl.textContent = 'Network error. Please try again.';
+        contactMsgEl.style.color = '#C0392B';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send';
+      }
+    });
 
     // ─── Share ───────────────────────────────────────────────────────────────────
     const _SVG_SHARE  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
