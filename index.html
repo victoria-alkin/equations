@@ -283,6 +283,14 @@
     .streak-flame { font-size: 1.05rem; margin-right: 0.15rem; }
     .streak-longest { color: #888; font-size: 0.82rem; }
     .lb-streak { margin-left: 0.4rem; color: #E67E22; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .daily-streak-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: #FFF4E8; color: #C0651B; border: 1.5px solid #F4C38A;
+      padding: 0.28rem 0.75rem; border-radius: 999px;
+      font-size: 0.82rem; font-weight: 600;
+      margin: 0 auto 0.85rem; width: fit-content;
+    }
+    .daily-streak-chip.longest { background: #FFF; color: #888; border-color: #E4E4E4; font-weight: 500; }
 
     .lb-title { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; color: #aaa; text-align: center; margin-bottom: 0.8rem; }
 
@@ -587,6 +595,7 @@
 
   <!-- ═══ DAILY MODE ═══ -->
   <div class="game-card" id="dailyCard">
+    <div class="daily-streak-chip hidden" id="dailyStreakChip" title=""></div>
     <div class="difficulty-tabs">
       <button class="tab active" data-diff="easy">EASY</button>
       <button class="tab" data-diff="medium">MEDIUM</button>
@@ -1416,7 +1425,11 @@
         document.getElementById('solvedBanner').classList.add('show'); setFeedback(''); startCountdown();
         updateDailyShareRow();
         document.querySelector('.actions').classList.add('hidden');
-        if (currentSession) { db.rpc('advance_streak').catch(e => console.error('advance_streak error:', e)); }
+        if (currentSession) {
+          db.rpc('advance_streak')
+            .then(() => renderDailyStreakChip())
+            .catch(e => console.error('advance_streak error:', e));
+        }
       } else {
         setFeedback('Not quite. Try again!', 'error');
         setTimeout(() => { if (!solved) { renderEquation(); renderOperators(); wireTouchOnBoxes(); } }, 900);
@@ -1534,6 +1547,34 @@
       document.getElementById('accountOverlay').classList.add('open');
       renderProfileBadges();
       renderProfileStreak();
+    }
+
+    async function renderDailyStreakChip() {
+      const el = document.getElementById('dailyStreakChip');
+      if (!currentSession) { el.classList.add('hidden'); el.textContent = ''; return; }
+      const { data } = await db.from('profiles').select('current_streak, longest_streak, last_play_date').eq('id', currentSession.user.id).maybeSingle();
+      const today = getEstDateString();
+      const yesterdayMs = nextEstMidnightMs() - 2 * 86400000 + 1;
+      const yesterday = new Date(yesterdayMs).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const last = data?.last_play_date;
+      const storedCurrent = Number(data?.current_streak) || 0;
+      const active = (last === today || last === yesterday);
+      const current = active ? storedCurrent : 0;
+      const longest = Number(data?.longest_streak) || 0;
+      if (current > 0) {
+        el.classList.remove('hidden', 'longest');
+        el.textContent = `🔥 ${current} day streak`;
+        el.title = `Current: ${current} • Longest: ${longest}`;
+      } else if (longest > 0) {
+        el.classList.remove('hidden');
+        el.classList.add('longest');
+        el.textContent = `Longest streak: ${longest} days`;
+        el.title = 'Solve a Daily puzzle to start a new streak!';
+      } else {
+        el.classList.add('hidden');
+        el.textContent = '';
+        el.title = '';
+      }
     }
 
     async function renderProfileStreak() {
@@ -2520,6 +2561,7 @@
     db.auth.onAuthStateChange((event, session) => {
       currentSession = session;
       showUserAvatarBtn();
+      renderDailyStreakChip();
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
       if (event === 'SIGNED_IN' && session && pendingInviteId) {
         const id = pendingInviteId;
