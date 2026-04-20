@@ -2214,7 +2214,7 @@
       for (const medal of ['gold','silver','bronze']) {
         const n = counts?.[medal] || 0;
         if (n <= 0) continue;
-        const countHtml = n > 1 ? `<span class="medal-count">×${n}</span>` : '';
+        const countHtml = `<span class="medal-count">×${n}</span>`;
         parts.push(`<span class="medal-group" title="${n} ${medal}"><img class="medal" src="${MEDAL_IMG[medal]}" alt="${medal} medal">${countHtml}</span>`);
       }
       return parts.join('');
