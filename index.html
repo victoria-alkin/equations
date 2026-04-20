@@ -2144,22 +2144,27 @@
       if (!battleId) return;
       const btn = document.getElementById('btnBattleRematch');
       const status = document.getElementById('battleRematchStatus');
+      // Pause polling so it can't overwrite the button state while the RPC is in flight
+      stopBattlePolling();
       btn.disabled = true; btn.textContent = 'Requesting...';
       status.classList.remove('hidden');
       status.textContent = 'Requesting rematch...';
       const { data: newId, error } = await db.rpc('request_rematch', { p_id: battleId });
       if (error) {
+        console.error('request_rematch error:', error);
+        alert('Could not request rematch: ' + (error.message || JSON.stringify(error)));
         btn.disabled = false; btn.textContent = 'Rematch';
         status.classList.add('hidden');
+        startBattlePolling();
         return;
       }
       if (newId) {
-        stopBattlePolling();
         history.replaceState(null, '', `?battle=${newId}`);
         await joinBattleById(newId);
         return;
       }
-      // Only one side has requested — polling will update the waiting/accept UI
+      // Only one side has requested — resume polling so we see when opponent clicks
+      startBattlePolling();
     }
 
     document.getElementById('btnCreateBattle').addEventListener('click', createBattle);
