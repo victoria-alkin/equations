@@ -1915,6 +1915,7 @@
 
     async function createBattle() {
       if (!currentSession) { openLoginModal('login'); return; }
+      await ensureCurrentUsername();
       const id = Math.random().toString(36).slice(2, 10);
       const seed = Math.floor(Math.random() * 2147483647);
       const { error } = await db.from('battles').insert({
@@ -1934,8 +1935,18 @@
       startBattlePolling();
     }
 
+    async function ensureCurrentUsername() {
+      if (currentUsername || !currentSession) return;
+      try {
+        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
+        currentAvatar   = profile?.avatar   || currentAvatar || 'icon1';
+      } catch {}
+    }
+
     async function joinBattleById(id) {
       if (!currentSession) { openLoginModal('login'); return; }
+      await ensureCurrentUsername();
       battleId = id;
       // Peek at the row to figure out our role
       const { data: row } = await db.from('battles').select('*').eq('id', id).maybeSingle();
