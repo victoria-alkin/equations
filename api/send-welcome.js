@@ -4,6 +4,8 @@ import path from 'path';
 const SUPABASE_URL = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
 const FROM = 'Equations <welcome@equationsgame.com>';
+const REPLY_TO = 'equationsgame.contact@gmail.com';
+const UNSUBSCRIBE_MAILTO = 'equationsgame.contact@gmail.com';
 
 const TEMPLATE_PATH = path.join(process.cwd(), 'email', 'WelcomeEmail.html');
 let CACHED_TEMPLATE = null;
@@ -73,9 +75,15 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: FROM,
         to: [email],
+        reply_to: REPLY_TO,
         subject: `Welcome to Equations, ${username}!`,
         html,
         text,
+        headers: {
+          'List-Unsubscribe': `<mailto:${UNSUBSCRIBE_MAILTO}?subject=unsubscribe>`,
+          'List-Id': 'Equations Welcome <welcome.equationsgame.com>',
+          'X-Entity-Ref-ID': `welcome-${Date.now()}`
+        },
         tags: [{ name: 'type', value: 'welcome' }]
       })
     });
