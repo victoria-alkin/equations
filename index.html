@@ -244,6 +244,10 @@
     .auth-msg { text-align: center; font-size: 0.85rem; color: #888; min-height: 1.2em; }
     .auth-msg.ok  { color: #5A9E52; }
     .auth-msg.err { color: #CC4444; }
+    .forgot-link-wrap { text-align: center; margin-top: -0.1rem; }
+    .forgot-back-wrap { margin-bottom: 0.1rem; }
+    .forgot-link { background: none; border: none; color: #999; font-size: 0.78rem; cursor: pointer; text-decoration: underline; padding: 0; font-family: inherit; }
+    .forgot-link:hover { color: #555; }
 
     /* User bar */
     .timed-user-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
@@ -627,6 +631,12 @@
         <input type="text" id="modalLoginIdentifier" placeholder="Username or email">
         <input type="password" id="modalLoginPassword" placeholder="Password">
         <button class="btn-magic" id="btnModalLogin">Log In</button>
+        <p class="forgot-link-wrap"><button class="forgot-link" id="btnModalForgot" type="button">Forgot password?</button></p>
+      </div>
+      <div id="modalForgotForm" class="auth-form hidden">
+        <p class="forgot-back-wrap"><button class="forgot-link" id="btnModalForgotBack" type="button">← Back to login</button></p>
+        <input type="email" id="modalForgotEmail" placeholder="Enter your email address">
+        <button class="btn-magic" id="btnModalSendReset">Send reset link</button>
       </div>
       <div id="modalSignupForm" class="auth-form hidden">
         <input type="text" id="modalSignupUsername" placeholder="Username (letters, numbers, _)">
@@ -701,6 +711,12 @@
         <input type="text" id="loginIdentifier" placeholder="Username or email">
         <input type="password" id="loginPassword" placeholder="Password">
         <button class="btn-magic" id="btnLogin">Log In</button>
+        <p class="forgot-link-wrap"><button class="forgot-link" id="btnForgot" type="button">Forgot password?</button></p>
+      </div>
+      <div id="forgotForm" class="auth-form hidden">
+        <p class="forgot-back-wrap"><button class="forgot-link" id="btnForgotBack" type="button">← Back to login</button></p>
+        <input type="email" id="forgotEmail" placeholder="Enter your email address">
+        <button class="btn-magic" id="btnSendReset">Send reset link</button>
       </div>
       <div id="signupForm" class="auth-form hidden">
         <input type="text" id="signupUsername" placeholder="Username (letters, numbers, _)">
@@ -884,6 +900,19 @@
         <button type="submit" class="btn-magic" id="contactSubmit">Send</button>
       </form>
       <p class="contact-email-line">Or email us directly at <a href="mailto:equationsgame.contact@gmail.com">equationsgame.contact@gmail.com</a></p>
+    </div>
+  </div>
+
+  <!-- Reset password modal (shown after clicking email reset link) -->
+  <div class="modal-overlay" id="resetPasswordModal">
+    <div class="modal-box">
+      <h3 style="margin:0 0 1rem;font-size:1rem;color:#444;text-align:center;">Set a new password</h3>
+      <div class="auth-form" id="resetPasswordForm">
+        <input type="password" id="resetNewPassword" placeholder="New password (min. 6 characters)">
+        <input type="password" id="resetConfirmPassword" placeholder="Confirm new password">
+        <button class="btn-magic" id="btnDoResetPassword">Update Password</button>
+      </div>
+      <p class="auth-msg" id="resetPasswordMsg"></p>
     </div>
   </div>
 
@@ -2743,9 +2772,41 @@
         document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
         const mode = btn.dataset.auth;
         document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
+        document.getElementById('forgotForm').classList.add('hidden');
         document.getElementById('signupForm').classList.toggle('hidden', mode !== 'signup');
         setAuthMsg('');
       });
+    });
+
+    // ─── Forgot / Reset password (inline) ───────────────────────────────────────
+    async function sendResetLink(email, msgFn, btn) {
+      if (!email) { msgFn('Please enter your email address.', 'err'); return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      const { error } = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://equationsgame.com/'
+      });
+      btn.textContent = 'Send reset link';
+      if (error) { btn.disabled = false; msgFn(error.message || 'Something went wrong.', 'err'); }
+      else { msgFn('Check your email for a reset link!', 'ok'); }
+    }
+
+    document.getElementById('btnForgot').addEventListener('click', () => {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('forgotForm').classList.remove('hidden');
+      document.getElementById('forgotEmail').value = '';
+      setAuthMsg('');
+    });
+    document.getElementById('btnForgotBack').addEventListener('click', () => {
+      document.getElementById('forgotForm').classList.add('hidden');
+      document.getElementById('loginForm').classList.remove('hidden');
+      setAuthMsg('');
+    });
+    document.getElementById('btnSendReset').addEventListener('click', () => {
+      const email = document.getElementById('forgotEmail').value.trim();
+      sendResetLink(email, setAuthMsg, document.getElementById('btnSendReset'));
+    });
+    document.getElementById('forgotEmail').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnSendReset').click();
     });
 
     // Log in
@@ -2836,6 +2897,13 @@
         document.getElementById('loginModal')?.classList.remove('open');
         setMode('battle');
         joinBattleById(id);
+      }
+      if (event === 'PASSWORD_RECOVERY') {
+        document.getElementById('loginModal')?.classList.remove('open');
+        document.getElementById('resetPasswordModal').classList.add('open');
+        document.getElementById('resetPasswordMsg').textContent = '';
+        document.getElementById('resetNewPassword').value = '';
+        document.getElementById('resetConfirmPassword').value = '';
       }
     });
 
@@ -2981,9 +3049,53 @@
         btn.classList.add('active');
         const mode = btn.dataset.modalAuth;
         document.getElementById('modalLoginForm').classList.toggle('hidden', mode !== 'login');
+        document.getElementById('modalForgotForm').classList.add('hidden');
         document.getElementById('modalSignupForm').classList.toggle('hidden', mode !== 'signup');
         setModalAuthMsg('');
       });
+    });
+
+    // ─── Forgot / Reset password (modal) ────────────────────────────────────────
+    document.getElementById('btnModalForgot').addEventListener('click', () => {
+      document.getElementById('modalLoginForm').classList.add('hidden');
+      document.getElementById('modalForgotForm').classList.remove('hidden');
+      document.getElementById('modalForgotEmail').value = '';
+      setModalAuthMsg('');
+    });
+    document.getElementById('btnModalForgotBack').addEventListener('click', () => {
+      document.getElementById('modalForgotForm').classList.add('hidden');
+      document.getElementById('modalLoginForm').classList.remove('hidden');
+      setModalAuthMsg('');
+    });
+    document.getElementById('btnModalSendReset').addEventListener('click', () => {
+      const email = document.getElementById('modalForgotEmail').value.trim();
+      sendResetLink(email, setModalAuthMsg, document.getElementById('btnModalSendReset'));
+    });
+    document.getElementById('modalForgotEmail').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnModalSendReset').click();
+    });
+
+    // ─── Reset password modal (after clicking email link) ────────────────────────
+    document.getElementById('btnDoResetPassword').addEventListener('click', async () => {
+      const newPw  = document.getElementById('resetNewPassword').value;
+      const confirm = document.getElementById('resetConfirmPassword').value;
+      const btn    = document.getElementById('btnDoResetPassword');
+      const msgEl  = document.getElementById('resetPasswordMsg');
+      if (!newPw || !confirm) { msgEl.textContent = 'Please fill in both fields.'; msgEl.className = 'auth-msg err'; return; }
+      if (newPw.length < 6) { msgEl.textContent = 'Password must be at least 6 characters.'; msgEl.className = 'auth-msg err'; return; }
+      if (newPw !== confirm) { msgEl.textContent = 'Passwords do not match.'; msgEl.className = 'auth-msg err'; return; }
+      btn.disabled = true; btn.textContent = 'Updating…';
+      const { error } = await db.auth.updateUser({ password: newPw });
+      btn.disabled = false; btn.textContent = 'Update Password';
+      if (error) { msgEl.textContent = error.message || 'Something went wrong.'; msgEl.className = 'auth-msg err'; }
+      else {
+        msgEl.textContent = 'Password updated! You\'re now signed in.';
+        msgEl.className = 'auth-msg ok';
+        setTimeout(() => document.getElementById('resetPasswordModal').classList.remove('open'), 2000);
+      }
+    });
+    document.getElementById('resetPasswordForm').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnDoResetPassword').click();
     });
 
     document.getElementById('btnModalLogin').addEventListener('click', async () => {
