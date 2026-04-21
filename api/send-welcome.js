@@ -1,11 +1,20 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const SUPABASE_URL = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
 const FROM = 'Equations <welcome@equationsgame.com>';
 const REPLY_TO = 'equationsgame.contact@gmail.com';
 const UNSUBSCRIBE_MAILTO = 'equationsgame.contact@gmail.com';
+const UNSUBSCRIBE_BASE = 'https://equationsgame.com/api/unsubscribe';
+
+function signUnsub(userId) {
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!secret) throw new Error('UNSUBSCRIBE_SECRET not set');
+  const sig = crypto.createHmac('sha256', secret).update(userId).digest('base64url').slice(0, 22);
+  return `${userId}.${sig}`;
+}
 
 const TEMPLATE_PATH = path.join(process.cwd(), 'email', 'WelcomeEmail.html');
 let CACHED_TEMPLATE = null;
@@ -42,6 +51,7 @@ export default async function handler(req, res) {
   if (!accessToken) return res.status(401).json({ error: 'Missing access token' });
 
   // Verify the caller owns this email by checking their Supabase session
+  let userId;
   try {
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}` }
@@ -51,11 +61,22 @@ export default async function handler(req, res) {
     if (!user || !user.email || user.email.toLowerCase() !== email) {
       return res.status(403).json({ error: 'Token does not match email' });
     }
+    userId = user.id;
   } catch {
     return res.status(401).json({ error: 'Could not verify token' });
   }
 
-  const html = loadTemplate().replace(/\{\{\s*username\s*\}\}/g, escapeHtml(username));
+  let unsubscribeUrl;
+  try {
+    unsubscribeUrl = `${UNSUBSCRIBE_BASE}?t=${encodeURIComponent(signUnsub(userId))}`;
+  } catch (e) {
+    console.error('signUnsub failed:', e);
+    return res.status(500).json({ error: 'Email service misconfigured' });
+  }
+
+  const html = loadTemplate()
+    .replace(/\{\{\s*username\s*\}\}/g, escapeHtml(username))
+    .replace(/\{\{\s*unsubscribe_url\s*\}\}/g, escapeHtml(unsubscribeUrl));
   const text =
     `Welcome to Equations, ${username}!\n\n` +
     `We're so glad you're here. Equations is a playful puzzle game about balancing numbers and finding clever solutions.\n\n` +
@@ -63,7 +84,8 @@ export default async function handler(req, res) {
     `Race the clock in Timed: https://equationsgame.com/timed\n` +
     `Challenge a friend in Battle: https://equationsgame.com/battle\n\n` +
     `Play your first puzzle: https://equationsgame.com/\n\n` +
-    `— The Equations team`;
+    `— The Equations team\n\n` +
+    `Unsubscribe: ${unsubscribeUrl}`;
 
   try {
     const r = await fetch('https://api.resend.com/emails', {
@@ -80,7 +102,8 @@ export default async function handler(req, res) {
         html,
         text,
         headers: {
-          'List-Unsubscribe': `<mailto:${UNSUBSCRIBE_MAILTO}?subject=unsubscribe>`,
+          'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:${UNSUBSCRIBE_MAILTO}?subject=unsubscribe>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
           'List-Id': 'Equations Welcome <welcome.equationsgame.com>',
           'X-Entity-Ref-ID': `welcome-${Date.now()}`
         },
