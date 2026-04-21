@@ -558,6 +558,18 @@
     .inline-medal { height: 1.1rem; width: auto; vertical-align: -0.2rem; margin: 0 0.05rem; }
     .modal-close { position: absolute; top: 0.7rem; right: 1rem; font-size: 1.1rem; cursor: pointer; background: none; border: none; color: #888; font-weight: bold; }
 
+    /* --- Badge earned notification --- */
+    .badge-notify { width: 460px; max-width: 92vw; }
+    .badge-notify h2 { font-size: 1.25rem; color: #333; margin-bottom: 1.1rem; }
+    .badge-notify-list { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.3rem; max-height: 60vh; overflow-y: auto; }
+    .badge-notify-card { display: flex; align-items: center; gap: 0.95rem; background: #FAF6FF; border: 2px solid #C9B7E8; border-radius: 12px; padding: 0.85rem 1rem; }
+    .badge-notify-medal { width: 56px; height: 56px; flex-shrink: 0; }
+    .badge-notify-medal-name { font-size: 1rem; color: #333; margin: 0 0 0.15rem; font-weight: 700; }
+    .badge-notify-meta { font-size: 0.82rem; color: #666; line-height: 1.4; margin: 0; }
+    .badge-notify-btn { display: block; margin: 0 auto; font-size: 0.95rem; font-weight: 700; padding: 0.6rem 1.6rem; background: #B8E0A8; color: #2D2D3A; border: 2px solid #2D2D3A; border-radius: 100px; cursor: pointer; font-family: inherit; }
+    .badge-notify-btn:hover { background: #A4D293; }
+    .badge-notify-btn:disabled { opacity: 0.6; cursor: default; }
+
     /* --- Mobile overrides --- */
     @media (max-width: 640px) {
       .user-top-bar {
@@ -2578,6 +2590,78 @@
       return parts.join('');
     }
 
+    const MEDAL_LABEL = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze' };
+    const MEDAL_PLACE = { gold: '1st', silver: '2nd', bronze: '3rd' };
+
+    function formatBadgeDay(dayStr) {
+      const [y, m, d] = String(dayStr).split('-').map(Number);
+      if (!y || !m || !d) return dayStr;
+      const date = new Date(Date.UTC(y, m - 1, d));
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
+    }
+
+    let unseenBadgeCheckInFlight = false;
+    async function checkUnseenBadges() {
+      if (!currentSession || unseenBadgeCheckInFlight) return;
+      unseenBadgeCheckInFlight = true;
+      try {
+        const { data, error } = await db.from('badges')
+          .select('id, medal, day')
+          .eq('user_id', currentSession.user.id)
+          .is('seen_at', null)
+          .order('day', { ascending: false });
+        if (error) { console.error('checkUnseenBadges error:', error); return; }
+        if (!data || data.length === 0) return;
+        if (document.getElementById('badgeNotifyModal')) return;
+        showBadgeNotifyModal(data);
+      } finally {
+        unseenBadgeCheckInFlight = false;
+      }
+    }
+
+    function escapeAttr(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+    }
+
+    function showBadgeNotifyModal(badges) {
+      const modal = document.createElement('div');
+      modal.id = 'badgeNotifyModal';
+      modal.className = 'modal-overlay open';
+      const heading = badges.length === 1 ? 'You earned a badge!' : `You earned ${badges.length} badges!`;
+      const cards = badges.map(b => {
+        const label = MEDAL_LABEL[b.medal] || b.medal;
+        const place = MEDAL_PLACE[b.medal] || '';
+        const dayLabel = formatBadgeDay(b.day);
+        const img = MEDAL_IMG[b.medal] || '';
+        return `<div class="badge-notify-card">
+          <img class="badge-notify-medal" src="${escapeAttr(img)}" alt="${escapeAttr(label)} medal">
+          <div>
+            <p class="badge-notify-medal-name">${escapeAttr(label)} medal</p>
+            <p class="badge-notify-meta">Finished ${escapeAttr(place)} on the Daily leaderboard for ${escapeAttr(dayLabel)}</p>
+          </div>
+        </div>`;
+      }).join('');
+      modal.innerHTML = `
+        <div class="modal badge-notify">
+          <h2>${escapeAttr(heading)}</h2>
+          <div class="badge-notify-list">${cards}</div>
+          <button class="badge-notify-btn" id="badgeNotifyDismiss" type="button">Awesome!</button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      const btn = document.getElementById('badgeNotifyDismiss');
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        const ids = badges.map(b => b.id);
+        const nowIso = new Date().toISOString();
+        const { error } = await db.from('badges')
+          .update({ seen_at: nowIso })
+          .in('id', ids);
+        if (error) console.error('mark badges seen error:', error);
+        modal.remove();
+      });
+    }
+
     async function fetchLeaderboards() {
       document.getElementById('lbContent').innerHTML = '<p class="lb-loading">Loading...</p>';
       const today = getEstDateString();
@@ -2740,6 +2824,9 @@
         if (!document.getElementById('dailyCard').classList.contains('hidden')) loadDailyPuzzle();
       });
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
+      if (event === 'SIGNED_IN' && session) {
+        settleBadges().then(checkUnseenBadges);
+      }
       if (event === 'SIGNED_IN' && session && pendingInviteId) {
         const id = pendingInviteId;
         pendingInviteId = null;
@@ -3131,7 +3218,7 @@
       puzzleIndex = getDailyIndex(difficulty);
       await fetchServerSolvedToday();
       loadDailyPuzzle();
-      settleBadges();
+      settleBadges().then(checkUnseenBadges);
 
       const params = new URLSearchParams(location.search);
       const bid = params.get('battle');
