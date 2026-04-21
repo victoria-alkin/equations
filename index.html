@@ -2775,6 +2775,9 @@
     });
 
     // Sign up
+    document.getElementById('signupForm').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnSignup').click();
+    });
     document.getElementById('btnSignup').addEventListener('click', async () => {
       const username = document.getElementById('signupUsername').value.trim();
       const email    = document.getElementById('signupEmail').value.trim();
@@ -3007,6 +3010,9 @@
       });
     });
 
+    document.getElementById('modalSignupForm').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnModalSignup').click();
+    });
     document.getElementById('btnModalSignup').addEventListener('click', async () => {
       const username = document.getElementById('modalSignupUsername').value.trim();
       const email    = document.getElementById('modalSignupEmail').value.trim();
