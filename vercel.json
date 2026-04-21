@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/send-welcome.js": {
+      "includeFiles": "email/WelcomeEmail.html"
+    }
+  },
   "rewrites": [
     { "source": "/invite/:id", "destination": "/api/invite/:id" },
     { "source": "/daily", "destination": "/index.html" },

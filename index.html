@@ -2932,9 +2932,17 @@
       if (await containsProfanity(username)) { setModalAuthMsg('Please choose a different username.', 'err'); return; }
       const { data: existing } = await db.from('profiles').select('id').ilike('username', escapeIlike(username)).maybeSingle();
       if (existing) { setModalAuthMsg('That username is already taken.', 'err'); return; }
-      const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
+      const { data: signUpData, error } = await db.auth.signUp({ email, password, options: { data: { username } } });
       if (error) { setModalAuthMsg(error.message, 'err'); return; }
       track('signup', { surface: 'modal' });
+      const accessToken = signUpData?.session?.access_token;
+      if (accessToken) {
+        fetch('/api/send-welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, username, accessToken })
+        }).catch(err => console.warn('welcome email failed:', err));
+      }
       setModalAuthMsg('Account created! You are now signed in.', 'ok');
       setTimeout(closeLoginModal, 1800);
     });
