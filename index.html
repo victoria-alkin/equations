@@ -2264,7 +2264,7 @@
       if (error) { alert('Could not create battle: ' + error.message); return; }
       track('battle_created');
       battleId = id; battleRole = 'host';
-      history.replaceState(null, '', `?battle=${id}`);
+      history.replaceState(null, '', `/battle?battle=${id}`);
       renderHostShareRow(id, 60);
       updateDurationButtons(60);
       showBattleState('waiting');
@@ -2287,7 +2287,7 @@
       battleRow = null;
       // Peek at the row to figure out our role
       const { data: row } = await db.from('battles').select('*').eq('id', id).maybeSingle();
-      if (!row) { alert('Battle not found.'); enterBattleHome(); history.replaceState(null, '', location.pathname); return; }
+      if (!row) { alert('Battle not found.'); enterBattleHome(); history.replaceState(null, '', '/battle'); return; }
       if (row.host_id === currentSession.user.id) {
         battleRole = 'host';
         battleRow = row;
@@ -2303,7 +2303,7 @@
       }
       if (row.guest_id && row.guest_id !== currentSession.user.id) {
         alert('This battle already has two players.');
-        enterBattleHome(); history.replaceState(null, '', location.pathname); return;
+        enterBattleHome(); history.replaceState(null, '', '/battle'); return;
       }
       if (!row.guest_id) {
         const { error } = await db.rpc('join_battle', { p_id: id, p_name: currentUsername || 'Guest' });
@@ -2371,7 +2371,7 @@
         if (row.rematch_id) {
           const newId = row.rematch_id;
           stopBattlePolling();
-          history.replaceState(null, '', `?battle=${newId}`);
+          history.replaceState(null, '', `/battle?battle=${newId}`);
           await joinBattleById(newId);
           return;
         }
@@ -2501,7 +2501,7 @@
         return;
       }
       if (newId) {
-        history.replaceState(null, '', `?battle=${newId}`);
+        history.replaceState(null, '', `/battle?battle=${newId}`);
         await joinBattleById(newId);
         return;
       }
@@ -2539,12 +2539,12 @@
     });
     document.getElementById('btnCancelBattle').addEventListener('click', async () => {
       if (battleId && battleRole === 'host') { try { await db.from('battles').delete().eq('id', battleId); } catch {} }
-      history.replaceState(null, '', location.pathname);
+      history.replaceState(null, '', '/battle');
       enterBattleHome();
     });
     document.getElementById('btnBattleRematch').addEventListener('click', requestRematch);
     document.getElementById('btnBattleExit').addEventListener('click', () => {
-      history.replaceState(null, '', location.pathname);
+      history.replaceState(null, '', '/battle');
       enterBattleHome();
     });
 
@@ -2759,8 +2759,99 @@
       if (mode === 'battle') { enterBattleHome(); }
       else { leaveBattleMode(); }
     }
+
+    // ─── Client-side routing ─────────────────────────────────────────────────────
+    const ROUTES = {
+      '/': {
+        mode: 'daily',
+        title: 'Equations — Daily Math Puzzle Game | equationsgame.com',
+        description: 'Play Equations, the free daily math puzzle game. Fill in the operators (+, −, ×, ÷) to make each equation true. New puzzles every day — solve them, race the clock, or challenge a friend in 1v1 battles.'
+      },
+      '/daily': {
+        mode: 'daily',
+        title: 'Daily Puzzle — Equations | equationsgame.com',
+        description: 'Today\'s free daily math puzzle. Fill in the operators (+, −, ×, ÷) to make each equation true. Easy, medium, and hard puzzles refresh every day.'
+      },
+      '/timed': {
+        mode: 'timed',
+        title: 'Timed Mode — Equations | Race the Clock Math Puzzles',
+        description: 'Race the clock: solve as many equation puzzles as you can in 60 seconds. Climb the Equations Timed leaderboard.'
+      },
+      '/battle': {
+        mode: 'battle',
+        title: '1v1 Battles — Equations | Multiplayer Math Puzzle Game',
+        description: 'Challenge a friend to a 1v1 math puzzle battle. Choose 30s, 60s, 90s, or 2 minutes and see who can solve the most equations.'
+      },
+      '/how-to-play': {
+        modal: 'help',
+        title: 'How to Play — Equations Daily Math Puzzle',
+        description: 'Learn how to play Equations: fill in the operators (+, −, ×, ÷) to make each equation true, following PEMDAS order of operations.'
+      },
+      '/contact': {
+        modal: 'contact',
+        title: 'Contact — Equations Daily Math Puzzle Game',
+        description: 'Get in touch with the Equations team. Send feedback, report a bug, or say hello.'
+      }
+    };
+    const DEFAULT_TITLE = ROUTES['/'].title;
+    const DEFAULT_DESC  = ROUTES['/'].description;
+    let activeMode = 'daily';
+
+    function normalizePath(p) {
+      if (!p) return '/';
+      const s = p.replace(/\/+$/, '');
+      return s === '' ? '/' : s;
+    }
+    function setMetaAttr(selector, attr, value) {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
+    }
+    function updateRouteMeta(path, route) {
+      const url = path === '/' ? 'https://equationsgame.com/' : `https://equationsgame.com${path}`;
+      document.title = route.title;
+      setMetaAttr('meta[name="description"]', 'content', route.description);
+      setMetaAttr('link[rel="canonical"]', 'href', url);
+      setMetaAttr('meta[property="og:url"]', 'content', url);
+      setMetaAttr('meta[property="og:title"]', 'content', route.title);
+      setMetaAttr('meta[property="og:description"]', 'content', route.description);
+      setMetaAttr('meta[name="twitter:url"]', 'content', url);
+      setMetaAttr('meta[name="twitter:title"]', 'content', route.title);
+      setMetaAttr('meta[name="twitter:description"]', 'content', route.description);
+    }
+    function applyRoute(path) {
+      const p = normalizePath(path);
+      const route = ROUTES[p];
+      if (!route) { applyRoute('/'); return; }
+      if (route.mode) {
+        activeMode = route.mode;
+        setMode(route.mode);
+        document.getElementById('modalOverlay').classList.remove('open');
+        document.getElementById('contactOverlay').classList.remove('open');
+      } else if (route.modal) {
+        setMode(activeMode);
+        if (route.modal === 'help') {
+          document.getElementById('contactOverlay').classList.remove('open');
+          document.getElementById('modalOverlay').classList.add('open');
+        } else if (route.modal === 'contact') {
+          document.getElementById('modalOverlay').classList.remove('open');
+          const msgEl = document.getElementById('contactMsg');
+          if (msgEl) { msgEl.textContent = ''; msgEl.style.color = ''; }
+          document.getElementById('contactOverlay').classList.add('open');
+        }
+      }
+      updateRouteMeta(p, route);
+    }
+    function navigateTo(path, { replace = false, keepSearch = false } = {}) {
+      const p = normalizePath(path);
+      const url = p + (keepSearch ? (location.search || '') : '');
+      if (replace) history.replaceState({ path: p }, '', url);
+      else         history.pushState({ path: p }, '', url);
+      applyRoute(p);
+    }
+    window.addEventListener('popstate', () => { applyRoute(location.pathname); });
+
     document.querySelectorAll('.mode-btn').forEach(btn => {
-      btn.addEventListener('click', () => setMode(btn.dataset.mode));
+      btn.addEventListener('click', () => navigateTo('/' + btn.dataset.mode));
     });
 
     // ─── Account settings ────────────────────────────────────────────────────────
@@ -2861,22 +2952,24 @@
     });
 
     // ─── Modal ───────────────────────────────────────────────────────────────────
-    document.getElementById('helpBtn').addEventListener('click', () => document.getElementById('modalOverlay').classList.add('open'));
-    document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
-    document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); });
+    function closeHelpAndReturn() {
+      document.getElementById('modalOverlay').classList.remove('open');
+      navigateTo('/' + activeMode, { replace: true });
+    }
+    document.getElementById('helpBtn').addEventListener('click', () => navigateTo('/how-to-play'));
+    document.getElementById('modalClose').addEventListener('click', closeHelpAndReturn);
+    document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === document.getElementById('modalOverlay')) closeHelpAndReturn(); });
 
     // ─── Contact form ────────────────────────────────────────────────────────────
     const contactOverlay = document.getElementById('contactOverlay');
     const contactMsgEl = document.getElementById('contactMsg');
-    function openContactOverlay() {
-      contactMsgEl.textContent = '';
-      contactMsgEl.style.color = '';
-      contactOverlay.classList.add('open');
+    function closeContactAndReturn() {
+      contactOverlay.classList.remove('open');
+      navigateTo('/' + activeMode, { replace: true });
     }
-    function closeContactOverlay() { contactOverlay.classList.remove('open'); }
-    document.getElementById('contactBtn').addEventListener('click', openContactOverlay);
-    document.getElementById('contactClose').addEventListener('click', closeContactOverlay);
-    contactOverlay.addEventListener('click', e => { if (e.target === contactOverlay) closeContactOverlay(); });
+    document.getElementById('contactBtn').addEventListener('click', () => navigateTo('/contact'));
+    document.getElementById('contactClose').addEventListener('click', closeContactAndReturn);
+    contactOverlay.addEventListener('click', e => { if (e.target === contactOverlay) closeContactAndReturn(); });
     document.getElementById('contactForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('contactSubmit');
@@ -3034,16 +3127,24 @@
 
       const params = new URLSearchParams(location.search);
       const bid = params.get('battle');
+      const initialPath = normalizePath(location.pathname);
       if (bid) {
+        activeMode = 'battle';
+        setMode('battle');
+        updateRouteMeta('/battle', ROUTES['/battle']);
         if (currentSession) {
-          setMode('battle');
           await joinBattleById(bid);
         } else {
           pendingInviteId = bid;
-          setMode('battle');
           await showBattleInviteBanner(bid);
           enterBattleHome();
         }
+      } else if (ROUTES[initialPath]) {
+        history.replaceState({ path: initialPath }, '', initialPath);
+        applyRoute(initialPath);
+      } else {
+        history.replaceState({ path: '/' }, '', '/');
+        applyRoute('/');
       }
     })();
   </script>

@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   const desc = 'Who can solve more equations in 60 seconds?';
   const img = 'https://equationsgame.com/images/opengraph2.png';
   const pageUrl = `https://equationsgame.com/invite/${encodeURIComponent(id)}`;
-  const redirect = `/?battle=${encodeURIComponent(id)}`;
+  const redirect = `/battle?battle=${encodeURIComponent(id)}`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
