@@ -80,13 +80,13 @@ export default async function handler(req, res) {
   const text =
     `Hi ${username},\n\n` +
     `Thanks for signing up for Equations! Really glad you're here.\n\n` +
-    `If you want a place to start, the daily puzzle is a good one: https://equationsgame.com/daily. Three new equations every morning, everyone plays the same set, so you can compare how you did with friends.\n\n` +
-    `There's also a 60-second timed mode (https://equationsgame.com/timed) with a daily leaderboard, and 1v1 battles (https://equationsgame.com/battle) you can challenge friends to.\n\n` +
+    `If you want a place to start, the daily puzzle is a good one: https://equationsgame.com/daily. Three new equations of varying difficulty every morning, everyone plays the same set, so you can compare how you did with friends.\n\n` +
+    `There's also a 60-second timed mode (https://equationsgame.com/timed) with a daily leaderboard, and 1v1 battles (https://equationsgame.com/battle) you can challenge friends to!\n\n` +
     `A few things worth knowing:\n` +
-    `- Your daily streak saves across devices once you're signed in\n` +
-    `- Finish in the top 3 on the daily leaderboard to earn a medal\n` +
-    `- You can rematch a friend right after a battle ends\n\n` +
-    `If you have any questions or run into bugs, just reply to this email, it goes straight to me.\n\n` +
+    `- Finish in the top 3 on the daily leaderboard to earn a badge. Your badges are displayed publicly on the leaderboard. Show everyone what you got!\n` +
+    `- Rematch your friend as soon as the match is over by clicking "Rematch".\n` +
+    `- Your daily streak saves across devices once you're signed in.\n\n` +
+    `If you have any questions or run into bugs, just reply to this email, it goes straight to us.\n\n` +
     `- Equations Team\n\n` +
     `Unsubscribe: ${unsubscribeUrl}`;
 
