@@ -1387,28 +1387,64 @@
       return d;
     }
 
-    function buildExpression(puzzle, answers) {
-      let idx = 0, expr = '';
+    // Build a flat token sequence in visual order: [pre_op?, value, post_op?, binary_op?, ...]
+    function buildTokenSequence(puzzle, answers) {
+      const tokens = [];
+      let idx = 0;
       puzzle.atoms.forEach((atom, i) => {
-        const userPre  = atom.pre  ? (answers[idx++] ?? null) : null;
-        const userPost = atom.post ? (answers[idx++] ?? null) : null;
-        let e = String(atom.value);
-        if      (userPost === '²') e = `Math.pow(${atom.value},2)`;
-        else if (userPost === '³') e = `Math.pow(${atom.value},3)`;
-        if      (userPre  === '√') e = `Math.sqrt(${e})`;
-        else if (userPre  === '∛') e = `Math.cbrt(${e})`;
-        expr += e;
-        if (i < puzzle.binaryOps.length) {
-          const op = answers[idx++] ?? '';
-          expr += op === '×' ? '*' : op === '÷' ? '/' : op === '−' ? '-' : op || '0';
-        }
+        if (atom.pre)  tokens.push(answers[idx++] ?? null);
+        tokens.push(atom.value);
+        if (atom.post) tokens.push(answers[idx++] ?? null);
+        if (i < puzzle.binaryOps.length) tokens.push(answers[idx++] ?? null);
       });
-      return expr;
+      return tokens;
+    }
+
+    // Evaluate a token sequence by operator intrinsic type (ignores slot-type assignments).
+    // Postfix ops (², ³) bind to the preceding value; prefix ops (√, ∛) bind to the next value.
+    // This lets any mathematically correct arrangement of operators be accepted.
+    const _POSTFIX = new Set(['²', '³']);
+    const _PREFIX  = new Set(['√', '∛']);
+
+    function evalTokens(tokens) {
+      let i = 0;
+      function nextValue() {
+        if (i >= tokens.length) return null;
+        const tok = tokens[i];
+        if (typeof tok === 'number') {
+          let val = String(tok); i++;
+          while (i < tokens.length && _POSTFIX.has(tokens[i])) {
+            val = tokens[i] === '²' ? `Math.pow(${val},2)` : `Math.pow(${val},3)`; i++;
+          }
+          return val;
+        }
+        if (_PREFIX.has(tok)) {
+          i++;
+          const inner = nextValue();
+          if (inner === null) return null;
+          return tok === '√' ? `Math.sqrt(${inner})` : `Math.cbrt(${inner})`;
+        }
+        return null;
+      }
+      let expr = '';
+      while (i < tokens.length) {
+        const tok = tokens[i];
+        if (tok === null) return NaN;
+        if (typeof tok === 'number' || _PREFIX.has(tok)) {
+          const val = nextValue();
+          if (val === null) return NaN;
+          expr += val;
+        } else {
+          expr += tok === '×' ? '*' : tok === '÷' ? '/' : tok === '−' ? '-' : tok;
+          i++;
+        }
+      }
+      try { return Function('"use strict"; return (' + expr + ')')(); }
+      catch { return NaN; }
     }
 
     function evaluate(puzzle, answers) {
-      try { return Function('"use strict"; return (' + buildExpression(puzzle, answers) + ')')(); }
-      catch { return NaN; }
+      return evalTokens(buildTokenSequence(puzzle, answers));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
