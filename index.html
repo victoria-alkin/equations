@@ -1686,7 +1686,7 @@
       if (userAnswers.filter(Boolean).length < blankDescs.length) { setFeedback('Fill in all the boxes first!', 'error'); return; }
       const p = currentPuzzle(), val = evaluate(p, userAnswers);
       const correct = Math.abs(val - p.result) < 1e-9;
-      const markings = blankDescs.map((d, i) => userAnswers[i] === d.answer ? 'correct' : 'wrong');
+      const markings = correct ? blankDescs.map(() => 'correct') : blankDescs.map((d, i) => userAnswers[i] === d.answer ? 'correct' : 'wrong');
       renderEquation(markings);
       if (correct) {
         solved = true; saveProgress();
