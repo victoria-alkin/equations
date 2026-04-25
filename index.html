@@ -574,6 +574,96 @@
     .badge-notify-btn:hover { background: #A4D293; }
     .badge-notify-btn:disabled { opacity: 0.6; cursor: default; }
 
+    /* ═══════════════════════════════════════════
+       LEAGUES MODE
+    ═══════════════════════════════════════════ */
+
+    .leagues-section-label {
+      font-size: 0.72rem; font-weight: 700; color: #bbb;
+      letter-spacing: 0.08em; margin-bottom: 0.6rem; text-align: center;
+    }
+
+    .league-opt-btn {
+      display: flex; align-items: center; gap: 0.7rem;
+      width: 100%; padding: 0.85rem 1.1rem; margin-bottom: 0.55rem;
+      background: white; border: 2px solid #DDD; border-radius: 14px;
+      font-size: 0.95rem; font-weight: 700; color: #444; cursor: pointer;
+      text-align: left; font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .league-opt-btn:hover  { border-color: #8DC883; background: #F6FBF5; }
+    .league-opt-btn:active { transform: scale(0.98); }
+    .league-opt-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+    .leagues-list { margin-bottom: 1.1rem; }
+    .league-list-item {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; padding: 0.7rem 1rem; margin-bottom: 0.4rem;
+      background: white; border: 2px solid #DDD; border-radius: 12px;
+      font-family: inherit; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .league-list-item:hover  { border-color: #8DC883; background: #F6FBF5; }
+    .league-list-name { font-weight: 700; color: #333; font-size: 0.93rem; }
+    .league-list-meta { font-size: 0.75rem; color: #999; }
+
+    .league-home-name {
+      font-size: 1.35rem; font-weight: 800; color: #333;
+      text-align: center; margin-bottom: 0.15rem;
+    }
+    .league-home-meta {
+      font-size: 0.82rem; color: #888; text-align: center; margin-bottom: 0.9rem;
+    }
+    .league-season-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #F4F8FF; border: 1px solid #C8D8EE; border-radius: 10px;
+      padding: 0.5rem 1rem; margin-bottom: 0.9rem;
+      font-size: 0.84rem; font-weight: 700; color: #3A4A66;
+    }
+    .league-season-days { font-weight: 500; color: #667; }
+
+    .university-results-box {
+      border: 1px solid #EEE; border-radius: 10px; overflow-y: auto;
+      max-height: 240px; margin-top: 0.5rem;
+    }
+    .university-result-item {
+      padding: 0.65rem 0.9rem; cursor: pointer;
+      border-bottom: 1px solid #F3F3F3; font-size: 0.88rem; color: #333;
+      transition: background 0.1s;
+    }
+    .university-result-item:last-child { border-bottom: none; }
+    .university-result-item:hover { background: #F6FBF5; }
+    .university-result-country { font-size: 0.73rem; color: #bbb; }
+
+    .member-manage-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 0; border-bottom: 1px solid #F3F3F3; font-size: 0.88rem;
+    }
+    .member-manage-row:last-child { border-bottom: none; }
+    .member-manage-name { font-weight: 600; color: #333; flex: 1; }
+    .member-manage-badge { font-size: 0.72rem; color: #8DC883; font-weight: 700; margin-left: 0.3rem; }
+    .member-manage-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
+    .btn-member-action {
+      padding: 0.22rem 0.6rem; border-radius: 20px; border: 1px solid #DDD;
+      background: white; font-size: 0.74rem; color: #555; cursor: pointer;
+      font-family: inherit; transition: background 0.1s, border-color 0.1s;
+    }
+    .btn-member-action:hover { background: #F5F5F5; border-color: #bbb; }
+    .btn-member-remove { color: #CC4444; border-color: #EECACA; }
+    .btn-member-remove:hover { background: #FFF0F0; border-color: #E87070; }
+
+    .league-admin-section {
+      margin-top: 1rem; border-top: 1px solid #EEE; padding-top: 0.9rem;
+    }
+    .league-admin-btns {
+      display: flex; gap: 0.45rem; flex-wrap: wrap; justify-content: center;
+    }
+
+    .league-bottom-links {
+      margin-top: 0.9rem; display: flex; gap: 1.2rem;
+      justify-content: center; flex-wrap: wrap;
+    }
+
     /* --- Mobile overrides --- */
     @media (max-width: 640px) {
       .user-top-bar {
@@ -656,6 +746,7 @@
     <button class="mode-btn active" data-mode="daily">Daily</button>
     <button class="mode-btn" data-mode="timed">Timed</button>
     <button class="mode-btn" data-mode="battle">Battle</button>
+    <button class="mode-btn" data-mode="leagues">Leagues</button>
   </div>
 
   <!-- ═══ DAILY MODE ═══ -->
@@ -749,6 +840,7 @@
         <p class="finish-sub">puzzles in 60 seconds!</p>
         <div class="share-row hidden" id="timedShareRow"></div>
         <button class="btn-start" style="margin-top:1rem" id="btnPlayAgain">Play Again</button>
+        <button class="btn-start hidden" style="margin-top:0.5rem;background:#667" id="btnReturnToLeague">← Return to League</button>
       </div>
     </div>
 
@@ -842,6 +934,161 @@
       <p class="battle-rematch-status hidden" id="battleRematchStatus"></p>
       <button class="btn-start-splash" id="btnBattleRematch">Rematch</button>
       <button class="link-btn" id="btnBattleExit" style="margin-top:0.7rem">Exit</button>
+    </div>
+  </div>
+
+  <!-- ═══ LEAGUES MODE ═══ -->
+  <div class="game-card hidden" id="leaguesCard">
+
+    <!-- Lobby -->
+    <div id="leaguesLobby">
+      <p class="splash-big-num" style="font-size:2.6rem;margin-bottom:0">Leagues</p>
+      <p class="splash-unit">COMPETE &amp; CLIMB</p>
+      <p class="splash-headline">Play timed puzzles and earn points<br>for your university or friends league!</p>
+
+      <!-- Not signed in -->
+      <div id="leaguesAuthNote" class="hidden">
+        <p class="splash-auth-note">
+          <button class="link-btn" id="btnLeaguesShowAuth">Log in or sign up</button> to join leagues
+        </p>
+      </div>
+
+      <!-- Loading -->
+      <div id="leaguesLoading" class="hidden">
+        <p style="text-align:center;color:#ccc;font-size:0.88rem">Loading...</p>
+      </div>
+
+      <!-- My leagues list (shown when user has at least one) -->
+      <div id="leaguesMyLeagues" class="hidden">
+        <p class="leagues-section-label">MY LEAGUES</p>
+        <div class="leagues-list" id="leaguesList"></div>
+      </div>
+
+      <!-- Join / create options -->
+      <div id="leaguesOptions" class="hidden">
+        <p class="leagues-section-label" id="leaguesOptionsLabel">JOIN OR CREATE A LEAGUE</p>
+        <button class="league-opt-btn" id="btnJoinUniversity">
+          <span class="league-opt-icon">🏫</span>Join University League
+        </button>
+        <button class="league-opt-btn" id="btnJoinExistingLeague">
+          <span class="league-opt-icon">🔑</span>Join with Invite Code
+        </button>
+        <button class="league-opt-btn" id="btnCreateNewLeague">
+          <span class="league-opt-icon">+</span>Create New League
+        </button>
+      </div>
+    </div>
+
+    <!-- League Home -->
+    <div id="leagueHome" class="hidden">
+      <button class="splash-back" id="btnLeagueBack">← All Leagues</button>
+      <p class="league-home-name" id="leagueHomeName"></p>
+      <p class="league-home-meta" id="leagueHomeMeta"></p>
+
+      <!-- Season bar (custom leagues only) -->
+      <div id="leagueSeasonBar" class="hidden">
+        <div class="league-season-bar">
+          <span id="leagueSeasonLabel"></span>
+          <span class="league-season-days" id="leagueSeasonDays"></span>
+        </div>
+      </div>
+
+      <!-- Play button -->
+      <button class="btn-start" id="btnPlayLeague">Play!</button>
+
+      <!-- Leaderboard -->
+      <hr class="lb-divider" style="margin-top:0.4rem">
+      <div class="lb-tabs" id="leagueLbTabs"></div>
+      <h3 class="lb-heading" id="leagueLbHeading"></h3>
+      <div id="leagueLbContent"><p class="lb-loading">Loading...</p></div>
+
+      <!-- Admin controls (custom leagues, admins only) -->
+      <div id="leagueAdminSection" class="hidden league-admin-section">
+        <p class="leagues-section-label">ADMIN</p>
+        <div class="league-admin-btns">
+          <button class="action-btn btn-check" id="btnStartSeason" style="font-size:0.82rem">Start Season</button>
+          <button class="action-btn btn-reset" id="btnManageMembers" style="font-size:0.82rem">Manage Members</button>
+          <button class="action-btn btn-reset" id="btnShareInviteAdmin" style="font-size:0.82rem">Share Invite</button>
+        </div>
+      </div>
+
+      <!-- Bottom links -->
+      <div class="league-bottom-links">
+        <button class="link-btn" id="btnShareInviteMember" style="display:none">Share invite link</button>
+        <button class="link-btn" id="btnLeaveLeague" style="color:#cc4444">Leave League</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join University League modal -->
+  <div class="modal-overlay" id="joinUniversityModal">
+    <div class="modal">
+      <button class="modal-close" id="joinUniversityClose">✕</button>
+      <h2>Join University League</h2>
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Search for your university and join its league. One league per university, open to all.</p>
+      <input type="text" class="settings-input" id="universitySearch" placeholder="Search universities..." autocomplete="off">
+      <div class="university-results-box hidden" id="universityResults"></div>
+      <p class="settings-msg" id="joinUniversityMsg"></p>
+    </div>
+  </div>
+
+  <!-- Join by invite code modal -->
+  <div class="modal-overlay" id="joinExistingModal">
+    <div class="modal">
+      <button class="modal-close" id="joinExistingClose">✕</button>
+      <h2>Join with Invite Code</h2>
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Enter the invite code shared by your league admin.</p>
+      <input type="text" class="settings-input" id="inviteCodeInput" placeholder="e.g. abc12345" autocomplete="off" style="letter-spacing:0.08em;text-transform:lowercase">
+      <p class="settings-msg" id="joinExistingMsg"></p>
+      <button class="btn-magic" id="btnJoinByCode" style="margin-top:0.5rem">Join League</button>
+    </div>
+  </div>
+
+  <!-- Create league modal -->
+  <div class="modal-overlay" id="createLeagueModal">
+    <div class="modal">
+      <button class="modal-close" id="createLeagueClose">✕</button>
+      <h2>Create New League</h2>
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Give your league a name. You'll get an invite link to share with friends.</p>
+      <input type="text" class="settings-input" id="newLeagueName" placeholder="League name" autocomplete="off" maxlength="40">
+      <p class="settings-msg" id="createLeagueMsg"></p>
+      <button class="btn-magic" id="btnDoCreateLeague" style="margin-top:0.5rem">Create League</button>
+    </div>
+  </div>
+
+  <!-- Manage members modal -->
+  <div class="modal-overlay" id="manageMembersModal">
+    <div class="modal">
+      <button class="modal-close" id="manageMembersClose">✕</button>
+      <h2>Manage Members</h2>
+      <div id="membersList" style="max-height:340px;overflow-y:auto"></div>
+      <p class="settings-msg" id="manageMembersMsg"></p>
+    </div>
+  </div>
+
+  <!-- Share invite link modal -->
+  <div class="modal-overlay" id="shareInviteModal">
+    <div class="modal">
+      <button class="modal-close" id="shareInviteClose">✕</button>
+      <h2>Invite People</h2>
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Share this link to invite people to your league.</p>
+      <div class="battle-link-row">
+        <input type="text" id="shareInviteLink" readonly>
+        <button class="btn-magic" id="btnCopyInviteLink">Copy</button>
+      </div>
+      <div class="share-row hidden" id="leagueShareRow" style="margin-top:0.8rem"></div>
+    </div>
+  </div>
+
+  <!-- Season winner modal -->
+  <div class="modal-overlay" id="seasonWinnerModal">
+    <div class="modal" style="text-align:center">
+      <button class="modal-close" id="seasonWinnerClose">✕</button>
+      <p style="font-size:2.8rem;margin-bottom:0.2rem">🏆</p>
+      <h2 id="seasonWinnerTitle" style="font-size:1.2rem;margin-bottom:0.5rem"></h2>
+      <p id="seasonWinnerSub" style="font-size:0.88rem;color:#888;margin-bottom:1.2rem"></p>
+      <button class="btn-magic" id="btnStartNewSeason">Start New Season</button>
+      <p style="margin-top:0.6rem"><button class="link-btn" id="btnDismissWinner">Maybe later</button></p>
     </div>
   </div>
 
@@ -1934,6 +2181,7 @@
         // Keep leaderboard display names in sync
         await db.from('best_scores').update({ display_name: newUsername }).eq('user_id', currentSession.user.id);
         await db.from('timed_scores').update({ display_name: newUsername }).eq('user_id', currentSession.user.id);
+        await db.from('league_members').update({ display_name: newUsername }).eq('user_id', currentSession.user.id);
         currentUsername = newUsername;
         document.getElementById('timedUsername').textContent = currentUsername;
       }
@@ -2226,6 +2474,15 @@
       populateShareRow(document.getElementById('timedShareRow'),
         `I solved ${scoreCopy} equation${scoreCopy === 1 ? '' : 's'} in 60 seconds on Equations! Can you beat my score? 🧮 equationsgame.com`
       );
+      const returnBtn  = document.getElementById('btnReturnToLeague');
+      const playAgain  = document.getElementById('btnPlayAgain');
+      if (leagueIsPlaying && activeLeague) {
+        returnBtn.classList.remove('hidden');
+        playAgain.textContent = 'Play Again (for league)';
+      } else {
+        returnBtn.classList.add('hidden');
+        playAgain.textContent = 'Play Again';
+      }
       if (currentSession) await saveTimedScore(timedScore);
       await fetchLeaderboards();
       renderLeaderboard();
@@ -2656,6 +2913,7 @@
     async function settleBadges() {
       const { error } = await db.rpc('settle_past_leaderboard_days');
       if (error) console.error('settle_past_leaderboard_days error:', error);
+      db.rpc('settle_league_points').catch(e => console.error('settle_league_points error:', e));
     }
 
     async function fetchBadgeCounts(userIds) {
@@ -2959,6 +3217,14 @@
         setMode('battle');
         joinBattleById(id);
       }
+      if (event === 'SIGNED_IN' && session && pendingLeagueCode) {
+        document.getElementById('loginModal')?.classList.remove('open');
+        setMode('leagues');
+        // enterLeaguesMode will handle pendingLeagueCode
+      }
+      if (event === 'SIGNED_IN' && session && activeMode === 'leagues') {
+        enterLeaguesMode();
+      }
       if (event === 'PASSWORD_RECOVERY') {
         document.getElementById('loginModal')?.classList.remove('open');
         document.getElementById('resetPasswordModal').classList.add('open');
@@ -2974,7 +3240,10 @@
       document.getElementById('dailyCard').classList.toggle('hidden', mode !== 'daily');
       document.getElementById('timedCard').classList.toggle('hidden', mode !== 'timed');
       document.getElementById('battleCard').classList.toggle('hidden', mode !== 'battle');
+      document.getElementById('leaguesCard').classList.toggle('hidden', mode !== 'leagues');
+      if (mode !== 'timed' && mode !== 'leagues') leagueIsPlaying = false;
       if (mode === 'timed') { updateAuthUI(); fetchLeaderboards().then(renderLeaderboard); }
+      if (mode === 'leagues') { enterLeaguesMode(); }
       if (mode === 'battle') { enterBattleHome(); }
       else { leaveBattleMode(); }
     }
@@ -3000,6 +3269,11 @@
         mode: 'battle',
         title: '1v1 Battles — Equations | Multiplayer Math Puzzle Game',
         description: 'Challenge a friend to a 1v1 math puzzle battle. Choose 30s, 60s, 90s, or 2 minutes and see who can solve the most equations.'
+      },
+      '/leagues': {
+        mode: 'leagues',
+        title: 'Leagues — Equations | Compete with Your University or Friends',
+        description: 'Join your university league or create a private league with friends. Earn points daily and climb the season standings.'
       },
       '/how-to-play': {
         modal: 'help',
@@ -3384,6 +3658,651 @@
       populateShareRow(row, text);
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LEAGUES MODE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    let myLeagues        = [];    // array of enriched league rows
+    let activeLeague     = null;  // currently-open league
+    let activeLeagueSeason = null; // active league_seasons row (custom leagues)
+    let leagueLbTab      = 'today';
+    let leagueMemberCount = 0;
+    let leagueIsPlaying  = false; // true while timed game is running for a league
+    let pendingLeagueCode = null; // invite code waiting for sign-in
+    let universityData   = null;  // lazy-loaded Hipo dataset
+
+    // ── Visibility helpers ──────────────────────────────────────────────────
+
+    function showLeagueSection(id) {
+      ['leaguesLobby', 'leagueHome'].forEach(s =>
+        document.getElementById(s).classList.toggle('hidden', s !== id));
+    }
+
+    function showLobbySection(ids) {
+      const show = Array.isArray(ids) ? ids : [ids];
+      ['leaguesAuthNote','leaguesLoading','leaguesMyLeagues','leaguesOptions'].forEach(s =>
+        document.getElementById(s).classList.toggle('hidden', !show.includes(s)));
+    }
+
+    // ── Entry point ─────────────────────────────────────────────────────────
+
+    async function enterLeaguesMode() {
+      showLeagueSection('leaguesLobby');
+      if (!currentSession) { showLobbySection('leaguesAuthNote'); return; }
+      showLobbySection('leaguesLoading');
+      await loadMyLeagues();
+      renderLeaguesLobby();
+      // Auto-join if we have a pending invite code
+      if (pendingLeagueCode) {
+        const code = pendingLeagueCode; pendingLeagueCode = null;
+        autoJoinByCode(code);
+      }
+    }
+
+    async function loadMyLeagues() {
+      const { data } = await db
+        .from('league_members')
+        .select('is_admin, joined_at, leagues(*)')
+        .eq('user_id', currentSession.user.id)
+        .order('joined_at', { ascending: true });
+      myLeagues = (data || []).map(row => ({
+        ...row.leagues, is_admin: row.is_admin, joined_at: row.joined_at
+      }));
+    }
+
+    function renderLeaguesLobby() {
+      const hasLeagues = myLeagues.length > 0;
+      const show = ['leaguesOptions'];
+      if (hasLeagues) {
+        show.push('leaguesMyLeagues');
+        const listEl = document.getElementById('leaguesList');
+        listEl.innerHTML = '';
+        myLeagues.forEach(league => {
+          const btn = document.createElement('button');
+          btn.className = 'league-list-item';
+          const typeLabel = league.type === 'university'
+            ? `🏫 ${league.university_name || 'University'}`
+            : '👥 Custom';
+          btn.innerHTML =
+            `<span class="league-list-name">${escapeHtml(league.name)}</span>` +
+            `<span class="league-list-meta">${escapeHtml(typeLabel)}</span>`;
+          btn.addEventListener('click', () => openLeagueHome(league));
+          listEl.appendChild(btn);
+        });
+        document.getElementById('leaguesOptionsLabel').textContent = 'JOIN ANOTHER LEAGUE';
+      } else {
+        document.getElementById('leaguesOptionsLabel').textContent = 'JOIN OR CREATE A LEAGUE';
+      }
+      showLobbySection(show);
+    }
+
+    // ── Open a specific league's home screen ────────────────────────────────
+
+    async function openLeagueHome(league) {
+      activeLeague = league;
+      leagueLbTab  = 'today';
+
+      // Refresh full league row
+      const { data: full } = await db.from('leagues').select('*').eq('id', league.id).maybeSingle();
+      if (full) activeLeague = { ...full, is_admin: league.is_admin };
+
+      // Member count
+      const { count } = await db
+        .from('league_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('league_id', league.id);
+      leagueMemberCount = count || 0;
+
+      // Active season (custom only)
+      activeLeagueSeason = null;
+      if (activeLeague.type === 'custom') {
+        const { data: season } = await db
+          .from('league_seasons')
+          .select('*')
+          .eq('league_id', league.id)
+          .is('ended_at', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        activeLeagueSeason = season;
+
+        // Show winner modal if season just ended and user is admin
+        if (!activeLeagueSeason && activeLeague.is_admin) {
+          const { data: last } = await db
+            .from('league_seasons')
+            .select('*')
+            .eq('league_id', league.id)
+            .not('ended_at', 'is', null)
+            .order('ended_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (last) showSeasonWinnerModal(last);
+        }
+      }
+
+      renderLeagueHomeHeader();
+      showLeagueSection('leagueHome');
+      await fetchAndRenderLeagueLeaderboard();
+    }
+
+    function renderLeagueHomeHeader() {
+      document.getElementById('leagueHomeName').textContent = activeLeague.name;
+      const typeStr = activeLeague.type === 'university'
+        ? `🏫 ${activeLeague.university_name || 'University'}`
+        : '👥 Custom League';
+      document.getElementById('leagueHomeMeta').textContent =
+        `${typeStr} · ${leagueMemberCount} member${leagueMemberCount !== 1 ? 's' : ''}`;
+
+      // Season bar
+      const bar = document.getElementById('leagueSeasonBar');
+      if (activeLeague.type === 'custom') {
+        bar.classList.remove('hidden');
+        if (activeLeagueSeason) {
+          const start = new Date(activeLeagueSeason.started_at);
+          const daysElapsed = Math.floor((Date.now() - start) / 86400000);
+          const daysLeft = Math.max(0, 7 - daysElapsed);
+          document.getElementById('leagueSeasonLabel').textContent =
+            `Season ${activeLeagueSeason.season_number}`;
+          document.getElementById('leagueSeasonDays').textContent =
+            daysLeft > 0 ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left` : 'Ending tonight';
+        } else {
+          document.getElementById('leagueSeasonLabel').textContent = 'No active season';
+          document.getElementById('leagueSeasonDays').textContent = '';
+        }
+      } else {
+        bar.classList.add('hidden');
+      }
+
+      // Admin section
+      const adminSection = document.getElementById('leagueAdminSection');
+      if (activeLeague.is_admin && activeLeague.type === 'custom') {
+        adminSection.classList.remove('hidden');
+        document.getElementById('btnStartSeason').textContent =
+          activeLeagueSeason ? 'Restart Season' : 'Start Season';
+      } else {
+        adminSection.classList.add('hidden');
+      }
+
+      // Share invite button (non-admin custom members)
+      const memberShareBtn = document.getElementById('btnShareInviteMember');
+      memberShareBtn.style.display =
+        (activeLeague.type === 'custom' && !activeLeague.is_admin) ? '' : 'none';
+
+      // Leaderboard tabs
+      renderLeagueLbTabs();
+    }
+
+    function renderLeagueLbTabs() {
+      const tabsEl = document.getElementById('leagueLbTabs');
+      tabsEl.innerHTML = '';
+      const tabs = activeLeague.type === 'university'
+        ? [{ key: 'today', label: 'Today' }, { key: 'week', label: 'This Week' }, { key: 'month', label: 'This Month' }]
+        : [{ key: 'today', label: 'Today' }, { key: 'season', label: 'Season' }];
+      tabs.forEach(({ key, label }) => {
+        const btn = document.createElement('button');
+        btn.className = 'lb-tab' + (leagueLbTab === key ? ' active' : '');
+        btn.textContent = label;
+        btn.addEventListener('click', () => {
+          leagueLbTab = key;
+          tabsEl.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          fetchAndRenderLeagueLeaderboard();
+        });
+        tabsEl.appendChild(btn);
+      });
+    }
+
+    // ── Leaderboard fetching ────────────────────────────────────────────────
+
+    async function fetchAndRenderLeagueLeaderboard() {
+      const contentEl = document.getElementById('leagueLbContent');
+      contentEl.innerHTML = '<p class="lb-loading">Loading...</p>';
+      const today = getEstDateString();
+      const myId  = currentSession?.user?.id;
+
+      if (leagueLbTab === 'today') {
+        document.getElementById('leagueLbHeading').textContent = "Today's Scores";
+        const { data: members } = await db
+          .from('league_members')
+          .select('user_id, display_name')
+          .eq('league_id', activeLeague.id);
+        const memberIds = (members || []).map(m => m.user_id);
+        const nameMap = {};
+        (members || []).forEach(m => { nameMap[m.user_id] = m.display_name || 'Unknown'; });
+
+        const { data: scores } = await db
+          .from('timed_scores')
+          .select('user_id, score')
+          .in('user_id', memberIds)
+          .eq('day', today);
+        const bestByUser = {};
+        (scores || []).forEach(s => {
+          if (!bestByUser[s.user_id] || s.score > bestByUser[s.user_id]) bestByUser[s.user_id] = s.score;
+        });
+
+        let rows = (members || []).map(m => ({
+          user_id: m.user_id, display_name: nameMap[m.user_id], score: bestByUser[m.user_id] || 0
+        })).sort((a, b) => b.score - a.score);
+        if (activeLeague.type === 'university') rows = rows.slice(0, 10);
+        renderLeagueLbRows(contentEl, rows, myId, 'score');
+
+      } else if (leagueLbTab === 'season') {
+        document.getElementById('leagueLbHeading').textContent =
+          activeLeagueSeason ? `Season ${activeLeagueSeason.season_number} Standings` : 'Season Standings';
+        if (!activeLeagueSeason) {
+          contentEl.innerHTML = '<p class="lb-empty">No active season — start one to begin competing!</p>';
+          return;
+        }
+        const { data: pts } = await db
+          .from('league_daily_points')
+          .select('user_id, points')
+          .eq('season_id', activeLeagueSeason.id);
+        const totalByUser = {};
+        (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
+
+        const { data: members } = await db
+          .from('league_members')
+          .select('user_id, display_name')
+          .eq('league_id', activeLeague.id);
+        const rows = (members || []).map(m => ({
+          user_id: m.user_id, display_name: m.display_name || 'Unknown',
+          score: totalByUser[m.user_id] || 0
+        })).sort((a, b) => b.score - a.score);
+        renderLeagueLbRows(contentEl, rows, myId, 'pts');
+
+      } else if (leagueLbTab === 'week' || leagueLbTab === 'month') {
+        const estNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+        let startStr;
+        if (leagueLbTab === 'week') {
+          const dow = estNow.getDay();
+          const diff = dow === 0 ? 6 : dow - 1; // days since Monday
+          const mon = new Date(estNow); mon.setDate(estNow.getDate() - diff);
+          startStr = mon.toLocaleDateString('en-CA');
+          document.getElementById('leagueLbHeading').textContent = 'This Week (Mon–Sun)';
+        } else {
+          startStr = `${estNow.getFullYear()}-${String(estNow.getMonth() + 1).padStart(2, '0')}-01`;
+          document.getElementById('leagueLbHeading').textContent =
+            estNow.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+        const { data: pts } = await db
+          .from('league_daily_points')
+          .select('user_id, points')
+          .eq('league_id', activeLeague.id)
+          .gte('day', startStr)
+          .lte('day', today);
+        const totalByUser = {};
+        (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
+
+        const { data: members } = await db
+          .from('league_members')
+          .select('user_id, display_name')
+          .eq('league_id', activeLeague.id);
+        const rows = (members || [])
+          .map(m => ({ user_id: m.user_id, display_name: m.display_name || 'Unknown', score: totalByUser[m.user_id] || 0 }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10);
+        renderLeagueLbRows(contentEl, rows, myId, 'pts');
+      }
+    }
+
+    function renderLeagueLbRows(el, rows, myId, scoreLabel) {
+      if (!rows || rows.length === 0) {
+        el.innerHTML = '<p class="lb-empty">No data yet — start playing!</p>'; return;
+      }
+      const table = document.createElement('table'); table.className = 'lb-table';
+      const medals = ['🥇', '🥈', '🥉'];
+      rows.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        if (row.user_id === myId) tr.classList.add('lb-me');
+        const scoreDisp = scoreLabel === 'pts' ? `${row.score} pts` : row.score;
+        tr.innerHTML =
+          `<td class="lb-rank">${medals[i] ?? i + 1}</td>` +
+          `<td class="lb-name">${escapeHtml(row.display_name)}</td>` +
+          `<td class="lb-score">${scoreDisp}</td>`;
+        table.appendChild(tr);
+      });
+      el.innerHTML = ''; el.appendChild(table);
+    }
+
+    // ── League game play ────────────────────────────────────────────────────
+
+    function startLeagueGame() {
+      leagueIsPlaying = true;
+      // Show timed card while playing; hide leagues card
+      document.getElementById('leaguesCard').classList.add('hidden');
+      document.getElementById('timedCard').classList.remove('hidden');
+      document.getElementById('btnReturnToLeague').textContent =
+        `← Return to ${activeLeague ? activeLeague.name : 'League'}`;
+      startTimedGame();
+    }
+
+    async function returnFromLeaguePlay() {
+      leagueIsPlaying = false;
+      document.getElementById('timedCard').classList.add('hidden');
+      document.getElementById('leaguesCard').classList.remove('hidden');
+      if (activeLeague) await openLeagueHome(activeLeague);
+      else enterLeaguesMode();
+    }
+
+    // ── Join / create flows ─────────────────────────────────────────────────
+
+    async function loadUniversityData() {
+      if (universityData) return universityData;
+      const r = await fetch(
+        'https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json'
+      );
+      universityData = await r.json();
+      return universityData;
+    }
+
+    function openJoinUniversityModal() {
+      document.getElementById('universitySearch').value = '';
+      document.getElementById('universityResults').innerHTML = '';
+      document.getElementById('universityResults').classList.add('hidden');
+      document.getElementById('joinUniversityMsg').textContent = '';
+      document.getElementById('joinUniversityModal').classList.add('open');
+      document.getElementById('universitySearch').focus();
+    }
+
+    function openJoinExistingModal() {
+      document.getElementById('inviteCodeInput').value = '';
+      document.getElementById('joinExistingMsg').textContent = '';
+      document.getElementById('joinExistingModal').classList.add('open');
+    }
+
+    function openCreateLeagueModal() {
+      document.getElementById('newLeagueName').value = '';
+      document.getElementById('createLeagueMsg').textContent = '';
+      document.getElementById('createLeagueModal').classList.add('open');
+    }
+
+    function openShareInviteModal() {
+      if (!activeLeague || !activeLeague.invite_code) return;
+      const link = `${location.origin}/league-invite/${activeLeague.invite_code}`;
+      document.getElementById('shareInviteLink').value = link;
+      document.getElementById('shareInviteModal').classList.add('open');
+      populateShareRow(
+        document.getElementById('leagueShareRow'),
+        `Join my Equations league "${activeLeague.name}"! ${link}`
+      );
+    }
+
+    async function autoJoinByCode(code) {
+      await ensureCurrentUsername();
+      try {
+        const { data: lid, error } = await db.rpc('join_league_by_code', {
+          p_invite_code: code, p_display_name: currentUsername || ''
+        });
+        if (error) throw error;
+        await loadMyLeagues();
+        const joined = myLeagues.find(l => l.id === lid);
+        if (joined) { renderLeaguesLobby(); openLeagueHome(joined); }
+        else { renderLeaguesLobby(); }
+      } catch (e) {
+        renderLeaguesLobby();
+      }
+    }
+
+    function showSeasonWinnerModal(season) {
+      const winnerName = season.winner_name || 'Unknown';
+      document.getElementById('seasonWinnerTitle').textContent = `${winnerName} wins Season ${season.season_number}!`;
+      document.getElementById('seasonWinnerSub').textContent =
+        `The season is over. Start a new season to keep the competition going!`;
+      document.getElementById('seasonWinnerModal').classList.add('open');
+    }
+
+    async function openManageMembers() {
+      const el = document.getElementById('membersList');
+      document.getElementById('manageMembersMsg').textContent = '';
+      el.innerHTML = '<p style="color:#ccc;text-align:center;font-size:0.85rem">Loading...</p>';
+      document.getElementById('manageMembersModal').classList.add('open');
+
+      const { data: members } = await db
+        .from('league_members')
+        .select('user_id, display_name, is_admin, joined_at')
+        .eq('league_id', activeLeague.id)
+        .order('joined_at', { ascending: true });
+
+      el.innerHTML = '';
+      (members || []).forEach(m => {
+        const row = document.createElement('div'); row.className = 'member-manage-row';
+        const isMe = m.user_id === currentSession?.user?.id;
+        const adminBadge = m.is_admin ? '<span class="member-manage-badge">Admin</span>' : '';
+        const actionsHtml = isMe ? '' :
+          `<button class="btn-member-action btn-member-remove" data-uid="${escapeAttr(m.user_id)}">Remove</button>` +
+          (!m.is_admin ? `<button class="btn-member-action" data-promote="${escapeAttr(m.user_id)}">Make Admin</button>` : '');
+        row.innerHTML =
+          `<span class="member-manage-name">${escapeHtml(m.display_name || 'Unknown')}${adminBadge}</span>` +
+          `<span class="member-manage-actions">${actionsHtml}</span>`;
+
+        row.querySelectorAll('[data-uid]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const uid = btn.dataset.uid;
+            btn.disabled = true;
+            const { error } = await db.rpc('remove_league_member', { p_league_id: activeLeague.id, p_user_id: uid });
+            if (error) { document.getElementById('manageMembersMsg').textContent = error.message; btn.disabled = false; return; }
+            row.remove();
+            leagueMemberCount = Math.max(0, leagueMemberCount - 1);
+            document.getElementById('leagueHomeMeta').textContent =
+              (activeLeague.type === 'university' ? `🏫 ${activeLeague.university_name}` : '👥 Custom League') +
+              ` · ${leagueMemberCount} member${leagueMemberCount !== 1 ? 's' : ''}`;
+          });
+        });
+        row.querySelectorAll('[data-promote]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const uid = btn.dataset.promote;
+            btn.disabled = true;
+            const { error } = await db.rpc('promote_league_member', { p_league_id: activeLeague.id, p_user_id: uid });
+            if (error) { document.getElementById('manageMembersMsg').textContent = error.message; btn.disabled = false; return; }
+            btn.remove();
+            const nameSpan = row.querySelector('.member-manage-name');
+            if (nameSpan && !nameSpan.querySelector('.member-manage-badge')) {
+              nameSpan.insertAdjacentHTML('beforeend', '<span class="member-manage-badge">Admin</span>');
+            }
+          });
+        });
+        el.appendChild(row);
+      });
+    }
+
+    // ── Event wiring ─────────────────────────────────────────────────────────
+
+    document.getElementById('btnLeaguesShowAuth').addEventListener('click', () => openLoginModal('login'));
+    document.getElementById('btnJoinUniversity').addEventListener('click', openJoinUniversityModal);
+    document.getElementById('btnJoinExistingLeague').addEventListener('click', openJoinExistingModal);
+    document.getElementById('btnCreateNewLeague').addEventListener('click', openCreateLeagueModal);
+
+    document.getElementById('btnLeagueBack').addEventListener('click', async () => {
+      activeLeague = null; activeLeagueSeason = null;
+      showLeagueSection('leaguesLobby');
+      await loadMyLeagues(); renderLeaguesLobby();
+    });
+
+    document.getElementById('btnPlayLeague').addEventListener('click', startLeagueGame);
+    document.getElementById('btnReturnToLeague').addEventListener('click', returnFromLeaguePlay);
+
+    document.getElementById('btnStartSeason').addEventListener('click', async () => {
+      if (!activeLeague) return;
+      const btn = document.getElementById('btnStartSeason');
+      btn.disabled = true;
+      const { error } = await db.rpc('start_league_season', { p_league_id: activeLeague.id });
+      btn.disabled = false;
+      if (error) { alert('Could not start season: ' + error.message); return; }
+      await openLeagueHome(activeLeague);
+    });
+
+    document.getElementById('btnManageMembers').addEventListener('click', openManageMembers);
+
+    document.getElementById('btnShareInviteAdmin').addEventListener('click', openShareInviteModal);
+    document.getElementById('btnShareInviteMember').addEventListener('click', openShareInviteModal);
+
+    document.getElementById('btnLeaveLeague').addEventListener('click', async () => {
+      if (!activeLeague || !currentSession) return;
+      if (!confirm(`Leave "${activeLeague.name}"?`)) return;
+      await db.rpc('remove_league_member', { p_league_id: activeLeague.id, p_user_id: currentSession.user.id });
+      activeLeague = null; activeLeagueSeason = null;
+      await loadMyLeagues(); renderLeaguesLobby();
+      showLeagueSection('leaguesLobby');
+    });
+
+    // Close modals
+    document.getElementById('joinUniversityClose').addEventListener('click', () =>
+      document.getElementById('joinUniversityModal').classList.remove('open'));
+    document.getElementById('joinExistingClose').addEventListener('click', () =>
+      document.getElementById('joinExistingModal').classList.remove('open'));
+    document.getElementById('createLeagueClose').addEventListener('click', () =>
+      document.getElementById('createLeagueModal').classList.remove('open'));
+    document.getElementById('manageMembersClose').addEventListener('click', () =>
+      document.getElementById('manageMembersModal').classList.remove('open'));
+    document.getElementById('shareInviteClose').addEventListener('click', () =>
+      document.getElementById('shareInviteModal').classList.remove('open'));
+    document.getElementById('seasonWinnerClose').addEventListener('click', () =>
+      document.getElementById('seasonWinnerModal').classList.remove('open'));
+    document.getElementById('btnDismissWinner').addEventListener('click', () =>
+      document.getElementById('seasonWinnerModal').classList.remove('open'));
+
+    document.getElementById('btnStartNewSeason').addEventListener('click', async () => {
+      document.getElementById('seasonWinnerModal').classList.remove('open');
+      if (activeLeague) {
+        const { error } = await db.rpc('start_league_season', { p_league_id: activeLeague.id });
+        if (error) { alert('Could not start season: ' + error.message); return; }
+        await openLeagueHome(activeLeague);
+      }
+    });
+
+    document.getElementById('btnCopyInviteLink').addEventListener('click', async () => {
+      const link = document.getElementById('shareInviteLink');
+      link.select();
+      try { await navigator.clipboard.writeText(link.value); } catch {}
+      const btn = document.getElementById('btnCopyInviteLink');
+      const orig = btn.textContent; btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+
+    // University search
+    let uniSearchTimeout = null;
+    document.getElementById('universitySearch').addEventListener('input', async function () {
+      clearTimeout(uniSearchTimeout);
+      const q = this.value.trim();
+      const resultsEl = document.getElementById('universityResults');
+      const msgEl     = document.getElementById('joinUniversityMsg');
+      if (q.length < 2) { resultsEl.classList.add('hidden'); return; }
+      uniSearchTimeout = setTimeout(async () => {
+        msgEl.textContent = '';
+        try {
+          const data = await loadUniversityData();
+          const lq = q.toLowerCase();
+          const matches = data.filter(u => u.name.toLowerCase().includes(lq)).slice(0, 10);
+          resultsEl.innerHTML = '';
+          if (matches.length === 0) {
+            resultsEl.innerHTML = '<div class="university-result-item" style="color:#bbb">No results</div>';
+          } else {
+            matches.forEach(u => {
+              const item = document.createElement('div'); item.className = 'university-result-item';
+              item.innerHTML =
+                `<div>${escapeHtml(u.name)}</div>` +
+                `<div class="university-result-country">${escapeHtml(u.country || '')}</div>`;
+              item.addEventListener('click', () => selectUniversity(u, msgEl, resultsEl));
+              resultsEl.appendChild(item);
+            });
+          }
+          resultsEl.classList.remove('hidden');
+        } catch (e) {
+          msgEl.textContent = 'Could not load university list. Try again.';
+          msgEl.className = 'settings-msg err';
+        }
+      }, 280);
+    });
+
+    async function selectUniversity(uni, msgEl, resultsEl) {
+      resultsEl.classList.add('hidden');
+      msgEl.textContent = 'Joining...'; msgEl.className = 'settings-msg';
+      await ensureCurrentUsername();
+
+      // Find or create the university league
+      const { data: existing } = await db
+        .from('leagues')
+        .select('id, name')
+        .eq('type', 'university')
+        .ilike('university_name', escapeIlike(uni.name))
+        .maybeSingle();
+
+      let leagueId;
+      if (existing) {
+        leagueId = existing.id;
+        const { error } = await db.rpc('join_university_league',
+          { p_league_id: leagueId, p_display_name: currentUsername || '' });
+        if (error && error.code !== '23505') {
+          msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return;
+        }
+      } else {
+        const { data: newId, error } = await db.rpc('create_league', {
+          p_name: uni.name, p_type: 'university',
+          p_university_name: uni.name,
+          p_invite_code: null,
+          p_display_name: currentUsername || ''
+        });
+        if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
+        leagueId = newId;
+      }
+
+      msgEl.textContent = `Joined ${uni.name}!`; msgEl.className = 'settings-msg ok';
+      setTimeout(async () => {
+        document.getElementById('joinUniversityModal').classList.remove('open');
+        await loadMyLeagues(); renderLeaguesLobby();
+        const joined = myLeagues.find(l => l.id === leagueId);
+        if (joined) openLeagueHome(joined);
+      }, 800);
+    }
+
+    // Join by invite code
+    document.getElementById('btnJoinByCode').addEventListener('click', async () => {
+      const code = document.getElementById('inviteCodeInput').value.trim().toLowerCase();
+      const msgEl = document.getElementById('joinExistingMsg');
+      if (!code) { msgEl.textContent = 'Enter a code first.'; msgEl.className = 'settings-msg err'; return; }
+      const btn = document.getElementById('btnJoinByCode');
+      btn.disabled = true; msgEl.textContent = 'Joining...'; msgEl.className = 'settings-msg';
+      await ensureCurrentUsername();
+      const { data: leagueId, error } = await db.rpc('join_league_by_code',
+        { p_invite_code: code, p_display_name: currentUsername || '' });
+      btn.disabled = false;
+      if (error) { msgEl.textContent = error.message || 'Invalid code.'; msgEl.className = 'settings-msg err'; return; }
+      msgEl.textContent = 'Joined!'; msgEl.className = 'settings-msg ok';
+      setTimeout(async () => {
+        document.getElementById('joinExistingModal').classList.remove('open');
+        await loadMyLeagues(); renderLeaguesLobby();
+        const joined = myLeagues.find(l => l.id === leagueId);
+        if (joined) openLeagueHome(joined);
+      }, 700);
+    });
+
+    // Create new league
+    document.getElementById('btnDoCreateLeague').addEventListener('click', async () => {
+      const name  = document.getElementById('newLeagueName').value.trim();
+      const msgEl = document.getElementById('createLeagueMsg');
+      if (!name) { msgEl.textContent = 'Enter a league name.'; msgEl.className = 'settings-msg err'; return; }
+      if (await containsProfanity(name)) { msgEl.textContent = 'Please choose a different name.'; msgEl.className = 'settings-msg err'; return; }
+      const btn = document.getElementById('btnDoCreateLeague');
+      btn.disabled = true; msgEl.textContent = 'Creating...'; msgEl.className = 'settings-msg';
+      await ensureCurrentUsername();
+      const inviteCode = Math.random().toString(36).slice(2, 10);
+      const { data: leagueId, error } = await db.rpc('create_league', {
+        p_name: name, p_type: 'custom',
+        p_university_name: null,
+        p_invite_code: inviteCode,
+        p_display_name: currentUsername || ''
+      });
+      btn.disabled = false;
+      if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
+      msgEl.textContent = 'League created!'; msgEl.className = 'settings-msg ok';
+      setTimeout(async () => {
+        document.getElementById('createLeagueModal').classList.remove('open');
+        await loadMyLeagues(); renderLeaguesLobby();
+        const created = myLeagues.find(l => l.id === leagueId);
+        if (created) openLeagueHome(created);
+      }, 700);
+    });
+
     // ─── Init ────────────────────────────────────────────────────────────────────
     (async () => {
       const { data: { session } } = await db.auth.getSession();
@@ -3400,7 +4319,8 @@
       settleBadges().then(checkUnseenBadges);
 
       const params = new URLSearchParams(location.search);
-      const bid = params.get('battle');
+      const bid         = params.get('battle');
+      const leagueCode  = params.get('leagueCode');
       const initialPath = normalizePath(location.pathname);
       if (bid) {
         activeMode = 'battle';
@@ -3413,6 +4333,14 @@
           await showBattleInviteBanner(bid);
           enterBattleHome();
         }
+      } else if (leagueCode) {
+        activeMode = 'leagues';
+        setMode('leagues');
+        updateRouteMeta('/leagues', ROUTES['/leagues']);
+        if (!currentSession) {
+          pendingLeagueCode = leagueCode;
+        }
+        // enterLeaguesMode() (called by setMode) will pick up pendingLeagueCode
       } else if (ROUTES[initialPath]) {
         history.replaceState({ path: initialPath }, '', initialPath);
         applyRoute(initialPath);

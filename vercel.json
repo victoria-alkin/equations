@@ -6,9 +6,11 @@
   },
   "rewrites": [
     { "source": "/invite/:id", "destination": "/api/invite/:id" },
+    { "source": "/league-invite/:code", "destination": "/api/league-invite/:code" },
     { "source": "/daily", "destination": "/index.html" },
     { "source": "/timed", "destination": "/index.html" },
     { "source": "/battle", "destination": "/index.html" },
+    { "source": "/leagues", "destination": "/index.html" },
     { "source": "/how-to-play", "destination": "/index.html" },
     { "source": "/contact", "destination": "/index.html" }
   ]
