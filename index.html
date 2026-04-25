@@ -4319,10 +4319,12 @@
         invite_code: inviteCode, is_admin: true, joined_at: new Date().toISOString() };
       if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(newLeague);
       setTimeout(() => {
-        document.getElementById('createLeagueModal').classList.remove('open');
-        renderLeaguesLobby();
-        openLeagueHome(newLeague);
-        loadMyLeagues().catch(() => {});
+        try {
+          document.getElementById('createLeagueModal').classList.remove('open');
+          showLeagueSection('leaguesLobby');
+          renderLeaguesLobby();
+        } catch(e) { console.error('post-create render error:', e); alert('League created but display error: ' + e.message); }
+        loadMyLeagues().catch(console.error);
       }, 700);
     });
 
