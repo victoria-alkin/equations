@@ -3691,12 +3691,7 @@
       showLeagueSection('leaguesLobby');
       if (!currentSession) { showLobbySection('leaguesAuthNote'); return; }
       showLobbySection('leaguesLoading');
-      try {
-        await Promise.race([
-          loadMyLeagues(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-        ]);
-      } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
+      await loadMyLeagues();
       try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
       // Auto-join if we have a pending invite code
       if (pendingLeagueCode) {
@@ -3706,19 +3701,26 @@
     }
 
     async function loadMyLeagues() {
-      const { data: memberships, error } = await db
-        .from('league_members')
-        .select('league_id, is_admin, joined_at')
-        .eq('user_id', currentSession.user.id)
-        .order('joined_at', { ascending: true });
-      if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
-      const ids = memberships.map(r => r.league_id);
-      const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
-      const byId = {};
-      (leagueRows || []).forEach(l => { byId[l.id] = l; });
-      myLeagues = memberships
-        .filter(r => byId[r.league_id])
-        .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
+      try {
+        await Promise.race([
+          (async () => {
+            const { data: memberships, error } = await db
+              .from('league_members')
+              .select('league_id, is_admin, joined_at')
+              .eq('user_id', currentSession.user.id)
+              .order('joined_at', { ascending: true });
+            if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
+            const ids = memberships.map(r => r.league_id);
+            const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
+            const byId = {};
+            (leagueRows || []).forEach(l => { byId[l.id] = l; });
+            myLeagues = memberships
+              .filter(r => byId[r.league_id])
+              .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
+          })(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+        ]);
+      } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
     }
 
     function renderLeaguesLobby() {
