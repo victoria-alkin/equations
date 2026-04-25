@@ -1011,6 +1011,9 @@
           <button class="action-btn btn-reset" id="btnManageMembers" style="font-size:0.82rem">Manage Members</button>
           <button class="action-btn btn-reset" id="btnShareInviteAdmin" style="font-size:0.82rem">Share Invite</button>
         </div>
+        <div style="margin-top:0.6rem;text-align:center">
+          <button id="btnDeleteLeague" style="background:none;border:none;color:#c0392b;font-size:0.8rem;font-weight:600;cursor:pointer;text-decoration:underline;padding:0.2rem 0.4rem">Delete League</button>
+        </div>
       </div>
 
       <!-- Bottom links -->
@@ -4147,6 +4150,20 @@
     document.getElementById('btnManageMembers').addEventListener('click', openManageMembers);
 
     document.getElementById('btnShareInviteAdmin').addEventListener('click', openShareInviteModal);
+
+    document.getElementById('btnDeleteLeague').addEventListener('click', async () => {
+      if (!activeLeague) return;
+      const confirmed = confirm(`Permanently delete "${activeLeague.name}" and all its data? This cannot be undone.`);
+      if (!confirmed) return;
+      const btn = document.getElementById('btnDeleteLeague');
+      btn.textContent = 'Deleting...'; btn.style.pointerEvents = 'none';
+      const { error } = await db.from('leagues').delete().eq('id', activeLeague.id);
+      if (error) { btn.textContent = 'Delete League'; btn.style.pointerEvents = ''; alert('Error: ' + error.message); return; }
+      myLeagues = myLeagues.filter(l => l.id !== activeLeague.id);
+      activeLeague = null; activeLeagueSeason = null;
+      showLeagueSection('leaguesLobby');
+      renderLeaguesLobby();
+    });
     document.getElementById('btnShareInviteMember').addEventListener('click', openShareInviteModal);
 
     document.getElementById('btnLeaveLeague').addEventListener('click', async () => {
