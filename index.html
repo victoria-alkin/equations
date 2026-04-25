@@ -4260,11 +4260,15 @@
       }
 
       msgEl.textContent = `Joined ${uni.name}!`; msgEl.className = 'settings-msg ok';
-      setTimeout(async () => {
+      const joinedLeague = myLeagues.find(l => l.id === leagueId) ||
+        { id: leagueId, name: uni.name, type: 'university', university_name: uni.name,
+          invite_code: null, is_admin: false, joined_at: new Date().toISOString() };
+      if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joinedLeague);
+      setTimeout(() => {
         document.getElementById('joinUniversityModal').classList.remove('open');
-        await loadMyLeagues(); renderLeaguesLobby();
-        const joined = myLeagues.find(l => l.id === leagueId);
-        if (joined) openLeagueHome(joined);
+        renderLeaguesLobby();
+        openLeagueHome(joinedLeague);
+        loadMyLeagues().catch(() => {});
       }, 800);
     }
 
@@ -4283,7 +4287,8 @@
       msgEl.textContent = 'Joined!'; msgEl.className = 'settings-msg ok';
       setTimeout(async () => {
         document.getElementById('joinExistingModal').classList.remove('open');
-        await loadMyLeagues(); renderLeaguesLobby();
+        await loadMyLeagues();
+        renderLeaguesLobby();
         const joined = myLeagues.find(l => l.id === leagueId);
         if (joined) openLeagueHome(joined);
       }, 700);
@@ -4308,11 +4313,14 @@
       btn.disabled = false;
       if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
       msgEl.textContent = 'League created!'; msgEl.className = 'settings-msg ok';
-      setTimeout(async () => {
+      const newLeague = { id: leagueId, name, type: 'custom', university_name: null,
+        invite_code: inviteCode, is_admin: true, joined_at: new Date().toISOString() };
+      if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(newLeague);
+      setTimeout(() => {
         document.getElementById('createLeagueModal').classList.remove('open');
-        await loadMyLeagues(); renderLeaguesLobby();
-        const created = myLeagues.find(l => l.id === leagueId);
-        if (created) openLeagueHome(created);
+        renderLeaguesLobby();
+        openLeagueHome(newLeague);
+        loadMyLeagues().catch(() => {});
       }, 700);
     });
 
