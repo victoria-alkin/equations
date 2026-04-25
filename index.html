@@ -3697,7 +3697,7 @@
           new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
         ]);
       } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
-      renderLeaguesLobby();
+      try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
       // Auto-join if we have a pending invite code
       if (pendingLeagueCode) {
         const code = pendingLeagueCode; pendingLeagueCode = null;
