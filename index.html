@@ -3737,8 +3737,8 @@
             ? `🏫 ${league.university_name || 'University'}`
             : '👥 Custom';
           btn.innerHTML =
-            `<span class="league-list-name">${escapeHtml(league.name)}</span>` +
-            `<span class="league-list-meta">${escapeHtml(typeLabel)}</span>`;
+            `<span class="league-list-name">${escapeAttr(league.name)}</span>` +
+            `<span class="league-list-meta">${escapeAttr(typeLabel)}</span>`;
           btn.addEventListener('click', () => openLeagueHome(league));
           listEl.appendChild(btn);
         });
@@ -3970,7 +3970,7 @@
         const scoreDisp = scoreLabel === 'pts' ? `${row.score} pts` : row.score;
         tr.innerHTML =
           `<td class="lb-rank">${medals[i] ?? i + 1}</td>` +
-          `<td class="lb-name">${escapeHtml(row.display_name)}</td>` +
+          `<td class="lb-name">${escapeAttr(row.display_name)}</td>` +
           `<td class="lb-score">${scoreDisp}</td>`;
         table.appendChild(tr);
       });
@@ -4085,7 +4085,7 @@
           `<button class="btn-member-action btn-member-remove" data-uid="${escapeAttr(m.user_id)}">Remove</button>` +
           (!m.is_admin ? `<button class="btn-member-action" data-promote="${escapeAttr(m.user_id)}">Make Admin</button>` : '');
         row.innerHTML =
-          `<span class="member-manage-name">${escapeHtml(m.display_name || 'Unknown')}${adminBadge}</span>` +
+          `<span class="member-manage-name">${escapeAttr(m.display_name || 'Unknown')}${adminBadge}</span>` +
           `<span class="member-manage-actions">${actionsHtml}</span>`;
 
         row.querySelectorAll('[data-uid]').forEach(btn => {
@@ -4213,8 +4213,8 @@
             matches.forEach(u => {
               const item = document.createElement('div'); item.className = 'university-result-item';
               item.innerHTML =
-                `<div>${escapeHtml(u.name)}</div>` +
-                `<div class="university-result-country">${escapeHtml(u.country || '')}</div>`;
+                `<div>${escapeAttr(u.name)}</div>` +
+                `<div class="university-result-country">${escapeAttr(u.country || '')}</div>`;
               item.addEventListener('click', () => selectUniversity(u, msgEl, resultsEl));
               resultsEl.appendChild(item);
             });
