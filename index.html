@@ -4298,10 +4298,12 @@
     document.getElementById('btnDoCreateLeague').addEventListener('click', async () => {
       const name  = document.getElementById('newLeagueName').value.trim();
       const msgEl = document.getElementById('createLeagueMsg');
-      if (!name) { msgEl.textContent = 'Enter a league name.'; msgEl.className = 'settings-msg err'; return; }
-      if (await containsProfanity(name)) { msgEl.textContent = 'Please choose a different name.'; msgEl.className = 'settings-msg err'; return; }
       const btn = document.getElementById('btnDoCreateLeague');
+      if (!name) { msgEl.textContent = 'Enter a league name.'; msgEl.className = 'settings-msg err'; return; }
       btn.disabled = true; msgEl.textContent = 'Creating...'; msgEl.className = 'settings-msg';
+      if (await containsProfanity(name)) {
+        btn.disabled = false; msgEl.textContent = 'Please choose a different name.'; msgEl.className = 'settings-msg err'; return;
+      }
       await ensureCurrentUsername();
       const inviteCode = Math.random().toString(36).slice(2, 10);
       const { data: leagueId, error } = await db.rpc('create_league', {
