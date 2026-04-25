@@ -1070,6 +1070,19 @@
     </div>
   </div>
 
+  <!-- Delete league confirmation modal -->
+  <div class="modal-overlay" id="deleteLeagueModal">
+    <div class="modal">
+      <h2 style="color:#c0392b">Delete League</h2>
+      <p style="font-size:0.9rem;color:#555;margin:0.6rem 0 1.2rem">Permanently delete <strong id="deleteLeagueName"></strong> and all its data? This cannot be undone.</p>
+      <div style="display:flex;gap:0.7rem;justify-content:flex-end">
+        <button class="action-btn btn-reset" id="btnDeleteCancel">Cancel</button>
+        <button class="action-btn" id="btnDeleteConfirm" style="background:#c0392b;color:#fff">Delete</button>
+      </div>
+      <p class="settings-msg" id="deleteLeagueMsg"></p>
+    </div>
+  </div>
+
   <!-- Share invite link modal -->
   <div class="modal-overlay" id="shareInviteModal">
     <div class="modal">
@@ -4151,14 +4164,25 @@
 
     document.getElementById('btnShareInviteAdmin').addEventListener('click', openShareInviteModal);
 
-    document.getElementById('btnDeleteLeague').addEventListener('click', async () => {
+    document.getElementById('btnDeleteLeague').addEventListener('click', () => {
       if (!activeLeague) return;
-      const confirmed = confirm(`Permanently delete "${activeLeague.name}" and all its data? This cannot be undone.`);
-      if (!confirmed) return;
-      const btn = document.getElementById('btnDeleteLeague');
-      btn.textContent = 'Deleting...'; btn.style.pointerEvents = 'none';
+      document.getElementById('deleteLeagueName').textContent = `"${activeLeague.name}"`;
+      document.getElementById('deleteLeagueMsg').textContent = '';
+      document.getElementById('deleteLeagueModal').classList.add('open');
+    });
+
+    document.getElementById('btnDeleteCancel').addEventListener('click', () => {
+      document.getElementById('deleteLeagueModal').classList.remove('open');
+    });
+
+    document.getElementById('btnDeleteConfirm').addEventListener('click', async () => {
+      const btn = document.getElementById('btnDeleteConfirm');
+      const msgEl = document.getElementById('deleteLeagueMsg');
+      btn.disabled = true; btn.textContent = 'Deleting...';
       const { error } = await db.from('leagues').delete().eq('id', activeLeague.id);
-      if (error) { btn.textContent = 'Delete League'; btn.style.pointerEvents = ''; alert('Error: ' + error.message); return; }
+      btn.disabled = false; btn.textContent = 'Delete';
+      if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
+      document.getElementById('deleteLeagueModal').classList.remove('open');
       myLeagues = myLeagues.filter(l => l.id !== activeLeague.id);
       activeLeague = null; activeLeagueSeason = null;
       showLeagueSection('leaguesLobby');
