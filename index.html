@@ -3691,7 +3691,12 @@
       showLeagueSection('leaguesLobby');
       if (!currentSession) { showLobbySection('leaguesAuthNote'); return; }
       showLobbySection('leaguesLoading');
-      try { await loadMyLeagues(); } catch (e) { console.error('loadMyLeagues error:', e); }
+      try {
+        await Promise.race([
+          loadMyLeagues(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+        ]);
+      } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
       renderLeaguesLobby();
       // Auto-join if we have a pending invite code
       if (pendingLeagueCode) {
