@@ -1041,8 +1041,8 @@
     <div class="modal">
       <button class="modal-close" id="joinExistingClose">✕</button>
       <h2>Join with Invite Code</h2>
-      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Enter the invite code shared by your league admin.</p>
-      <input type="text" class="settings-input" id="inviteCodeInput" placeholder="e.g. abc12345" autocomplete="off" style="letter-spacing:0.08em;text-transform:lowercase">
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Paste an invite link or just the code.</p>
+      <input type="text" class="settings-input" id="inviteCodeInput" placeholder="Link or code" autocomplete="off" style="letter-spacing:0.08em;text-transform:lowercase">
       <p class="settings-msg" id="joinExistingMsg"></p>
       <button class="btn-magic" id="btnJoinByCode" style="margin-top:0.5rem">Join League</button>
     </div>
@@ -1111,12 +1111,18 @@
     <div class="modal">
       <button class="modal-close" id="shareInviteClose">✕</button>
       <h2>Invite People</h2>
-      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Share this link to invite people to your league.</p>
-      <div class="battle-link-row">
+      <p style="font-size:0.85rem;color:#888;margin-bottom:0.5rem">Share the link, or just the code if you prefer.</p>
+      <p style="font-size:0.75rem;color:#aaa;margin-bottom:0.3rem;font-weight:600;letter-spacing:0.05em">INVITE LINK</p>
+      <div class="battle-link-row" style="margin-bottom:0.8rem">
         <input type="text" id="shareInviteLink" readonly>
         <button class="btn-magic" id="btnCopyInviteLink">Copy</button>
       </div>
-      <div class="share-row hidden" id="leagueShareRow" style="margin-top:0.8rem"></div>
+      <p style="font-size:0.75rem;color:#aaa;margin-bottom:0.3rem;font-weight:600;letter-spacing:0.05em">CODE ONLY</p>
+      <div class="battle-link-row" style="margin-bottom:0.8rem">
+        <input type="text" id="shareInviteCode" readonly style="letter-spacing:0.12em;font-family:monospace">
+        <button class="btn-magic" id="btnCopyInviteCode">Copy</button>
+      </div>
+      <div class="share-row hidden" id="leagueShareRow"></div>
     </div>
   </div>
 
@@ -4080,6 +4086,7 @@
       if (!activeLeague || !activeLeague.invite_code) return;
       const link = `${location.origin}/league-invite/${activeLeague.invite_code}`;
       document.getElementById('shareInviteLink').value = link;
+      document.getElementById('shareInviteCode').value = activeLeague.invite_code;
       document.getElementById('shareInviteModal').classList.add('open');
       populateShareRow(
         document.getElementById('leagueShareRow'),
@@ -4279,10 +4286,19 @@
     });
 
     document.getElementById('btnCopyInviteLink').addEventListener('click', async () => {
-      const link = document.getElementById('shareInviteLink');
-      link.select();
-      try { await navigator.clipboard.writeText(link.value); } catch {}
+      const input = document.getElementById('shareInviteLink');
+      input.select();
+      try { await navigator.clipboard.writeText(input.value); } catch {}
       const btn = document.getElementById('btnCopyInviteLink');
+      const orig = btn.textContent; btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+
+    document.getElementById('btnCopyInviteCode').addEventListener('click', async () => {
+      const input = document.getElementById('shareInviteCode');
+      input.select();
+      try { await navigator.clipboard.writeText(input.value); } catch {}
+      const btn = document.getElementById('btnCopyInviteCode');
       const orig = btn.textContent; btn.textContent = 'Copied!';
       setTimeout(() => { btn.textContent = orig; }, 1500);
     });
@@ -4366,7 +4382,8 @@
 
     // Join by invite code
     document.getElementById('btnJoinByCode').addEventListener('click', async () => {
-      const code = document.getElementById('inviteCodeInput').value.trim().toLowerCase();
+      const raw = document.getElementById('inviteCodeInput').value.trim();
+      const code = (raw.includes('/') ? raw.split('/').pop() : raw).toLowerCase().replace(/[^a-z0-9]/g, '');
       const msgEl = document.getElementById('joinExistingMsg');
       if (!code) { msgEl.textContent = 'Enter a code first.'; msgEl.className = 'settings-msg err'; return; }
       const btn = document.getElementById('btnJoinByCode');
