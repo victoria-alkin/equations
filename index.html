@@ -4088,6 +4088,7 @@
     }
 
     async function autoJoinByCode(code) {
+      showLobbySection('leaguesLoading');
       await ensureCurrentUsername();
       try {
         const { data: lid, error } = await db.rpc('join_league_by_code', {
@@ -4096,9 +4097,10 @@
         if (error) throw error;
         await loadMyLeagues();
         const joined = myLeagues.find(l => l.id === lid);
-        if (joined) { renderLeaguesLobby(); openLeagueHome(joined); }
-        else { renderLeaguesLobby(); }
+        renderLeaguesLobby();
+        if (joined) showJoinedModal(joined);
       } catch (e) {
+        console.error('autoJoinByCode:', e);
         renderLeaguesLobby();
       }
     }
@@ -4449,13 +4451,10 @@
           enterBattleHome();
         }
       } else if (leagueCode) {
+        pendingLeagueCode = leagueCode; // set before setMode so enterLeaguesMode picks it up
         activeMode = 'leagues';
         setMode('leagues');
         updateRouteMeta('/leagues', ROUTES['/leagues']);
-        if (!currentSession) {
-          pendingLeagueCode = leagueCode;
-        }
-        // enterLeaguesMode() (called by setMode) will pick up pendingLeagueCode
       } else if (ROUTES[initialPath]) {
         history.replaceState({ path: initialPath }, '', initialPath);
         applyRoute(initialPath);
