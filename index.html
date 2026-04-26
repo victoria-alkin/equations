@@ -1070,6 +1070,19 @@
     </div>
   </div>
 
+  <!-- Leave league confirmation modal -->
+  <div class="modal-overlay" id="leaveLeagueModal">
+    <div class="modal">
+      <h2>Leave League</h2>
+      <p style="font-size:0.9rem;color:#555;margin:0.6rem 0 1.2rem">Are you sure you want to leave <strong id="leaveLeagueName"></strong>? You can rejoin later with an invite link.</p>
+      <div style="display:flex;gap:0.7rem;justify-content:flex-end">
+        <button class="action-btn btn-reset" id="btnLeaveCancel">Cancel</button>
+        <button class="action-btn" id="btnLeaveConfirm" style="background:#cc4444;color:#fff">Leave</button>
+      </div>
+      <p class="settings-msg" id="leaveLeagueMsg"></p>
+    </div>
+  </div>
+
   <!-- Delete league confirmation modal -->
   <div class="modal-overlay" id="deleteLeagueModal">
     <div class="modal">
@@ -4190,13 +4203,29 @@
     });
     document.getElementById('btnShareInviteMember').addEventListener('click', openShareInviteModal);
 
-    document.getElementById('btnLeaveLeague').addEventListener('click', async () => {
+    document.getElementById('btnLeaveLeague').addEventListener('click', () => {
       if (!activeLeague || !currentSession) return;
-      if (!confirm(`Leave "${activeLeague.name}"?`)) return;
-      await db.rpc('remove_league_member', { p_league_id: activeLeague.id, p_user_id: currentSession.user.id });
+      document.getElementById('leaveLeagueName').textContent = `"${activeLeague.name}"`;
+      document.getElementById('leaveLeagueMsg').textContent = '';
+      document.getElementById('leaveLeagueModal').classList.add('open');
+    });
+
+    document.getElementById('btnLeaveCancel').addEventListener('click', () => {
+      document.getElementById('leaveLeagueModal').classList.remove('open');
+    });
+
+    document.getElementById('btnLeaveConfirm').addEventListener('click', async () => {
+      const btn = document.getElementById('btnLeaveConfirm');
+      const msgEl = document.getElementById('leaveLeagueMsg');
+      btn.disabled = true; btn.textContent = 'Leaving...';
+      const { error } = await db.rpc('remove_league_member', { p_league_id: activeLeague.id, p_user_id: currentSession.user.id });
+      btn.disabled = false; btn.textContent = 'Leave';
+      if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
+      document.getElementById('leaveLeagueModal').classList.remove('open');
       activeLeague = null; activeLeagueSeason = null;
-      await loadMyLeagues(); renderLeaguesLobby();
+      await loadMyLeagues();
       showLeagueSection('leaguesLobby');
+      renderLeaguesLobby();
     });
 
     // Close modals
