@@ -1030,10 +1030,40 @@
     <div class="modal">
       <button class="modal-close" id="joinUniversityClose">✕</button>
       <h2>Join University League</h2>
-      <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Search for your university and join its league. One league per university, open to all.</p>
-      <input type="text" class="settings-input" id="universitySearch" placeholder="Search universities..." autocomplete="off">
-      <div class="university-results-box hidden" id="universityResults"></div>
-      <p class="settings-msg" id="joinUniversityMsg"></p>
+
+      <!-- Step 1: search -->
+      <div id="uniSearchStep">
+        <p style="font-size:0.85rem;color:#888;margin-bottom:0.8rem">Search for your university and join its league.</p>
+        <input type="text" class="settings-input" id="universitySearch" placeholder="Search universities..." autocomplete="off">
+        <div class="university-results-box hidden" id="universityResults"></div>
+        <p class="settings-msg" id="joinUniversityMsg"></p>
+      </div>
+
+      <!-- Step 2: verify -->
+      <div id="uniVerifyStep" class="hidden">
+        <button class="link-btn" id="btnUniBack" style="font-size:0.82rem;color:#aaa;margin-bottom:0.7rem">← Back</button>
+        <p style="font-weight:700;font-size:1rem;margin:0 0 0.6rem" id="uniVerifyTitle"></p>
+
+        <!-- OTP path (university in Hipo, login email doesn't match) -->
+        <div id="uniOtpSection" class="hidden">
+          <p style="font-size:0.85rem;color:#555;margin-bottom:0.6rem" id="uniOtpHint"></p>
+          <input type="email" class="settings-input" id="uniEmailInput" placeholder="you@university.edu" autocomplete="email">
+          <button class="btn-magic" id="btnSendOtp" style="margin-top:0.5rem">Send Code</button>
+          <div id="uniCodeSection" class="hidden" style="margin-top:0.9rem">
+            <p style="font-size:0.85rem;color:#555;margin-bottom:0.5rem" id="uniCodeHint"></p>
+            <input type="text" class="settings-input" id="uniCodeInput" placeholder="6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+            <button class="btn-magic" id="btnVerifyOtp" style="margin-top:0.5rem">Verify &amp; Join</button>
+          </div>
+        </div>
+
+        <!-- Honor system path (university not in Hipo) -->
+        <div id="uniHonorSection" class="hidden">
+          <p style="font-size:0.85rem;color:#888;margin-bottom:0.9rem">We can't automatically verify this university, so you're joining on the honor system.</p>
+          <button class="btn-magic" id="btnHonorJoin">Join Anyway</button>
+        </div>
+
+        <p class="settings-msg" id="uniVerifyMsg"></p>
+      </div>
     </div>
   </div>
 
@@ -3754,6 +3784,7 @@
     let pendingLeagueCode  = null; // invite code waiting for sign-in
     let universityData     = null; // lazy-loaded Hipo dataset
     let pendingJoinedLeague = null;
+    let pendingVerifyUni   = null;
 
     function showJoinedModal(league) {
       pendingJoinedLeague = league;
@@ -4300,8 +4331,58 @@
     });
 
     // Close modals
-    document.getElementById('joinUniversityClose').addEventListener('click', () =>
-      document.getElementById('joinUniversityModal').classList.remove('open'));
+    document.getElementById('joinUniversityClose').addEventListener('click', () => {
+      document.getElementById('joinUniversityModal').classList.remove('open');
+      resetUniModal();
+    });
+    document.getElementById('btnUniBack').addEventListener('click', resetUniModal);
+
+    document.getElementById('btnSendOtp').addEventListener('click', async () => {
+      const uni = pendingVerifyUni; if (!uni) return;
+      const email = document.getElementById('uniEmailInput').value.trim().toLowerCase();
+      const msgEl = document.getElementById('uniVerifyMsg');
+      if (!email.includes('@')) { msgEl.textContent = 'Enter a valid email address.'; msgEl.className = 'settings-msg err'; return; }
+      const btn = document.getElementById('btnSendOtp');
+      btn.disabled = true; btn.textContent = 'Sending...'; msgEl.textContent = '';
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        const r = await fetch('/api/send-university-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uniEmail: email, university_name: uni.name, domains: uni.domains || [], accessToken: session?.access_token || '' })
+        });
+        const result = await r.json();
+        if (!r.ok) { msgEl.textContent = result.error || 'Failed to send code.'; msgEl.className = 'settings-msg err'; btn.disabled = false; btn.textContent = 'Send Code'; return; }
+        document.getElementById('uniCodeHint').textContent = `Code sent to ${email}. Check your inbox (and spam folder).`;
+        document.getElementById('uniCodeSection').classList.remove('hidden');
+        msgEl.textContent = ''; btn.textContent = 'Resend Code';
+      } catch { msgEl.textContent = 'Failed to send code. Try again.'; msgEl.className = 'settings-msg err'; }
+      btn.disabled = false;
+    });
+
+    document.getElementById('btnVerifyOtp').addEventListener('click', async () => {
+      const uni = pendingVerifyUni; if (!uni) return;
+      const email = document.getElementById('uniEmailInput').value.trim().toLowerCase();
+      const code  = document.getElementById('uniCodeInput').value.trim();
+      const msgEl = document.getElementById('uniVerifyMsg');
+      if (code.length !== 6) { msgEl.textContent = 'Enter the 6-digit code.'; msgEl.className = 'settings-msg err'; return; }
+      const btn = document.getElementById('btnVerifyOtp');
+      btn.disabled = true; btn.textContent = 'Verifying...';
+      const { error } = await db.rpc('verify_university_otp', { p_email: email, p_code: code });
+      btn.disabled = false; btn.textContent = 'Verify & Join';
+      if (error) { msgEl.textContent = 'Incorrect or expired code. Try again.'; msgEl.className = 'settings-msg err'; return; }
+      msgEl.textContent = '✓ Verified!'; msgEl.className = 'settings-msg ok';
+      await doJoinUniversity(uni);
+    });
+
+    document.getElementById('btnHonorJoin').addEventListener('click', async () => {
+      const uni = pendingVerifyUni; if (!uni) return;
+      const btn = document.getElementById('btnHonorJoin');
+      btn.disabled = true;
+      await doJoinUniversity(uni);
+      btn.disabled = false;
+    });
+
     document.getElementById('joinExistingClose').addEventListener('click', () =>
       document.getElementById('joinExistingModal').classList.remove('open'));
     document.getElementById('createLeagueClose').addEventListener('click', () =>
@@ -4365,7 +4446,7 @@
               item.innerHTML =
                 `<div>${escapeAttr(u.name)}</div>` +
                 `<div class="university-result-country">${escapeAttr(u.country || '')}</div>`;
-              item.addEventListener('click', () => selectUniversity(u, msgEl, resultsEl));
+              item.addEventListener('click', () => selectUniversity(u));
               resultsEl.appendChild(item);
             });
           }
@@ -4377,15 +4458,67 @@
       }, 280);
     });
 
-    async function selectUniversity(uni, msgEl, resultsEl) {
-      resultsEl.classList.add('hidden');
-      msgEl.textContent = 'Joining...'; msgEl.className = 'settings-msg';
+    function domainMatchesUni(email, uniDomains) {
+      if (!uniDomains || uniDomains.length === 0) return false;
+      const d = (email.split('@')[1] || '').toLowerCase();
+      return uniDomains.some(ud => d === ud.toLowerCase() || d.endsWith('.' + ud.toLowerCase()));
+    }
+
+    function resetUniModal() {
+      document.getElementById('uniSearchStep').classList.remove('hidden');
+      document.getElementById('uniVerifyStep').classList.add('hidden');
+      document.getElementById('universitySearch').value = '';
+      document.getElementById('universityResults').classList.add('hidden');
+      document.getElementById('joinUniversityMsg').textContent = '';
+      document.getElementById('uniOtpSection').classList.add('hidden');
+      document.getElementById('uniHonorSection').classList.add('hidden');
+      document.getElementById('uniCodeSection').classList.add('hidden');
+      document.getElementById('uniEmailInput').value = '';
+      document.getElementById('uniCodeInput').value = '';
+      document.getElementById('uniVerifyMsg').textContent = '';
+      pendingVerifyUni = null;
+    }
+
+    function selectUniversity(uni) {
+      pendingVerifyUni = uni;
+      document.getElementById('uniSearchStep').classList.add('hidden');
+      document.getElementById('uniVerifyStep').classList.remove('hidden');
+      document.getElementById('uniVerifyTitle').textContent = uni.name;
+      document.getElementById('uniVerifyMsg').textContent = '';
+      document.getElementById('uniOtpSection').classList.add('hidden');
+      document.getElementById('uniHonorSection').classList.add('hidden');
+      document.getElementById('uniCodeSection').classList.add('hidden');
+      document.getElementById('uniEmailInput').value = '';
+      document.getElementById('uniCodeInput').value = '';
+
+      // Case 1: login email already matches — instant verification
+      const loginEmail = currentSession?.user?.email || '';
+      if (loginEmail && uni.domains?.length > 0 && domainMatchesUni(loginEmail, uni.domains)) {
+        const msgEl = document.getElementById('uniVerifyMsg');
+        msgEl.textContent = '✓ Email verified — joining...'; msgEl.className = 'settings-msg ok';
+        doJoinUniversity(uni);
+        return;
+      }
+
+      // Case 2: university has domains but login email doesn't match — OTP
+      if (uni.domains?.length > 0) {
+        document.getElementById('uniOtpSection').classList.remove('hidden');
+        const loginDomain = loginEmail.split('@')[1] || '';
+        document.getElementById('uniOtpHint').textContent =
+          `Your account uses @${loginDomain}. Enter your ${uni.name} email to verify.`;
+        return;
+      }
+
+      // Case 3: university not in Hipo — honor system
+      document.getElementById('uniHonorSection').classList.remove('hidden');
+    }
+
+    async function doJoinUniversity(uni) {
+      const msgEl = document.getElementById('uniVerifyMsg');
       await ensureCurrentUsername();
 
-      // Find or create the university league
       const { data: existing } = await db
-        .from('leagues')
-        .select('id, name')
+        .from('leagues').select('id, name')
         .eq('type', 'university')
         .ilike('university_name', escapeIlike(uni.name))
         .maybeSingle();
@@ -4400,10 +4533,8 @@
         }
       } else {
         const { data: newId, error } = await db.rpc('create_league', {
-          p_name: uni.name, p_type: 'university',
-          p_university_name: uni.name,
-          p_invite_code: null,
-          p_display_name: currentUsername || ''
+          p_name: uni.name, p_type: 'university', p_university_name: uni.name,
+          p_invite_code: null, p_display_name: currentUsername || ''
         });
         if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
         leagueId = newId;
@@ -4415,6 +4546,7 @@
       if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joinedLeague);
       renderLeaguesLobby();
       document.getElementById('joinUniversityModal').classList.remove('open');
+      resetUniModal();
       showJoinedModal(joinedLeague);
       loadMyLeagues().catch(() => {});
     }
