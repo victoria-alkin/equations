@@ -1070,6 +1070,16 @@
     </div>
   </div>
 
+  <!-- Joined league success modal -->
+  <div class="modal-overlay" id="joinedLeagueModal">
+    <div class="modal" style="text-align:center">
+      <p style="font-size:2.2rem;margin:0 0 0.4rem">🎉</p>
+      <h2 style="margin-bottom:0.3rem">You're in!</h2>
+      <p id="joinedLeagueName" style="font-size:1rem;color:#555;margin-bottom:1.4rem"></p>
+      <button class="btn-magic" id="btnGoToLeague">Go to League →</button>
+    </div>
+  </div>
+
   <!-- Leave league confirmation modal -->
   <div class="modal-overlay" id="leaveLeagueModal">
     <div class="modal">
@@ -3698,8 +3708,16 @@
     let leagueLbTab      = 'today';
     let leagueMemberCount = 0;
     let leagueIsPlaying  = false; // true while timed game is running for a league
-    let pendingLeagueCode = null; // invite code waiting for sign-in
-    let universityData   = null;  // lazy-loaded Hipo dataset
+    let pendingLeagueCode  = null; // invite code waiting for sign-in
+    let universityData     = null; // lazy-loaded Hipo dataset
+    let pendingJoinedLeague = null;
+
+    function showJoinedModal(league) {
+      pendingJoinedLeague = league;
+      document.getElementById('joinedLeagueName').textContent =
+        `You've joined ${league.name}!`;
+      document.getElementById('joinedLeagueModal').classList.add('open');
+    }
 
     // ── Visibility helpers ──────────────────────────────────────────────────
 
@@ -4184,6 +4202,11 @@
       document.getElementById('deleteLeagueModal').classList.add('open');
     });
 
+    document.getElementById('btnGoToLeague').addEventListener('click', () => {
+      document.getElementById('joinedLeagueModal').classList.remove('open');
+      if (pendingJoinedLeague) { openLeagueHome(pendingJoinedLeague); pendingJoinedLeague = null; }
+    });
+
     document.getElementById('btnDeleteCancel').addEventListener('click', () => {
       document.getElementById('deleteLeagueModal').classList.remove('open');
     });
@@ -4329,17 +4352,14 @@
         leagueId = newId;
       }
 
-      msgEl.textContent = `Joined ${uni.name}!`; msgEl.className = 'settings-msg ok';
       const joinedLeague = myLeagues.find(l => l.id === leagueId) ||
         { id: leagueId, name: uni.name, type: 'university', university_name: uni.name,
           invite_code: null, is_admin: false, joined_at: new Date().toISOString() };
       if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joinedLeague);
-      setTimeout(() => {
-        document.getElementById('joinUniversityModal').classList.remove('open');
-        renderLeaguesLobby();
-        openLeagueHome(joinedLeague);
-        loadMyLeagues().catch(() => {});
-      }, 800);
+      renderLeaguesLobby();
+      document.getElementById('joinUniversityModal').classList.remove('open');
+      showJoinedModal(joinedLeague);
+      loadMyLeagues().catch(() => {});
     }
 
     // Join by invite code
@@ -4354,14 +4374,14 @@
         { p_invite_code: code, p_display_name: currentUsername || '' });
       btn.disabled = false;
       if (error) { msgEl.textContent = error.message || 'Invalid code.'; msgEl.className = 'settings-msg err'; return; }
-      msgEl.textContent = 'Joined!'; msgEl.className = 'settings-msg ok';
-      setTimeout(async () => {
-        document.getElementById('joinExistingModal').classList.remove('open');
-        await loadMyLeagues();
-        renderLeaguesLobby();
-        const joined = myLeagues.find(l => l.id === leagueId);
-        if (joined) openLeagueHome(joined);
-      }, 700);
+      await loadMyLeagues();
+      const joined = myLeagues.find(l => l.id === leagueId) ||
+        { id: leagueId, name: 'League', type: 'custom', university_name: null,
+          invite_code: code, is_admin: false, joined_at: new Date().toISOString() };
+      if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joined);
+      renderLeaguesLobby();
+      document.getElementById('joinExistingModal').classList.remove('open');
+      showJoinedModal(joined);
     });
 
     // Create new league
