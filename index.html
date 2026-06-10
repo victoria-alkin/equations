@@ -3850,11 +3850,22 @@
       }
     }
 
-    function autoOpenUniversityLeague(slug) {
+    async function autoOpenUniversityLeague(slug) {
       const match = myLeagues.find(l =>
         l.type === 'university' && toLeagueSlug(l.university_name || l.name) === slug
       );
-      if (match) openLeagueHome(match);
+      if (match) { openLeagueHome(match); return; }
+      try {
+        const { data: rows } = await db.from('leagues').select('university_name, name').eq('type', 'university');
+        const found = (rows || []).find(l => toLeagueSlug(l.university_name || l.name) === slug);
+        const uniName = found?.university_name || found?.name;
+        if (uniName) {
+          openJoinUniversityModal();
+          const searchInput = document.getElementById('universitySearch');
+          searchInput.value = uniName;
+          searchInput.dispatchEvent(new Event('input'));
+        }
+      } catch {}
     }
 
     async function loadMyLeagues() {
