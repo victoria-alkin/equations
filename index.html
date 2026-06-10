@@ -2142,7 +2142,7 @@
       const loginBtn = document.getElementById('loginTopBtn');
       btn.classList.remove('avatar-bg-behind-green', 'avatar-bg-behind-purple');
       if (currentSession) {
-        document.getElementById('userAvatarImg').src = `images/${currentAvatar}.png`;
+        document.getElementById('userAvatarImg').src = `/images/${currentAvatar}.png`;
         btn.classList.add(avatarBackdropClass(currentAvatar));
         const displayName = currentUsername || '';
         document.getElementById('userTopName').textContent = displayName;
@@ -2191,7 +2191,7 @@
         const div = document.createElement('div');
         div.className = 'icon-option ' + iconPickerBackdropClass(icon) + (icon === pendingAvatar ? ' chosen' : '');
         div.dataset.icon = icon;
-        const img = document.createElement('img'); img.src = `images/${icon}.png`; img.alt = icon;
+        const img = document.createElement('img'); img.src = `/images/${icon}.png`; img.alt = icon;
         div.appendChild(img);
         div.addEventListener('click', () => {
           pendingAvatar = icon;
@@ -3021,7 +3021,7 @@
     });
 
     // ─── Leaderboard ────────────────────────────────────────────────────────────
-    const MEDAL_IMG = { gold: 'images/1.png', silver: 'images/2.png', bronze: 'images/3.png' };
+    const MEDAL_IMG = { gold: '/images/1.png', silver: '/images/2.png', bronze: '/images/3.png' };
 
     async function settleBadges() {
       const { error } = await db.rpc('settle_past_leaderboard_days');
