@@ -138,6 +138,7 @@ export default async function handler(req, res) {
 </style>
 </head>
 <body>
+<script>if(sessionStorage.getItem('eqInApp'))location.replace(${JSON.stringify(playUrl)});</script>
 <div class="card">
   <div class="emoji">🏫</div>
   <p class="league-name">${escapeHtml(displayName)}</p>

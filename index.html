@@ -4650,6 +4650,7 @@
     });
 
     // ─── Init ────────────────────────────────────────────────────────────────────
+    sessionStorage.setItem('eqInApp', '1');
     (async () => {
       const { data: { session } } = await db.auth.getSession();
       currentSession = session;
