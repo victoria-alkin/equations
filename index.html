@@ -1184,8 +1184,8 @@
         <input type="text" id="shareInviteLink" readonly>
         <button class="btn-magic" id="btnCopyInviteLink">Copy</button>
       </div>
-      <p style="font-size:0.75rem;color:#aaa;margin-bottom:0.3rem;font-weight:600;letter-spacing:0.05em">CODE ONLY</p>
-      <div class="battle-link-row" style="margin-bottom:0.8rem">
+      <p id="shareInviteCodeLabel" style="font-size:0.75rem;color:#aaa;margin-bottom:0.3rem;font-weight:600;letter-spacing:0.05em">CODE ONLY</p>
+      <div id="shareInviteCodeRow" class="battle-link-row" style="margin-bottom:0.8rem">
         <input type="text" id="shareInviteCode" readonly style="letter-spacing:0.12em;font-family:monospace">
         <button class="btn-magic" id="btnCopyInviteCode">Copy</button>
       </div>
@@ -3335,6 +3335,11 @@
         setMode('leagues');
         // enterLeaguesMode will handle pendingLeagueCode
       }
+      if (event === 'SIGNED_IN' && session && pendingUniversitySlug) {
+        document.getElementById('loginModal')?.classList.remove('open');
+        setMode('leagues');
+        // enterLeaguesMode will handle pendingUniversitySlug
+      }
       if (event === 'SIGNED_IN' && session && activeMode === 'leagues') {
         enterLeaguesMode();
       }
@@ -3781,7 +3786,12 @@
     let leagueLbTab      = 'today';
     let leagueMemberCount = 0;
     let leagueIsPlaying  = false; // true while timed game is running for a league
-    let pendingLeagueCode  = null; // invite code waiting for sign-in
+    let pendingLeagueCode    = null; // invite code waiting for sign-in
+    let pendingUniversitySlug = null; // university slug waiting for sign-in
+
+    function toLeagueSlug(name) {
+      return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
     let universityData     = null; // lazy-loaded Hipo dataset
     let pendingJoinedLeague = null;
     let pendingVerifyUni   = null;
@@ -3798,6 +3808,7 @@
     function showLeagueSection(id) {
       ['leaguesLobby', 'leagueHome'].forEach(s =>
         document.getElementById(s).classList.toggle('hidden', s !== id));
+      if (id === 'leaguesLobby') history.replaceState({ path: '/leagues' }, '', '/leagues');
     }
 
     function showLobbySection(ids) {
@@ -3818,7 +3829,17 @@
       if (pendingLeagueCode) {
         const code = pendingLeagueCode; pendingLeagueCode = null;
         autoJoinByCode(code);
+      } else if (pendingUniversitySlug) {
+        const slug = pendingUniversitySlug; pendingUniversitySlug = null;
+        autoOpenUniversityLeague(slug);
       }
+    }
+
+    function autoOpenUniversityLeague(slug) {
+      const match = myLeagues.find(l =>
+        l.type === 'university' && toLeagueSlug(l.university_name || l.name) === slug
+      );
+      if (match) openLeagueHome(match);
     }
 
     async function loadMyLeagues() {
@@ -3916,6 +3937,10 @@
 
       renderLeagueHomeHeader();
       showLeagueSection('leagueHome');
+      if (activeLeague.type === 'university') {
+        const slug = toLeagueSlug(activeLeague.university_name || activeLeague.name);
+        history.replaceState({ path: `/leagues/${slug}` }, '', `/leagues/${slug}`);
+      }
       await fetchAndRenderLeagueLeaderboard();
     }
 
@@ -3957,10 +3982,17 @@
         adminSection.classList.add('hidden');
       }
 
-      // Share invite button (non-admin custom members)
+      // Share button — university leagues always; custom leagues for non-admin members
       const memberShareBtn = document.getElementById('btnShareInviteMember');
-      memberShareBtn.style.display =
-        (activeLeague.type === 'custom' && !activeLeague.is_admin) ? '' : 'none';
+      if (activeLeague.type === 'university') {
+        memberShareBtn.style.display = '';
+        memberShareBtn.textContent = 'Share league link';
+      } else if (activeLeague.type === 'custom' && !activeLeague.is_admin) {
+        memberShareBtn.style.display = '';
+        memberShareBtn.textContent = 'Share invite link';
+      } else {
+        memberShareBtn.style.display = 'none';
+      }
 
       // Leaderboard tabs
       renderLeagueLbTabs();
@@ -4151,15 +4183,24 @@
     }
 
     function openShareInviteModal() {
-      if (!activeLeague || !activeLeague.invite_code) return;
-      const link = `${location.origin}/league-invite/${activeLeague.invite_code}`;
+      if (!activeLeague) return;
+      const isUniversity = activeLeague.type === 'university';
+      let link, shareMsg;
+      if (isUniversity) {
+        const slug = toLeagueSlug(activeLeague.university_name || activeLeague.name);
+        link = `${location.origin}/leagues/${slug}`;
+        shareMsg = `Compete in the ${activeLeague.university_name || activeLeague.name} league on Equations! ${link}`;
+      } else {
+        if (!activeLeague.invite_code) return;
+        link = `${location.origin}/league-invite/${activeLeague.invite_code}`;
+        document.getElementById('shareInviteCode').value = activeLeague.invite_code;
+        shareMsg = `Join my Equations league "${activeLeague.name}"! ${link}`;
+      }
       document.getElementById('shareInviteLink').value = link;
-      document.getElementById('shareInviteCode').value = activeLeague.invite_code;
+      document.getElementById('shareInviteCodeLabel').style.display = isUniversity ? 'none' : '';
+      document.getElementById('shareInviteCodeRow').style.display = isUniversity ? 'none' : '';
       document.getElementById('shareInviteModal').classList.add('open');
-      populateShareRow(
-        document.getElementById('leagueShareRow'),
-        `Join my Equations league "${activeLeague.name}"! ${link}`
-      );
+      populateShareRow(document.getElementById('leagueShareRow'), shareMsg);
     }
 
     async function autoJoinByCode(code) {
@@ -4624,8 +4665,9 @@
       settleBadges().then(checkUnseenBadges);
 
       const params = new URLSearchParams(location.search);
-      const bid         = params.get('battle');
-      const leagueCode  = params.get('leagueCode');
+      const bid           = params.get('battle');
+      const leagueCode    = params.get('leagueCode');
+      const universitySlug = params.get('universitySlug');
       const initialPath = normalizePath(location.pathname);
       if (bid) {
         activeMode = 'battle';
@@ -4640,6 +4682,11 @@
         }
       } else if (leagueCode) {
         pendingLeagueCode = leagueCode; // set before setMode so enterLeaguesMode picks it up
+        activeMode = 'leagues';
+        setMode('leagues');
+        updateRouteMeta('/leagues', ROUTES['/leagues']);
+      } else if (universitySlug) {
+        pendingUniversitySlug = universitySlug;
         activeMode = 'leagues';
         setMode('leagues');
         updateRouteMeta('/leagues', ROUTES['/leagues']);

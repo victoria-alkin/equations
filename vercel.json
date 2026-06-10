@@ -7,6 +7,7 @@
   "rewrites": [
     { "source": "/invite/:id", "destination": "/api/invite/:id" },
     { "source": "/league-invite/:code", "destination": "/api/league-invite/:code" },
+    { "source": "/leagues/:slug", "destination": "/api/leagues/:slug" },
     { "source": "/daily", "destination": "/index.html" },
     { "source": "/timed", "destination": "/index.html" },
     { "source": "/battle", "destination": "/index.html" },
