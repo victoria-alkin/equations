@@ -2182,6 +2182,7 @@
     }
 
     function openAccountSettings() {
+      if (!currentSession?.user) return;
       document.getElementById('accountUsernameInput').value = currentUsername;
       lockAccountUsernameField();
       setSettingsMsg('');
@@ -3301,7 +3302,11 @@
       }
     });
 
-    document.getElementById('btnSignOut').addEventListener('click', async () => { await db.auth.signOut(); });
+    document.getElementById('btnSignOut').addEventListener('click', async () => {
+      currentSession = null; currentUsername = ''; currentAvatar = 'icon1';
+      showUserAvatarBtn();
+      await db.auth.signOut();
+    });
 
     document.getElementById('btnStartGame').addEventListener('click', () => {
       if (currentSession) startTimedGame(); else showTimedState('auth');
@@ -3621,7 +3626,9 @@
     document.getElementById('btnEditUsername').addEventListener('click', () => unlockAccountUsernameField());
     document.getElementById('btnSaveSettings').addEventListener('click', saveSettings);
     document.getElementById('btnSignOutSettings').addEventListener('click', async () => {
+      currentSession = null; currentUsername = ''; currentAvatar = 'icon1';
       closeAccountOverlay();
+      showUserAvatarBtn();
       await db.auth.signOut();
     });
 
