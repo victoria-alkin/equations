@@ -92,8 +92,11 @@ export default async function handler(req, res) {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: system-ui, -apple-system, sans-serif;
-    background: #1a1a2e;
-    color: #e8e8f0;
+    background-image: url('https://equationsgame.com/images/background.png');
+    background-repeat: repeat;
+    background-size: 300px 300px;
+    background-color: #f5f5f5;
+    color: #444;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -101,40 +104,41 @@ export default async function handler(req, res) {
     padding: 2rem;
   }
   .card {
-    background: #25253a;
-    border-radius: 1.2rem;
+    background: #FDFCFB;
+    border-radius: 18px;
     padding: 2.5rem 2rem;
     max-width: 420px;
     width: 100%;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
   }
   .emoji { font-size: 3rem; margin-bottom: 0.6rem; }
-  .league-name { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
-  .sub { font-size: 0.88rem; color: #aaa; margin-bottom: 1.4rem; }
+  .league-name { font-size: 1.6rem; font-weight: 700; color: #333; margin-bottom: 0.3rem; }
+  .sub { font-size: 0.88rem; color: #888; margin-bottom: 1.4rem; }
   .members {
     font-size: 0.9rem;
-    color: #b0b0cc;
+    color: #666;
     margin-bottom: 1.8rem;
     padding: 0.5rem 1rem;
-    background: rgba(255,255,255,0.05);
-    border-radius: 0.5rem;
+    background: #f0f0f0;
+    border-radius: 8px;
     display: inline-block;
     min-width: 60%;
   }
   .btn-play {
     display: inline-block;
-    background: #6c5ce7;
+    background: #8DC883;
     color: #fff;
     font-weight: 700;
     font-size: 1.05rem;
     padding: 0.85rem 2.5rem;
-    border-radius: 0.7rem;
+    border-radius: 14px;
     text-decoration: none;
+    transition: opacity 0.15s;
   }
-  .btn-play:hover { background: #7d6ff0; }
-  .brand { margin-top: 1.5rem; font-size: 0.78rem; color: #555; }
-  .brand a { color: #777; text-decoration: none; }
+  .btn-play:hover { opacity: 0.88; }
+  .brand { margin-top: 1.5rem; font-size: 0.78rem; color: #aaa; }
+  .brand a { color: #aaa; text-decoration: none; }
 </style>
 </head>
 <body>
