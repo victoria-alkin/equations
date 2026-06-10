@@ -2141,7 +2141,7 @@
       const btn = document.getElementById('userAvatarBtn');
       const loginBtn = document.getElementById('loginTopBtn');
       btn.classList.remove('avatar-bg-behind-green', 'avatar-bg-behind-purple');
-      if (currentSession) {
+      if (currentSession?.user) {
         document.getElementById('userAvatarImg').src = `/images/${currentAvatar}.png`;
         btn.classList.add(avatarBackdropClass(currentAvatar));
         const displayName = currentUsername || '';
@@ -4664,7 +4664,7 @@
     (async () => {
       const { data: { session } } = await db.auth.getSession();
       currentSession = session;
-      if (currentSession) {
+      if (currentSession?.user) {
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
         currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
         currentAvatar   = profile?.avatar   || 'icon1';
