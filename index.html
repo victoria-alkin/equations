@@ -3986,9 +3986,11 @@
       const memberShareBtn = document.getElementById('btnShareInviteMember');
       if (activeLeague.type === 'university') {
         memberShareBtn.style.display = '';
+        memberShareBtn.style.color = '#333';
         memberShareBtn.textContent = 'Share league link';
       } else if (activeLeague.type === 'custom' && !activeLeague.is_admin) {
         memberShareBtn.style.display = '';
+        memberShareBtn.style.color = '';
         memberShareBtn.textContent = 'Share invite link';
       } else {
         memberShareBtn.style.display = 'none';
