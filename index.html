@@ -3312,8 +3312,17 @@
 
     document.getElementById('btnPlayAgain').addEventListener('click', startTimedGame);
 
-    db.auth.onAuthStateChange((event, session) => {
+    db.auth.onAuthStateChange(async (event, session) => {
       currentSession = session;
+      if (event === 'SIGNED_OUT') {
+        currentUsername = '';
+        currentAvatar = 'icon1';
+      }
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', session.user.id).maybeSingle();
+        currentUsername = profile?.username || session.user.user_metadata?.username || '';
+        currentAvatar   = profile?.avatar   || 'icon1';
+      }
       showUserAvatarBtn();
       renderDailyStreakChip();
       fetchServerSolvedToday().then(() => {
