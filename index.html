@@ -4696,7 +4696,8 @@
       const params = new URLSearchParams(location.search);
       const bid           = params.get('battle');
       const leagueCode    = params.get('leagueCode');
-      const universitySlug = params.get('universitySlug');
+      const universitySlug = sessionStorage.getItem('pendingUniversitySlug') || params.get('universitySlug');
+      if (universitySlug) sessionStorage.removeItem('pendingUniversitySlug');
       const initialPath = normalizePath(location.pathname);
       if (bid) {
         activeMode = 'battle';

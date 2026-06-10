@@ -133,7 +133,8 @@ export default async function handler(req, res) {
     font-size: 1.05rem;
     padding: 0.85rem 2.5rem;
     border-radius: 14px;
-    text-decoration: none;
+    border: none;
+    cursor: pointer;
     transition: opacity 0.15s;
   }
   .btn-play:hover { opacity: 0.88; }
@@ -142,13 +143,17 @@ export default async function handler(req, res) {
 </style>
 </head>
 <body>
-<script>if(sessionStorage.getItem('eqInApp'))location.replace(${JSON.stringify(playUrl)});</script>
+<script>
+  var slug = ${JSON.stringify(slug)};
+  function goPlay() { sessionStorage.setItem('pendingUniversitySlug', slug); location.replace('/leagues'); }
+  if (sessionStorage.getItem('eqInApp')) goPlay();
+</script>
 <div class="card">
   <div class="emoji">🏫</div>
   <p class="league-name">${escapeHtml(displayName)}</p>
   <p class="sub">University League &middot; Equations</p>
   <p class="members">${escapeHtml(memberText)}</p>
-  <a class="btn-play" href="${playUrl}">Play &amp; Compete</a>
+  <button class="btn-play" onclick="goPlay()">Play &amp; Compete</button>
   <p class="brand"><a href="https://equationsgame.com">equationsgame.com</a></p>
 </div>
 </body>
