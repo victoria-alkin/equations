@@ -3249,19 +3249,21 @@
       const btn        = document.getElementById('btnLogin');
       if (!identifier || !password) { setAuthMsg('Please fill in all fields.', 'err'); return; }
       btn.disabled = true; setAuthMsg('Logging in...');
+      const reset = () => { btn.disabled = false; };
+      const timer = setTimeout(() => { reset(); setAuthMsg('Request timed out. Please try again.', 'err'); }, 15000);
       try {
         let email = identifier;
         if (!identifier.includes('@')) {
           const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-          if (!lookedUp) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+          if (!lookedUp) { clearTimeout(timer); reset(); setAuthMsg('Username not found.', 'err'); return; }
           email = lookedUp;
         }
         const { error } = await db.auth.signInWithPassword({ email, password });
-        btn.disabled = false;
+        clearTimeout(timer); reset();
         if (error) setAuthMsg(error.message, 'err');
         else track('login', { surface: 'timed' });
       } catch (e) {
-        btn.disabled = false;
+        clearTimeout(timer); reset();
         setAuthMsg('Something went wrong. Please try again.', 'err');
       }
     });
@@ -3573,20 +3575,22 @@
       if (!identifier || !password) { setModalAuthMsg('Please fill in all fields.', 'err'); return; }
       const btn = document.getElementById('btnModalLogin');
       btn.disabled = true; setModalAuthMsg('Logging in...');
+      const reset = () => { btn.disabled = false; };
+      const timer = setTimeout(() => { reset(); setModalAuthMsg('Request timed out. Please try again.', 'err'); }, 15000);
       try {
         let email = identifier;
         if (!identifier.includes('@')) {
           const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-          if (!lookedUp) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+          if (!lookedUp) { clearTimeout(timer); reset(); setModalAuthMsg('Username not found.', 'err'); return; }
           email = lookedUp;
         }
         const { error } = await db.auth.signInWithPassword({ email, password });
-        btn.disabled = false;
+        clearTimeout(timer); reset();
         if (error) { setModalAuthMsg(error.message, 'err'); return; }
         track('login', { surface: 'modal' });
         closeLoginModal();
       } catch (e) {
-        btn.disabled = false;
+        clearTimeout(timer); reset();
         setModalAuthMsg('Something went wrong. Please try again.', 'err');
       }
     });
