@@ -3250,12 +3250,12 @@
       if (!identifier || !password) { setAuthMsg('Please fill in all fields.', 'err'); return; }
       btn.disabled = true; setAuthMsg('Logging in...');
       const reset = () => { btn.disabled = false; };
-      const timer = setTimeout(() => { reset(); setAuthMsg('Request timed out. Please try again.', 'err'); }, 15000);
+      const timer = setTimeout(() => { reset(); setAuthMsg('Request timed out. Please try again.', 'err'); }, 8000);
       try {
         let email = identifier;
         if (!identifier.includes('@')) {
-          const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-          if (!lookedUp) { clearTimeout(timer); reset(); setAuthMsg('Username not found.', 'err'); return; }
+          const { data: lookedUp, error: rpcErr } = await db.rpc('get_email_by_username', { p_username: identifier });
+          if (rpcErr || !lookedUp) { clearTimeout(timer); reset(); setAuthMsg(rpcErr ? 'Something went wrong. Please try again.' : 'Username not found.', 'err'); return; }
           email = lookedUp;
         }
         const { error } = await db.auth.signInWithPassword({ email, password });
@@ -3576,12 +3576,12 @@
       const btn = document.getElementById('btnModalLogin');
       btn.disabled = true; setModalAuthMsg('Logging in...');
       const reset = () => { btn.disabled = false; };
-      const timer = setTimeout(() => { reset(); setModalAuthMsg('Request timed out. Please try again.', 'err'); }, 15000);
+      const timer = setTimeout(() => { reset(); setModalAuthMsg('Request timed out. Please try again.', 'err'); }, 8000);
       try {
         let email = identifier;
         if (!identifier.includes('@')) {
-          const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-          if (!lookedUp) { clearTimeout(timer); reset(); setModalAuthMsg('Username not found.', 'err'); return; }
+          const { data: lookedUp, error: rpcErr } = await db.rpc('get_email_by_username', { p_username: identifier });
+          if (rpcErr || !lookedUp) { clearTimeout(timer); reset(); setModalAuthMsg(rpcErr ? 'Something went wrong. Please try again.' : 'Username not found.', 'err'); return; }
           email = lookedUp;
         }
         const { error } = await db.auth.signInWithPassword({ email, password });
