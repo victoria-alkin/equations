@@ -4699,16 +4699,31 @@
     // ─── Init ────────────────────────────────────────────────────────────────────
     sessionStorage.setItem('eqInApp', '1');
     (async () => {
-      const { data: { session } } = await db.auth.getSession();
+      let session = null;
+      try {
+        const r = await Promise.race([
+          db.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+        session = r.data.session;
+      } catch {}
       currentSession = session;
+
+      // Load profile without blocking puzzle init
       if (currentSession?.user) {
-        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
-        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
-        currentAvatar   = profile?.avatar   || 'icon1';
+        db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle()
+          .then(({ data: profile }) => {
+            currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
+            currentAvatar   = profile?.avatar   || 'icon1';
+            showUserAvatarBtn();
+          }).catch(() => {
+            currentUsername = currentSession.user.user_metadata?.username || '';
+            showUserAvatarBtn();
+          });
       }
       showUserAvatarBtn();
       puzzleIndex = getDailyIndex(difficulty);
-      await fetchServerSolvedToday();
+      await Promise.race([fetchServerSolvedToday(), new Promise(r => setTimeout(r, 5000))]);
       loadDailyPuzzle();
       settleBadges().then(checkUnseenBadges);
 
