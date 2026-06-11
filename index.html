@@ -3254,9 +3254,9 @@
       try {
         let email = identifier;
         if (!identifier.includes('@')) {
-          const { data: lookedUp, error: rpcErr } = await db.rpc('get_email_by_username', { p_username: identifier });
-          if (rpcErr || !lookedUp) { clearTimeout(timer); reset(); setAuthMsg(rpcErr ? 'Something went wrong. Please try again.' : 'Username not found.', 'err'); return; }
-          email = lookedUp;
+          const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
+          if (!profile?.email) { clearTimeout(timer); reset(); setAuthMsg('Username not found.', 'err'); return; }
+          email = profile.email;
         }
         const { error } = await db.auth.signInWithPassword({ email, password });
         clearTimeout(timer); reset();
@@ -3580,9 +3580,9 @@
       try {
         let email = identifier;
         if (!identifier.includes('@')) {
-          const { data: lookedUp, error: rpcErr } = await db.rpc('get_email_by_username', { p_username: identifier });
-          if (rpcErr || !lookedUp) { clearTimeout(timer); reset(); setModalAuthMsg(rpcErr ? 'Something went wrong. Please try again.' : 'Username not found.', 'err'); return; }
-          email = lookedUp;
+          const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
+          if (!profile?.email) { clearTimeout(timer); reset(); setModalAuthMsg('Username not found.', 'err'); return; }
+          email = profile.email;
         }
         const { error } = await db.auth.signInWithPassword({ email, password });
         clearTimeout(timer); reset();
