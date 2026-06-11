@@ -125,19 +125,22 @@ export default async function handler(req, res) {
     display: inline-block;
     min-width: 60%;
   }
-  .btn-play {
-    display: inline-block;
-    background: #8DC883;
-    color: #fff;
+  .auth-prompt { font-size: 0.9rem; color: #666; margin-bottom: 1.2rem; }
+  .btn-row { display: flex; gap: 0.75rem; justify-content: center; }
+  .btn {
+    flex: 1;
+    max-width: 160px;
     font-weight: 700;
-    font-size: 1.05rem;
-    padding: 0.85rem 2.5rem;
+    font-size: 1rem;
+    padding: 0.8rem 1rem;
     border-radius: 14px;
     border: none;
     cursor: pointer;
     transition: opacity 0.15s;
   }
-  .btn-play:hover { opacity: 0.88; }
+  .btn:hover { opacity: 0.88; }
+  .btn-login { background: #f0f0f0; color: #333; }
+  .btn-signup { background: #8DC883; color: #fff; }
   .brand { margin-top: 1.5rem; font-size: 0.78rem; color: #aaa; }
   .brand a { color: #aaa; text-decoration: none; }
 </style>
@@ -145,15 +148,34 @@ export default async function handler(req, res) {
 <body>
 <script>
   var slug = ${JSON.stringify(slug)};
-  function goPlay() { sessionStorage.setItem('pendingUniversitySlug', slug); location.replace('/leagues'); }
-  if (sessionStorage.getItem('eqInApp')) goPlay();
+  function goPlay(authTab) {
+    sessionStorage.setItem('pendingUniversitySlug', slug);
+    if (authTab) sessionStorage.setItem('pendingAuthTab', authTab);
+    location.replace('/leagues');
+  }
+  // If already in the SPA, redirect immediately
+  if (sessionStorage.getItem('eqInApp')) { goPlay(); }
+  else {
+    // Check for an active Supabase session in localStorage
+    try {
+      var raw = localStorage.getItem('sb-pcyymbfaxacvmkxrvmhx-auth-token');
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && s.access_token && (!s.expires_at || Date.now() / 1000 < s.expires_at)) goPlay();
+      }
+    } catch (e) {}
+  }
 </script>
 <div class="card">
   <div class="emoji">🏫</div>
   <p class="league-name">${escapeHtml(displayName)}</p>
   <p class="sub">University League &middot; Equations</p>
   <p class="members">${escapeHtml(memberText)}</p>
-  <button class="btn-play" onclick="goPlay()">Play &amp; Compete</button>
+  <p class="auth-prompt">Log in or sign up to compete in this league.</p>
+  <div class="btn-row">
+    <button class="btn btn-login" onclick="goPlay('login')">Log In</button>
+    <button class="btn btn-signup" onclick="goPlay('signup')">Sign Up</button>
+  </div>
   <p class="brand"><a href="https://equationsgame.com">equationsgame.com</a></p>
 </div>
 </body>

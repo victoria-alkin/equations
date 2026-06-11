@@ -3836,7 +3836,12 @@
 
     async function enterLeaguesMode() {
       showLeagueSection('leaguesLobby');
-      if (!currentSession) { showLobbySection('leaguesAuthNote'); return; }
+      if (!currentSession) {
+        showLobbySection('leaguesAuthNote');
+        const authTab = sessionStorage.getItem('pendingAuthTab');
+        if (authTab) { sessionStorage.removeItem('pendingAuthTab'); openLoginModal(authTab); }
+        return;
+      }
       showLobbySection('leaguesLoading');
       await loadMyLeagues();
       try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
