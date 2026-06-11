@@ -3249,18 +3249,21 @@
       const btn        = document.getElementById('btnLogin');
       if (!identifier || !password) { setAuthMsg('Please fill in all fields.', 'err'); return; }
       btn.disabled = true; setAuthMsg('Logging in...');
-
-      let email = identifier;
-      if (!identifier.includes('@')) {
-        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-        if (!lookedUp) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-        email = lookedUp;
+      try {
+        let email = identifier;
+        if (!identifier.includes('@')) {
+          const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
+          if (!lookedUp) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+          email = lookedUp;
+        }
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        btn.disabled = false;
+        if (error) setAuthMsg(error.message, 'err');
+        else track('login', { surface: 'timed' });
+      } catch (e) {
+        btn.disabled = false;
+        setAuthMsg('Something went wrong. Please try again.', 'err');
       }
-
-      const { error } = await db.auth.signInWithPassword({ email, password });
-      btn.disabled = false;
-      if (error) setAuthMsg(error.message, 'err');
-      else track('login', { surface: 'timed' });
     });
     ['loginIdentifier', 'loginPassword'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
@@ -3570,17 +3573,22 @@
       if (!identifier || !password) { setModalAuthMsg('Please fill in all fields.', 'err'); return; }
       const btn = document.getElementById('btnModalLogin');
       btn.disabled = true; setModalAuthMsg('Logging in...');
-      let email = identifier;
-      if (!identifier.includes('@')) {
-        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-        if (!lookedUp) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-        email = lookedUp;
+      try {
+        let email = identifier;
+        if (!identifier.includes('@')) {
+          const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
+          if (!lookedUp) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+          email = lookedUp;
+        }
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        btn.disabled = false;
+        if (error) { setModalAuthMsg(error.message, 'err'); return; }
+        track('login', { surface: 'modal' });
+        closeLoginModal();
+      } catch (e) {
+        btn.disabled = false;
+        setModalAuthMsg('Something went wrong. Please try again.', 'err');
       }
-      const { error } = await db.auth.signInWithPassword({ email, password });
-      btn.disabled = false;
-      if (error) { setModalAuthMsg(error.message, 'err'); return; }
-      track('login', { surface: 'modal' });
-      closeLoginModal();
     });
     ['modalLoginIdentifier', 'modalLoginPassword'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
