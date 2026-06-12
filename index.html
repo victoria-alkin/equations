@@ -3252,9 +3252,9 @@
 
       let email = identifier;
       if (!identifier.includes('@')) {
-        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-        if (!lookedUp) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-        email = lookedUp;
+        const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
+        if (!profile?.email) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+        email = profile.email;
       }
 
       const { error } = await db.auth.signInWithPassword({ email, password });
@@ -3572,9 +3572,9 @@
       btn.disabled = true; setModalAuthMsg('Logging in...');
       let email = identifier;
       if (!identifier.includes('@')) {
-        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
-        if (!lookedUp) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-        email = lookedUp;
+        const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
+        if (!profile?.email) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+        email = profile.email;
       }
       const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
