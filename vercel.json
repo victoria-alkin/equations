@@ -4,12 +4,6 @@
       "includeFiles": "email/WelcomeEmail.html"
     }
   },
-  "headers": [
-    {
-      "source": "/(|daily|timed|battle|leagues|how-to-play|contact)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
-    }
-  ],
   "rewrites": [
     { "source": "/invite/:id", "destination": "/api/invite/:id" },
     { "source": "/league-invite/:code", "destination": "/api/league-invite/:code" },

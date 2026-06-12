@@ -3249,23 +3249,18 @@
       const btn        = document.getElementById('btnLogin');
       if (!identifier || !password) { setAuthMsg('Please fill in all fields.', 'err'); return; }
       btn.disabled = true; setAuthMsg('Logging in...');
-      const reset = () => { btn.disabled = false; };
-      const timer = setTimeout(() => { reset(); setAuthMsg('Request timed out. Please try again.', 'err'); }, 8000);
-      try {
-        let email = identifier;
-        if (!identifier.includes('@')) {
-          const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
-          if (!profile?.email) { clearTimeout(timer); reset(); setAuthMsg('Username not found.', 'err'); return; }
-          email = profile.email;
-        }
-        const { error } = await db.auth.signInWithPassword({ email, password });
-        clearTimeout(timer); reset();
-        if (error) setAuthMsg(error.message, 'err');
-        else track('login', { surface: 'timed' });
-      } catch (e) {
-        clearTimeout(timer); reset();
-        setAuthMsg('Something went wrong. Please try again.', 'err');
+
+      let email = identifier;
+      if (!identifier.includes('@')) {
+        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
+        if (!lookedUp) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+        email = lookedUp;
       }
+
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      btn.disabled = false;
+      if (error) setAuthMsg(error.message, 'err');
+      else track('login', { surface: 'timed' });
     });
     ['loginIdentifier', 'loginPassword'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
@@ -3336,8 +3331,6 @@
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
       if (event === 'SIGNED_IN' && session) {
         settleBadges().then(checkUnseenBadges);
-      }
-      if (session && (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && !currentUsername))) {
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', session.user.id).maybeSingle();
         currentUsername = profile?.username || session.user.user_metadata?.username || '';
         currentAvatar   = profile?.avatar   || 'icon1';
@@ -3577,24 +3570,17 @@
       if (!identifier || !password) { setModalAuthMsg('Please fill in all fields.', 'err'); return; }
       const btn = document.getElementById('btnModalLogin');
       btn.disabled = true; setModalAuthMsg('Logging in...');
-      const reset = () => { btn.disabled = false; };
-      const timer = setTimeout(() => { reset(); setModalAuthMsg('Request timed out. Please try again.', 'err'); }, 8000);
-      try {
-        let email = identifier;
-        if (!identifier.includes('@')) {
-          const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
-          if (!profile?.email) { clearTimeout(timer); reset(); setModalAuthMsg('Username not found.', 'err'); return; }
-          email = profile.email;
-        }
-        const { error } = await db.auth.signInWithPassword({ email, password });
-        clearTimeout(timer); reset();
-        if (error) { setModalAuthMsg(error.message, 'err'); return; }
-        track('login', { surface: 'modal' });
-        closeLoginModal();
-      } catch (e) {
-        clearTimeout(timer); reset();
-        setModalAuthMsg('Something went wrong. Please try again.', 'err');
+      let email = identifier;
+      if (!identifier.includes('@')) {
+        const { data: lookedUp } = await db.rpc('get_email_by_username', { p_username: identifier });
+        if (!lookedUp) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+        email = lookedUp;
       }
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      btn.disabled = false;
+      if (error) { setModalAuthMsg(error.message, 'err'); return; }
+      track('login', { surface: 'modal' });
+      closeLoginModal();
     });
     ['modalLoginIdentifier', 'modalLoginPassword'].forEach(id => {
       document.getElementById(id).addEventListener('keydown', e => {
@@ -4699,31 +4685,16 @@
     // ─── Init ────────────────────────────────────────────────────────────────────
     sessionStorage.setItem('eqInApp', '1');
     (async () => {
-      let session = null;
-      try {
-        const r = await Promise.race([
-          db.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-        ]);
-        session = r.data.session;
-      } catch {}
+      const { data: { session } } = await db.auth.getSession();
       currentSession = session;
-
-      // Load profile without blocking puzzle init
       if (currentSession?.user) {
-        db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle()
-          .then(({ data: profile }) => {
-            currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
-            currentAvatar   = profile?.avatar   || 'icon1';
-            showUserAvatarBtn();
-          }).catch(() => {
-            currentUsername = currentSession.user.user_metadata?.username || '';
-            showUserAvatarBtn();
-          });
+        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
+        currentAvatar   = profile?.avatar   || 'icon1';
       }
       showUserAvatarBtn();
       puzzleIndex = getDailyIndex(difficulty);
-      await Promise.race([fetchServerSolvedToday(), new Promise(r => setTimeout(r, 5000))]);
+      await fetchServerSolvedToday();
       loadDailyPuzzle();
       settleBadges().then(checkUnseenBadges);
 
