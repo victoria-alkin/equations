@@ -3256,9 +3256,20 @@
 
       let email = identifier;
       if (!identifier.includes('@')) {
-        const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
-        if (!profile?.email) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-        email = profile.email;
+        try {
+          const ac = new AbortController();
+          const t = setTimeout(() => ac.abort(), 5000);
+          const r = await fetch(
+            `https://pcyymbfaxacvmkxrvmhx.supabase.co/rest/v1/profiles?select=email&username=ilike.${encodeURIComponent(identifier)}&limit=1`,
+            { headers: { apikey: 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u', Accept: 'application/json' }, signal: ac.signal }
+          );
+          clearTimeout(t);
+          const rows = await r.json();
+          if (!rows?.[0]?.email) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+          email = rows[0].email;
+        } catch (e) {
+          setAuthMsg('Something went wrong. Please try again.', 'err'); btn.disabled = false; return;
+        }
       }
 
       const { error } = await db.auth.signInWithPassword({ email, password });
@@ -3576,9 +3587,20 @@
       btn.disabled = true; setModalAuthMsg('Logging in...');
       let email = identifier;
       if (!identifier.includes('@')) {
-        const { data: profile } = await db.from('profiles').select('email').ilike('username', identifier).maybeSingle();
-        if (!profile?.email) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-        email = profile.email;
+        try {
+          const ac = new AbortController();
+          const t = setTimeout(() => ac.abort(), 5000);
+          const r = await fetch(
+            `https://pcyymbfaxacvmkxrvmhx.supabase.co/rest/v1/profiles?select=email&username=ilike.${encodeURIComponent(identifier)}&limit=1`,
+            { headers: { apikey: 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u', Accept: 'application/json' }, signal: ac.signal }
+          );
+          clearTimeout(t);
+          const rows = await r.json();
+          if (!rows?.[0]?.email) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
+          email = rows[0].email;
+        } catch (e) {
+          setModalAuthMsg('Something went wrong. Please try again.', 'err'); btn.disabled = false; return;
+        }
       }
       const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
