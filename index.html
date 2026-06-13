@@ -2141,7 +2141,7 @@
       const btn = document.getElementById('userAvatarBtn');
       const loginBtn = document.getElementById('loginTopBtn');
       btn.classList.remove('avatar-bg-behind-green', 'avatar-bg-behind-purple');
-      if (currentSession?.user && currentUsername) {
+      if (currentSession?.user) {
         document.getElementById('userAvatarImg').src = `/images/${currentAvatar}.png`;
         btn.classList.add(avatarBackdropClass(currentAvatar));
         document.getElementById('userTopName').textContent = currentUsername;
@@ -4706,28 +4706,16 @@
     // ─── Init ────────────────────────────────────────────────────────────────────
     sessionStorage.setItem('eqInApp', '1');
     (async () => {
-      // getSession can hang if token refresh fails — timeout after 5s
-      try {
-        const result = await Promise.race([
-          db.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-        ]);
-        currentSession = result.data.session;
-      } catch (e) {
-        currentSession = null;
+      const { data: { session } } = await db.auth.getSession();
+      currentSession = session;
+      if (currentSession?.user) {
+        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
+        currentAvatar   = profile?.avatar   || 'icon1';
       }
       showUserAvatarBtn();
-      // Load profile without blocking puzzle
-      if (currentSession?.user) {
-        db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle()
-          .then(({ data: profile }) => {
-            currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
-            currentAvatar   = profile?.avatar   || 'icon1';
-            showUserAvatarBtn();
-          }).catch(() => {});
-      }
       puzzleIndex = getDailyIndex(difficulty);
-      await Promise.race([fetchServerSolvedToday(), new Promise(r => setTimeout(r, 5000))]);
+      await fetchServerSolvedToday();
       loadDailyPuzzle();
       settleBadges().then(checkUnseenBadges);
 
