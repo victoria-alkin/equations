@@ -4746,23 +4746,19 @@
     puzzleIndex = getDailyIndex(difficulty);
     try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
     (async () => {
+      // Step 1: resolve auth — fast, reads from localStorage cache.
       try {
         const { data: { session } } = await db.auth.getSession();
         currentSession = session;
-        // Username/avatar are set by onAuthStateChange (INITIAL_SESSION /
-        // SIGNED_IN / TOKEN_REFRESHED). Don't overwrite them here — doing so
-        // with an empty user_metadata value would wipe what the handler set.
         showUserAvatarBtn();
-        await fetchServerSolvedToday();
-        // Re-render only if server knows about a solve we don't have locally
-        if (serverSolvedToday[difficulty] && !solved) {
-          try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
-        }
       } catch (e) {
         console.error('Init auth error:', e);
       }
-      settleBadges().then(checkUnseenBadges);
 
+      // Step 2: apply routing immediately — never block this on slow DB calls.
+      // fetchServerSolvedToday can hang; if it's inside the try above it would
+      // prevent routing from ever running, leaving the user stuck on daily mode.
+      settleBadges().then(checkUnseenBadges);
       const params = new URLSearchParams(location.search);
       const bid           = params.get('battle');
       const leagueCode    = params.get('leagueCode');
@@ -4796,6 +4792,17 @@
       } else {
         history.replaceState({ path: '/' }, '', '/');
         applyRoute('/');
+      }
+
+      // Step 3: fetch server-solved state in the background; re-render daily
+      // only if the server knows about a solve we don't have locally.
+      try {
+        await fetchServerSolvedToday();
+        if (serverSolvedToday[difficulty] && !solved) {
+          try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
+        }
+      } catch (e) {
+        console.error('fetchServerSolvedToday error:', e);
       }
     })();
   </script>
