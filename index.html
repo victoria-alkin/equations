@@ -3357,7 +3357,12 @@
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', session.user.id).maybeSingle();
         currentUsername = profile?.username || session.user.user_metadata?.username || '';
         currentAvatar   = profile?.avatar   || 'icon1';
+        // Cache so the next reload can show name/avatar immediately without a DB round-trip.
+        if (currentUsername) localStorage.setItem('eq_profile_cache', JSON.stringify({ username: currentUsername, avatar: currentAvatar }));
         showUserAvatarBtn();
+      }
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('eq_profile_cache');
       }
       if (event === 'SIGNED_IN' && session && pendingInviteId) {
         const id = pendingInviteId;
@@ -4714,6 +4719,11 @@
 
     // ─── Init ────────────────────────────────────────────────────────────────────
     sessionStorage.setItem('eqInApp', '1');
+    // Restore cached profile so name/avatar show before any DB call completes.
+    try {
+      const cached = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
+      if (cached?.username) { currentUsername = cached.username; currentAvatar = cached.avatar || 'icon1'; }
+    } catch {}
     // Render puzzle immediately with local state — never block on network calls.
     // Auth and server-solved state load async and patch in after.
     puzzleIndex = getDailyIndex(difficulty);
