@@ -4807,23 +4807,20 @@
       const cached = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
       if (cached?.username) { currentUsername = cached.username; currentAvatar = cached.avatar || 'icon1'; }
     } catch {}
+    // Pre-set session from localStorage so routing doesn't have to wait for getSession().
+    // getSession() may make a token-refresh network call; if it stalls, routing would
+    // never run and the user would land on daily mode regardless of the URL.
+    try {
+      const raw = localStorage.getItem('sb-pcyymbfaxacvmkxrvmhx-auth-token');
+      if (raw) { const s = JSON.parse(raw); if (s?.access_token && s?.user) currentSession = s; }
+    } catch {}
     // Render puzzle immediately with local state — never block on network calls.
     // Auth and server-solved state load async and patch in after.
     puzzleIndex = getDailyIndex(difficulty);
     try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
     (async () => {
-      // Step 1: resolve auth — fast, reads from localStorage cache.
-      try {
-        const { data: { session } } = await db.auth.getSession();
-        currentSession = session;
-        showUserAvatarBtn();
-      } catch (e) {
-        console.error('Init auth error:', e);
-      }
-
-      // Step 2: apply routing immediately — never block this on slow DB calls.
-      // fetchServerSolvedToday can hang; if it's inside the try above it would
-      // prevent routing from ever running, leaving the user stuck on daily mode.
+      // Step 1: route immediately using the localStorage-pre-set session.
+      // Never block URL routing on any network call — getSession() comes after.
       settleBadges().then(checkUnseenBadges);
       const params = new URLSearchParams(location.search);
       const bid           = params.get('battle');
@@ -4858,6 +4855,19 @@
       } else {
         history.replaceState({ path: '/' }, '', '/');
         applyRoute('/');
+      }
+
+      // Step 2: verify/refresh auth — may make a network call for token refresh.
+      // Routing already ran above, so a slow or stalled getSession() can't block it.
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        const prevUserId = currentSession?.user?.id;
+        currentSession = session;
+        showUserAvatarBtn();
+        // If the verified session differs (e.g. token was invalidated), refresh the active mode.
+        if (prevUserId !== session?.user?.id && activeMode === 'leagues') enterLeaguesMode();
+      } catch (e) {
+        console.error('Init auth error:', e);
       }
 
       // Step 3: fetch server-solved state in the background; re-render daily
