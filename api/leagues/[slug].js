@@ -296,16 +296,25 @@ export default async function handler(req, res) {
     if (e.key === 'Enter') doSignup();
   });
 
+  // Read session directly from localStorage — avoids creating a second Supabase
+  // client which can interfere with the SPA's auth state via token refresh races.
+  function getSessionFromStorage() {
+    try {
+      var raw = localStorage.getItem('sb-pcyymbfaxacvmkxrvmhx-auth-token');
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (!s || !s.access_token) return null;
+      if (s.expires_at && Date.now() / 1000 >= s.expires_at) return null;
+      return s;
+    } catch(e) { return null; }
+  }
+
   // Determine which state to show
   (async function() {
     // If coming back from the SPA, just redirect
     if (sessionStorage.getItem('eqInApp')) { goPlay(); return; }
 
-    var session = null;
-    try {
-      var r = await db.auth.getSession();
-      session = r.data && r.data.session;
-    } catch(e) {}
+    var session = getSessionFromStorage();
 
     if (!session) { show('stateAuth'); return; }
 
