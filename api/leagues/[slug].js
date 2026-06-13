@@ -172,14 +172,9 @@ export default async function handler(req, res) {
   <p class="sub">University League &middot; Equations</p>
   <p class="members">${escapeHtml(memberText)}</p>
 
-  <!-- State: signed in + member (auto-redirects, this is just a fallback) -->
-  <div id="stateMember" class="hidden">
-    <button class="btn btn-green" onclick="goPlay()">Go to League</button>
-  </div>
-
-  <!-- State: signed in, not a member -->
-  <div id="stateJoin" class="hidden">
-    <button class="btn btn-green" onclick="goPlay()">Join this League</button>
+  <!-- State: signed in (member or not — SPA handles the distinction) -->
+  <div id="stateSignedIn" class="hidden">
+    <button class="btn btn-green" onclick="goPlay()">Play &amp; Compete</button>
   </div>
 
   <!-- State: not signed in -->
@@ -218,7 +213,7 @@ export default async function handler(req, res) {
   }
 
   function show(id) {
-    ['stateMember','stateJoin','stateAuth'].forEach(function(s) {
+    ['stateSignedIn','stateAuth'].forEach(function(s) {
       document.getElementById(s).classList.toggle('hidden', s !== id);
     });
   }
@@ -344,37 +339,18 @@ export default async function handler(req, res) {
     } catch(e) { return null; }
   }
 
-  // Determine which state to show
-  (async function() {
-    // If coming back from the SPA, just redirect
+  // Determine which state to show — synchronous, no async calls
+  (function() {
     if (sessionStorage.getItem('eqInApp')) { goPlay(); return; }
-
     var session = getSessionFromStorage();
-
-    if (!session) { show('stateAuth'); return; }
-
-    // Signed in — check membership
-    if (LEAGUE_ID) {
-      try {
-        var ac = new AbortController();
-        var t = setTimeout(function() { ac.abort(); }, 5000);
-        var mr = await fetch(
-          SB_URL + '/rest/v1/league_members?league_id=eq.' + LEAGUE_ID + '&user_id=eq.' + session.user.id + '&select=user_id&limit=1',
-          { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token, Accept: 'application/json' }, signal: ac.signal }
-        );
-        clearTimeout(t);
-        var members = await mr.json();
-        if (members && members.length > 0) { goPlay(); return; } // already a member
-      } catch(e) {}
-    }
-
-    show('stateJoin');
+    if (session) { goPlay(); return; }
+    show('stateAuth');
   })();
 </script>
 </body>
 </html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', 'no-store');
   res.status(200).send(html);
 }
