@@ -14,6 +14,7 @@ function toSlug(name) {
 export default async function handler(req, res) {
   const slug = String(req.query.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
 
+  let leagueId = null;
   let universityName = null;
   let leagueName = null;
   let memberCount = 0;
@@ -28,6 +29,7 @@ export default async function handler(req, res) {
       if (Array.isArray(rows)) {
         const match = rows.find(row => toSlug(row.university_name || row.name) === slug);
         if (match) {
+          leagueId = match.id;
           universityName = match.university_name;
           leagueName = match.name;
           try {
@@ -65,7 +67,6 @@ export default async function handler(req, res) {
   const desc = `Compete in the ${escapeHtml(displayName)} league on Equations! Solve timed math puzzles and climb the leaderboard.`;
   const img = 'https://equationsgame.com/images/opengraph2.png';
   const pageUrl = `https://equationsgame.com/leagues/${encodeURIComponent(slug)}`;
-  const playUrl = `/leagues?universitySlug=${encodeURIComponent(slug)}`;
   const memberText = memberCount > 0
     ? `${memberCount} member${memberCount !== 1 ? 's' : ''} competing`
     : 'Be among the first to join!';
@@ -88,6 +89,7 @@ export default async function handler(req, res) {
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
 <meta name="twitter:image" content="${img}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -125,37 +127,206 @@ export default async function handler(req, res) {
     display: inline-block;
     min-width: 60%;
   }
-  .btn-play {
-    display: inline-block;
-    background: #8DC883;
-    color: #fff;
+  /* Shared button styles */
+  .btn {
+    display: block;
+    width: 100%;
     font-weight: 700;
-    font-size: 1.05rem;
-    padding: 0.85rem 2.5rem;
+    font-size: 1rem;
+    padding: 0.85rem 1rem;
     border-radius: 14px;
     border: none;
     cursor: pointer;
     transition: opacity 0.15s;
+    margin-bottom: 0.6rem;
   }
-  .btn-play:hover { opacity: 0.88; }
+  .btn:last-child { margin-bottom: 0; }
+  .btn:hover { opacity: 0.88; }
+  .btn-green { background: #8DC883; color: #fff; }
+  .btn-gray  { background: #f0f0f0; color: #333; }
+  /* Auth form */
+  .auth-tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 3px; margin-bottom: 1.2rem; }
+  .auth-tab {
+    flex: 1; padding: 0.5rem; border: none; background: none; border-radius: 10px;
+    font-weight: 600; font-size: 0.92rem; cursor: pointer; color: #888; transition: all 0.15s;
+  }
+  .auth-tab.active { background: #fff; color: #333; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .auth-form input {
+    display: block; width: 100%; padding: 0.7rem 0.9rem; margin-bottom: 0.6rem;
+    border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem;
+    outline: none; transition: border-color 0.15s;
+  }
+  .auth-form input:focus { border-color: #8DC883; }
+  .auth-msg { font-size: 0.85rem; min-height: 1.2em; margin-bottom: 0.6rem; }
+  .auth-msg.err { color: #c0392b; }
+  .auth-msg.ok  { color: #27ae60; }
+  .divider { font-size: 0.8rem; color: #bbb; margin: 1rem 0; }
   .brand { margin-top: 1.5rem; font-size: 0.78rem; color: #aaa; }
   .brand a { color: #aaa; text-decoration: none; }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<script>
-  var slug = ${JSON.stringify(slug)};
-  function goPlay() { sessionStorage.setItem('pendingUniversitySlug', slug); location.replace('/leagues'); }
-  if (sessionStorage.getItem('eqInApp')) goPlay();
-</script>
 <div class="card">
   <div class="emoji">🏫</div>
   <p class="league-name">${escapeHtml(displayName)}</p>
   <p class="sub">University League &middot; Equations</p>
   <p class="members">${escapeHtml(memberText)}</p>
-  <button class="btn-play" onclick="goPlay()">Play &amp; Compete</button>
+
+  <!-- State: signed in + member (auto-redirects, this is just a fallback) -->
+  <div id="stateMember" class="hidden">
+    <button class="btn btn-green" onclick="goPlay()">Go to League</button>
+  </div>
+
+  <!-- State: signed in, not a member -->
+  <div id="stateJoin" class="hidden">
+    <button class="btn btn-green" onclick="goPlay()">Join this League</button>
+  </div>
+
+  <!-- State: not signed in -->
+  <div id="stateAuth" class="hidden">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Log In</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+    <div id="formLogin" class="auth-form">
+      <input type="text" id="loginId" placeholder="Username or email" autocomplete="username">
+      <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password">
+      <p class="auth-msg" id="loginMsg"></p>
+      <button class="btn btn-green" id="btnLogin" onclick="doLogin()">Log In</button>
+    </div>
+    <div id="formSignup" class="auth-form hidden">
+      <input type="text" id="signupUsername" placeholder="Username" autocomplete="username">
+      <input type="email" id="signupEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="signupPw" placeholder="Password" autocomplete="new-password">
+      <p class="auth-msg" id="signupMsg"></p>
+      <button class="btn btn-green" id="btnSignup" onclick="doSignup()">Sign Up</button>
+    </div>
+  </div>
+
   <p class="brand"><a href="https://equationsgame.com">equationsgame.com</a></p>
 </div>
+
+<script>
+  var SLUG     = ${JSON.stringify(slug)};
+  var LEAGUE_ID = ${JSON.stringify(leagueId)};
+  var SB_URL   = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
+  var SB_KEY   = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
+  var db = supabase.createClient(SB_URL, SB_KEY);
+
+  function goPlay() {
+    sessionStorage.setItem('pendingUniversitySlug', SLUG);
+    location.replace('/leagues');
+  }
+
+  function show(id) {
+    ['stateMember','stateJoin','stateAuth'].forEach(function(s) {
+      document.getElementById(s).classList.toggle('hidden', s !== id);
+    });
+  }
+
+  function switchTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+    document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('formSignup').classList.toggle('hidden', tab !== 'signup');
+  }
+
+  function setMsg(id, msg, type) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'auth-msg' + (type ? ' ' + type : '');
+  }
+
+  async function lookupEmail(identifier) {
+    if (identifier.includes('@')) return identifier;
+    var ac = new AbortController();
+    var t = setTimeout(function() { ac.abort(); }, 5000);
+    var r = await fetch(
+      SB_URL + '/rest/v1/profiles?select=email&username=ilike.' + encodeURIComponent(identifier) + '&limit=1',
+      { headers: { apikey: SB_KEY, Accept: 'application/json' }, signal: ac.signal }
+    );
+    clearTimeout(t);
+    var rows = await r.json();
+    return rows && rows[0] && rows[0].email ? rows[0].email : null;
+  }
+
+  async function doLogin() {
+    var identifier = document.getElementById('loginId').value.trim();
+    var password   = document.getElementById('loginPw').value;
+    var btn = document.getElementById('btnLogin');
+    if (!identifier || !password) { setMsg('loginMsg', 'Please fill in all fields.', 'err'); return; }
+    btn.disabled = true; setMsg('loginMsg', 'Logging in...');
+    try {
+      var email = await lookupEmail(identifier);
+      if (!email) { setMsg('loginMsg', 'Username not found.', 'err'); btn.disabled = false; return; }
+      var result = await db.auth.signInWithPassword({ email: email, password: password });
+      if (result.error) { setMsg('loginMsg', result.error.message, 'err'); btn.disabled = false; return; }
+      setMsg('loginMsg', 'Signed in! Redirecting...', 'ok');
+      goPlay();
+    } catch(e) {
+      setMsg('loginMsg', 'Something went wrong. Please try again.', 'err');
+      btn.disabled = false;
+    }
+  }
+
+  async function doSignup() {
+    var username = document.getElementById('signupUsername').value.trim();
+    var email    = document.getElementById('signupEmail').value.trim();
+    var password = document.getElementById('signupPw').value;
+    var btn = document.getElementById('btnSignup');
+    if (!username || !email || !password) { setMsg('signupMsg', 'Please fill in all fields.', 'err'); return; }
+    btn.disabled = true; setMsg('signupMsg', 'Creating account...');
+    try {
+      var result = await db.auth.signUp({ email: email, password: password, options: { data: { username: username } } });
+      if (result.error) { setMsg('signupMsg', result.error.message, 'err'); btn.disabled = false; return; }
+      setMsg('signupMsg', 'Account created! Redirecting...', 'ok');
+      goPlay();
+    } catch(e) {
+      setMsg('signupMsg', 'Something went wrong. Please try again.', 'err');
+      btn.disabled = false;
+    }
+  }
+
+  // Enter key support
+  document.getElementById('loginPw').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('signupPw').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doSignup();
+  });
+
+  // Determine which state to show
+  (async function() {
+    // If coming back from the SPA, just redirect
+    if (sessionStorage.getItem('eqInApp')) { goPlay(); return; }
+
+    var session = null;
+    try {
+      var r = await db.auth.getSession();
+      session = r.data && r.data.session;
+    } catch(e) {}
+
+    if (!session) { show('stateAuth'); return; }
+
+    // Signed in — check membership
+    if (LEAGUE_ID) {
+      try {
+        var ac = new AbortController();
+        var t = setTimeout(function() { ac.abort(); }, 5000);
+        var mr = await fetch(
+          SB_URL + '/rest/v1/league_members?league_id=eq.' + LEAGUE_ID + '&user_id=eq.' + session.user.id + '&select=user_id&limit=1',
+          { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token, Accept: 'application/json' }, signal: ac.signal }
+        );
+        clearTimeout(t);
+        var members = await mr.json();
+        if (members && members.length > 0) { goPlay(); return; } // already a member
+      } catch(e) {}
+    }
+
+    show('stateJoin');
+  })();
+</script>
 </body>
 </html>`;
 
