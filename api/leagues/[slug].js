@@ -89,7 +89,6 @@ export default async function handler(req, res) {
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
 <meta name="twitter:image" content="${img}">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -208,11 +207,10 @@ export default async function handler(req, res) {
 </div>
 
 <script>
-  var SLUG     = ${JSON.stringify(slug)};
+  var SLUG      = ${JSON.stringify(slug)};
   var LEAGUE_ID = ${JSON.stringify(leagueId)};
-  var SB_URL   = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
-  var SB_KEY   = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
-  var db = supabase.createClient(SB_URL, SB_KEY);
+  var SB_URL    = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
+  var SB_KEY    = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
 
   function goPlay() {
     sessionStorage.setItem('pendingUniversitySlug', SLUG);
@@ -260,8 +258,26 @@ export default async function handler(req, res) {
     try {
       var email = await lookupEmail(identifier);
       if (!email) { setMsg('loginMsg', 'Username not found.', 'err'); btn.disabled = false; return; }
-      var result = await db.auth.signInWithPassword({ email: email, password: password });
-      if (result.error) { setMsg('loginMsg', result.error.message, 'err'); btn.disabled = false; return; }
+      var ac = new AbortController();
+      var t = setTimeout(function() { ac.abort(); }, 8000);
+      var r = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password }),
+        signal: ac.signal
+      });
+      clearTimeout(t);
+      var data = await r.json();
+      if (!r.ok || data.error) { setMsg('loginMsg', data.error_description || data.error || 'Invalid credentials.', 'err'); btn.disabled = false; return; }
+      // Write session to localStorage in the format the Supabase JS client expects
+      var sessionKey = 'sb-pcyymbfaxacvmkxrvmhx-auth-token';
+      localStorage.setItem(sessionKey, JSON.stringify({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: Math.floor(Date.now() / 1000) + data.expires_in,
+        token_type: data.token_type,
+        user: data.user
+      }));
       setMsg('loginMsg', 'Signed in! Redirecting...', 'ok');
       goPlay();
     } catch(e) {
@@ -278,8 +294,27 @@ export default async function handler(req, res) {
     if (!username || !email || !password) { setMsg('signupMsg', 'Please fill in all fields.', 'err'); return; }
     btn.disabled = true; setMsg('signupMsg', 'Creating account...');
     try {
-      var result = await db.auth.signUp({ email: email, password: password, options: { data: { username: username } } });
-      if (result.error) { setMsg('signupMsg', result.error.message, 'err'); btn.disabled = false; return; }
+      var ac = new AbortController();
+      var t = setTimeout(function() { ac.abort(); }, 8000);
+      var r = await fetch(SB_URL + '/auth/v1/signup', {
+        method: 'POST',
+        headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password, data: { username: username } }),
+        signal: ac.signal
+      });
+      clearTimeout(t);
+      var data = await r.json();
+      if (!r.ok || data.error) { setMsg('signupMsg', data.error_description || data.error || 'Sign up failed.', 'err'); btn.disabled = false; return; }
+      if (data.access_token) {
+        var sessionKey = 'sb-pcyymbfaxacvmkxrvmhx-auth-token';
+        localStorage.setItem(sessionKey, JSON.stringify({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          expires_at: Math.floor(Date.now() / 1000) + data.expires_in,
+          token_type: data.token_type,
+          user: data.user
+        }));
+      }
       setMsg('signupMsg', 'Account created! Redirecting...', 'ok');
       goPlay();
     } catch(e) {
