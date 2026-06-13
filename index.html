@@ -3446,6 +3446,7 @@
       }
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('eq_profile_cache');
+        localStorage.removeItem('eq_leagues_cache');
       }
       if (event === 'SIGNED_IN' && session && pendingInviteId) {
         const id = pendingInviteId;
@@ -3992,26 +3993,43 @@
     }
 
     async function loadMyLeagues() {
+      // Serve from cache immediately — avoids waiting on two sequential Supabase
+      // calls (league_members then leagues) when the connection is slow.
+      let hasCached = false;
       try {
-        await Promise.race([
-          (async () => {
-            const { data: memberships, error } = await db
-              .from('league_members')
-              .select('league_id, is_admin, joined_at')
-              .eq('user_id', currentSession.user.id)
-              .order('joined_at', { ascending: true });
-            if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
-            const ids = memberships.map(r => r.league_id);
-            const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
-            const byId = {};
-            (leagueRows || []).forEach(l => { byId[l.id] = l; });
-            myLeagues = memberships
-              .filter(r => byId[r.league_id])
-              .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
-          })(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-        ]);
-      } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
+        const c = JSON.parse(localStorage.getItem('eq_leagues_cache') || 'null');
+        if (c?.leagues) { myLeagues = c.leagues; hasCached = true; }
+      } catch {}
+
+      const fetchFresh = async () => {
+        try {
+          await Promise.race([
+            (async () => {
+              const { data: memberships, error } = await db
+                .from('league_members')
+                .select('league_id, is_admin, joined_at')
+                .eq('user_id', currentSession.user.id)
+                .order('joined_at', { ascending: true });
+              if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
+              const ids = memberships.map(r => r.league_id);
+              const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
+              const byId = {};
+              (leagueRows || []).forEach(l => { byId[l.id] = l; });
+              myLeagues = memberships
+                .filter(r => byId[r.league_id])
+                .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
+              try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
+            })(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+          ]);
+        } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
+      };
+
+      if (hasCached) {
+        fetchFresh(); // warm cache — refresh in background, don't block rendering
+      } else {
+        await fetchFresh(); // cold start — must wait
+      }
     }
 
     function renderLeaguesLobby() {
@@ -4491,6 +4509,7 @@
       if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
       document.getElementById('deleteLeagueModal').classList.remove('open');
       myLeagues = myLeagues.filter(l => l.id !== activeLeague.id);
+      try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
       activeLeague = null; activeLeagueSeason = null;
       showLeagueSection('leaguesLobby');
       renderLeaguesLobby();
@@ -4736,6 +4755,7 @@
         { id: leagueId, name: uni.name, type: 'university', university_name: uni.name,
           invite_code: null, is_admin: false, joined_at: new Date().toISOString() };
       if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joinedLeague);
+      try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
       renderLeaguesLobby();
       document.getElementById('joinUniversityModal').classList.remove('open');
       resetUniModal();
@@ -4761,6 +4781,7 @@
         { id: leagueId, name: 'League', type: 'custom', university_name: null,
           invite_code: code, is_admin: false, joined_at: new Date().toISOString() };
       if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joined);
+      try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
       renderLeaguesLobby();
       document.getElementById('joinExistingModal').classList.remove('open');
       showJoinedModal(joined);
@@ -4790,6 +4811,7 @@
       const newLeague = { id: leagueId, name, type: 'custom', university_name: null,
         invite_code: inviteCode, is_admin: true, joined_at: new Date().toISOString() };
       if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(newLeague);
+      try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
       setTimeout(() => {
         try {
           document.getElementById('createLeagueModal').classList.remove('open');
