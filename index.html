@@ -4722,23 +4722,10 @@
       try {
         const { data: { session } } = await db.auth.getSession();
         currentSession = session;
-        if (currentSession?.user) {
-          // Show name immediately from the JWT (no DB call) so the top bar
-          // never stays blank while the profiles fetch is in flight.
-          currentUsername = currentSession.user.user_metadata?.username || '';
-          showUserAvatarBtn();
-          // Enrich from profiles table without blocking anything.
-          db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle()
-            .then(({ data: profile }) => {
-              if (profile) {
-                currentUsername = profile.username || currentUsername;
-                currentAvatar   = profile.avatar   || 'icon1';
-                showUserAvatarBtn();
-              }
-            }).catch(() => {});
-        } else {
-          showUserAvatarBtn();
-        }
+        // Username/avatar are set by onAuthStateChange (INITIAL_SESSION /
+        // SIGNED_IN / TOKEN_REFRESHED). Don't overwrite them here — doing so
+        // with an empty user_metadata value would wipe what the handler set.
+        showUserAvatarBtn();
         await fetchServerSolvedToday();
         // Re-render only if server knows about a solve we don't have locally
         if (serverSolvedToday[difficulty] && !solved) {
