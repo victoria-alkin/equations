@@ -1879,15 +1879,19 @@
         serverSolvedDay = today;
         return;
       }
-      const { data } = await db.from('daily_solves')
-        .select('difficulty')
-        .eq('user_id', currentSession.user.id)
-        .eq('day', today);
-      serverSolvedToday = { easy: false, medium: false, hard: false };
-      for (const row of (data || [])) {
-        if (row.difficulty in serverSolvedToday) serverSolvedToday[row.difficulty] = true;
+      try {
+        const { data } = await dbWithTimeout(
+          db.from('daily_solves').select('difficulty').eq('user_id', currentSession.user.id).eq('day', today),
+          5000
+        );
+        serverSolvedToday = { easy: false, medium: false, hard: false };
+        for (const row of (data || [])) {
+          if (row.difficulty in serverSolvedToday) serverSolvedToday[row.difficulty] = true;
+        }
+        serverSolvedDay = today;
+      } catch {
+        // Timed out — leave serverSolvedToday as default (all false)
       }
-      serverSolvedDay = today;
     }
 
     async function recordDailySolve(diff) {
@@ -2209,7 +2213,11 @@
       renderProfileBadges();
       renderProfileStreak();
       // Refresh from DB in background; patch modal if it's still open.
-      const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+      let profile;
+      try {
+        const { data } = await dbWithTimeout(db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle());
+        profile = data;
+      } catch {}
       if (profile) {
         currentUsername = profile.username || currentSession.user.user_metadata?.username || '';
         currentAvatar   = profile.avatar   || 'icon1';
@@ -2221,7 +2229,16 @@
     async function renderDailyStreakChip() {
       const el = document.getElementById('dailyStreakChip');
       if (!currentSession) { el.classList.add('hidden'); el.textContent = ''; return; }
-      const { data } = await db.from('profiles').select('current_streak, longest_streak, last_play_date').eq('id', currentSession.user.id).maybeSingle();
+      let data;
+      try {
+        const result = await dbWithTimeout(
+          db.from('profiles').select('current_streak, longest_streak, last_play_date').eq('id', currentSession.user.id).maybeSingle(),
+          5000
+        );
+        data = result.data;
+      } catch {
+        el.classList.add('hidden'); el.textContent = ''; return;
+      }
       const today = getEstDateString();
       const yesterdayMs = nextEstMidnightMs() - 2 * 86400000 + 1;
       const yesterday = new Date(yesterdayMs).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
@@ -2253,16 +2270,25 @@
     async function renderProfileStreak() {
       const el = document.getElementById('profileStreak');
       if (!currentSession) { el.innerHTML = '<span class="profile-badges-empty">Sign in to track your streak.</span>'; return; }
-      el.innerHTML = '<span class="profile-badges-empty">Loading...</span>';
+      // Serve cached streak instantly (populated by onAuthStateChange profile fetch)
       let data;
       try {
-        const result = await dbWithTimeout(
-          db.from('profiles').select('current_streak, longest_streak, last_play_date').eq('id', currentSession.user.id).maybeSingle()
-        );
-        data = result.data;
-      } catch {
-        el.innerHTML = '<span class="profile-badges-empty">Could not load streak.</span>';
-        return;
+        const cached = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
+        if (cached && cached.last_play_date !== undefined) {
+          data = { current_streak: cached.current_streak, longest_streak: cached.longest_streak, last_play_date: cached.last_play_date };
+        }
+      } catch {}
+      if (!data) {
+        el.innerHTML = '<span class="profile-badges-empty">Loading...</span>';
+        try {
+          const result = await dbWithTimeout(
+            db.from('profiles').select('current_streak, longest_streak, last_play_date').eq('id', currentSession.user.id).maybeSingle()
+          );
+          data = result.data;
+        } catch {
+          el.innerHTML = '<span class="profile-badges-empty">Could not load streak.</span>';
+          return;
+        }
       }
       const today = getEstDateString();
       const yesterdayMs = nextEstMidnightMs() - 2 * 86400000 + 1;
@@ -3371,12 +3397,23 @@
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
         if (event === 'SIGNED_IN') settleBadges().then(checkUnseenBadges);
-        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', session.user.id).maybeSingle();
-        currentUsername = profile?.username || session.user.user_metadata?.username || '';
-        currentAvatar   = profile?.avatar   || 'icon1';
-        // Cache so the next reload can show name/avatar immediately without a DB round-trip.
-        if (currentUsername) localStorage.setItem('eq_profile_cache', JSON.stringify({ username: currentUsername, avatar: currentAvatar }));
-        showUserAvatarBtn();
+        try {
+          const { data: profile } = await dbWithTimeout(
+            db.from('profiles').select('username, avatar, current_streak, longest_streak, last_play_date').eq('id', session.user.id).maybeSingle()
+          );
+          currentUsername = profile?.username || session.user.user_metadata?.username || '';
+          currentAvatar   = profile?.avatar   || 'icon1';
+          // Cache profile + streak so the next reload shows both instantly without a DB round-trip.
+          if (profile) localStorage.setItem('eq_profile_cache', JSON.stringify({
+            username: currentUsername, avatar: currentAvatar,
+            current_streak: profile.current_streak ?? null,
+            longest_streak: profile.longest_streak ?? null,
+            last_play_date: profile.last_play_date ?? null
+          }));
+          showUserAvatarBtn();
+        } catch {
+          // Profile fetch timed out; username/avatar already set from localStorage cache at init
+        }
       }
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('eq_profile_cache');
