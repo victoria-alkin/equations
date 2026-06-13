@@ -2311,9 +2311,24 @@
     async function renderProfileBadges() {
       const el = document.getElementById('profileBadges');
       if (!currentSession) { el.innerHTML = '<span class="profile-badges-empty">Sign in to earn badges.</span>'; return; }
+      // Serve cached badge counts instantly if available
+      try {
+        const cached = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
+        if (cached && cached.badges !== undefined) {
+          const html = renderBadgeGroup(cached.badges);
+          el.innerHTML = html || '<span class="profile-badges-empty">No badges yet. Finish in the top 3 of the daily leaderboard!</span>';
+          return;
+        }
+      } catch {}
       el.innerHTML = '<span class="profile-badges-empty">Loading...</span>';
       try {
-        const counts = (await dbWithTimeout(fetchBadgeCounts([currentSession.user.id])))[currentSession.user.id];
+        const allCounts = await dbWithTimeout(fetchBadgeCounts([currentSession.user.id]));
+        const counts = allCounts[currentSession.user.id];
+        try {
+          const existing = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null') || {};
+          existing.badges = counts || { gold: 0, silver: 0, bronze: 0 };
+          localStorage.setItem('eq_profile_cache', JSON.stringify(existing));
+        } catch {}
         const html = renderBadgeGroup(counts);
         el.innerHTML = html || '<span class="profile-badges-empty">No badges yet. Finish in the top 3 of the daily leaderboard!</span>';
       } catch {
@@ -3396,7 +3411,13 @@
       });
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
-        if (event === 'SIGNED_IN') settleBadges().then(checkUnseenBadges);
+        if (event === 'SIGNED_IN') {
+          try {
+            const c = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
+            if (c) { delete c.badges; localStorage.setItem('eq_profile_cache', JSON.stringify(c)); }
+          } catch {}
+          settleBadges().then(checkUnseenBadges);
+        }
         try {
           const { data: profile } = await dbWithTimeout(
             db.from('profiles').select('username, avatar, current_streak, longest_streak, last_play_date').eq('id', session.user.id).maybeSingle()
