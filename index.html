@@ -3435,6 +3435,14 @@
         } catch {
           // Profile fetch timed out; username/avatar already set from localStorage cache at init
         }
+        // Pre-fetch badge counts in background so the modal shows them instantly on open.
+        dbWithTimeout(fetchBadgeCounts([session.user.id]), 6000).then(allCounts => {
+          try {
+            const existing = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null') || {};
+            existing.badges = allCounts[session.user.id] || { gold: 0, silver: 0, bronze: 0 };
+            localStorage.setItem('eq_profile_cache', JSON.stringify(existing));
+          } catch {}
+        }).catch(() => {});
       }
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('eq_profile_cache');
