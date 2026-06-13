@@ -3388,6 +3388,7 @@
       document.getElementById('battleCard').classList.toggle('hidden', mode !== 'battle');
       document.getElementById('leaguesCard').classList.toggle('hidden', mode !== 'leagues');
       if (mode !== 'timed' && mode !== 'leagues') leagueIsPlaying = false;
+      if (mode === 'daily' && !document.getElementById('equation').hasChildNodes()) { try { loadDailyPuzzle(); } catch(e) { console.error('loadDailyPuzzle error:', e); } }
       if (mode === 'timed') { updateAuthUI(); fetchLeaderboards().then(renderLeaderboard); }
       if (mode === 'leagues') { enterLeaguesMode(); }
       if (mode === 'battle') { enterBattleHome(); }
@@ -4705,18 +4706,28 @@
 
     // ─── Init ────────────────────────────────────────────────────────────────────
     sessionStorage.setItem('eqInApp', '1');
+    // Render puzzle immediately with local state — never block on network calls.
+    // Auth and server-solved state load async and patch in after.
+    puzzleIndex = getDailyIndex(difficulty);
+    try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
     (async () => {
-      const { data: { session } } = await db.auth.getSession();
-      currentSession = session;
-      if (currentSession?.user) {
-        const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
-        currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
-        currentAvatar   = profile?.avatar   || 'icon1';
+      try {
+        const { data: { session } } = await db.auth.getSession();
+        currentSession = session;
+        if (currentSession?.user) {
+          const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+          currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
+          currentAvatar   = profile?.avatar   || 'icon1';
+        }
+        showUserAvatarBtn();
+        await fetchServerSolvedToday();
+        // Re-render only if server knows about a solve we don't have locally
+        if (serverSolvedToday[difficulty] && !solved) {
+          try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
+        }
+      } catch (e) {
+        console.error('Init auth error:', e);
       }
-      showUserAvatarBtn();
-      puzzleIndex = getDailyIndex(difficulty);
-      await fetchServerSolvedToday();
-      loadDailyPuzzle();
       settleBadges().then(checkUnseenBadges);
 
       const params = new URLSearchParams(location.search);

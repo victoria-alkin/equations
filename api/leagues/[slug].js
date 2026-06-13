@@ -326,24 +326,22 @@ export default async function handler(req, res) {
     if (e.key === 'Enter') doSignup();
   });
 
-  // Read session directly from localStorage — avoids creating a second Supabase
-  // client which can interfere with the SPA's auth state via token refresh races.
-  function getSessionFromStorage() {
+  // Check for any stored session — if a refresh_token exists, the SPA can
+  // handle renewal. Don't reject expired access_tokens here; send them to the
+  // SPA which calls db.auth.getSession() and refreshes automatically.
+  function hasStoredSession() {
     try {
       var raw = localStorage.getItem('sb-pcyymbfaxacvmkxrvmhx-auth-token');
-      if (!raw) return null;
+      if (!raw) return false;
       var s = JSON.parse(raw);
-      if (!s || !s.access_token) return null;
-      if (s.expires_at && Date.now() / 1000 >= s.expires_at) return null;
-      return s;
-    } catch(e) { return null; }
+      return !!(s && s.refresh_token);
+    } catch(e) { return false; }
   }
 
   // Determine which state to show — synchronous, no async calls
   (function() {
     if (sessionStorage.getItem('eqInApp')) { goPlay(); return; }
-    var session = getSessionFromStorage();
-    if (session) { goPlay(); return; }
+    if (hasStoredSession()) { goPlay(); return; }
     show('stateAuth');
   })();
 </script>
