@@ -2182,32 +2182,40 @@
 
     async function openAccountSettings() {
       if (!currentSession?.user) return;
-      // Always fetch fresh profile so username/avatar are never stale or empty
-      const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
-      currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
-      currentAvatar   = profile?.avatar   || 'icon1';
-      showUserAvatarBtn();
-      document.getElementById('accountUsernameInput').value = currentUsername;
-      lockAccountUsernameField();
-      setSettingsMsg('');
-      pendingAvatar = currentAvatar;
-      const picker = document.getElementById('iconPicker'); picker.innerHTML = '';
-      ['icon1','icon2','icon3','icon4'].forEach(icon => {
-        const div = document.createElement('div');
-        div.className = 'icon-option ' + iconPickerBackdropClass(icon) + (icon === pendingAvatar ? ' chosen' : '');
-        div.dataset.icon = icon;
-        const img = document.createElement('img'); img.src = `/images/${icon}.png`; img.alt = icon;
-        div.appendChild(img);
-        div.addEventListener('click', () => {
-          pendingAvatar = icon;
-          document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('chosen'));
-          div.classList.add('chosen');
+      // Open the modal immediately with whatever we already have, so a slow
+      // DB call never makes the button appear broken.
+      function buildModal() {
+        document.getElementById('accountUsernameInput').value = currentUsername;
+        lockAccountUsernameField();
+        setSettingsMsg('');
+        pendingAvatar = currentAvatar;
+        const picker = document.getElementById('iconPicker'); picker.innerHTML = '';
+        ['icon1','icon2','icon3','icon4'].forEach(icon => {
+          const div = document.createElement('div');
+          div.className = 'icon-option ' + iconPickerBackdropClass(icon) + (icon === pendingAvatar ? ' chosen' : '');
+          div.dataset.icon = icon;
+          const img = document.createElement('img'); img.src = `/images/${icon}.png`; img.alt = icon;
+          div.appendChild(img);
+          div.addEventListener('click', () => {
+            pendingAvatar = icon;
+            document.querySelectorAll('.icon-option').forEach(o => o.classList.remove('chosen'));
+            div.classList.add('chosen');
+          });
+          picker.appendChild(div);
         });
-        picker.appendChild(div);
-      });
+      }
+      buildModal();
       document.getElementById('accountOverlay').classList.add('open');
       renderProfileBadges();
       renderProfileStreak();
+      // Refresh from DB in background; patch modal if it's still open.
+      const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
+      if (profile) {
+        currentUsername = profile.username || currentSession.user.user_metadata?.username || '';
+        currentAvatar   = profile.avatar   || 'icon1';
+        showUserAvatarBtn();
+        if (document.getElementById('accountOverlay').classList.contains('open')) buildModal();
+      }
     }
 
     async function renderDailyStreakChip() {
@@ -4715,11 +4723,22 @@
         const { data: { session } } = await db.auth.getSession();
         currentSession = session;
         if (currentSession?.user) {
-          const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle();
-          currentUsername = profile?.username || currentSession.user.user_metadata?.username || '';
-          currentAvatar   = profile?.avatar   || 'icon1';
+          // Show name immediately from the JWT (no DB call) so the top bar
+          // never stays blank while the profiles fetch is in flight.
+          currentUsername = currentSession.user.user_metadata?.username || '';
+          showUserAvatarBtn();
+          // Enrich from profiles table without blocking anything.
+          db.from('profiles').select('username, avatar').eq('id', currentSession.user.id).maybeSingle()
+            .then(({ data: profile }) => {
+              if (profile) {
+                currentUsername = profile.username || currentUsername;
+                currentAvatar   = profile.avatar   || 'icon1';
+                showUserAvatarBtn();
+              }
+            }).catch(() => {});
+        } else {
+          showUserAvatarBtn();
         }
-        showUserAvatarBtn();
         await fetchServerSolvedToday();
         // Re-render only if server knows about a solve we don't have locally
         if (serverSolvedToday[difficulty] && !solved) {
