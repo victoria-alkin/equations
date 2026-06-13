@@ -3352,8 +3352,8 @@
         if (!document.getElementById('dailyCard').classList.contains('hidden')) loadDailyPuzzle();
       });
       if (!document.getElementById('timedCard').classList.contains('hidden')) updateAuthUI();
-      if (event === 'SIGNED_IN' && session) {
-        settleBadges().then(checkUnseenBadges);
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') && session) {
+        if (event === 'SIGNED_IN') settleBadges().then(checkUnseenBadges);
         const { data: profile } = await db.from('profiles').select('username, avatar').eq('id', session.user.id).maybeSingle();
         currentUsername = profile?.username || session.user.user_metadata?.username || '';
         currentAvatar   = profile?.avatar   || 'icon1';
