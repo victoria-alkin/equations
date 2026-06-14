@@ -4105,51 +4105,56 @@
     async function openLeagueHome(league) {
       activeLeague = league;
       leagueLbTab  = 'today';
-
-      // Refresh full league row
-      const { data: full } = await db.from('leagues').select('*').eq('id', league.id).maybeSingle();
-      if (full) activeLeague = { ...full, is_admin: league.is_admin };
-
-      // Member count
-      const { count } = await db
-        .from('league_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('league_id', league.id);
-      leagueMemberCount = count || 0;
-
-      // Active season (custom only)
+      leagueMemberCount = 0;
       activeLeagueSeason = null;
-      if (activeLeague.type === 'custom') {
-        const { data: season } = await db
-          .from('league_seasons')
-          .select('*')
-          .eq('league_id', league.id)
-          .is('ended_at', null)
-          .order('started_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        activeLeagueSeason = season;
 
-        // Show winner modal if season just ended and user is admin
-        if (!activeLeagueSeason && activeLeague.is_admin) {
-          const { data: last } = await db
-            .from('league_seasons')
-            .select('*')
-            .eq('league_id', league.id)
-            .not('ended_at', 'is', null)
-            .order('ended_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (last) showSeasonWinnerModal(last);
-        }
-      }
-
+      // Show the league home immediately with the data we already have — don't block
+      // on REST calls before rendering. All REST calls below refresh in the background.
       renderLeagueHomeHeader();
       showLeagueSection('leagueHome');
       if (activeLeague.type === 'university') {
         const slug = toLeagueSlug(activeLeague.university_name || activeLeague.name);
         history.replaceState({ path: `/leagues/${slug}` }, '', `/leagues/${slug}`);
       }
+
+      // Background refresh — update header as each fetch completes.
+      (async () => {
+        try {
+          const { data: full } = await dbWithTimeout(
+            db.from('leagues').select('*').eq('id', league.id).maybeSingle(), 8000
+          );
+          if (full) { activeLeague = { ...full, is_admin: league.is_admin }; renderLeagueHomeHeader(); }
+        } catch {}
+
+        try {
+          const { count } = await dbWithTimeout(
+            db.from('league_members').select('*', { count: 'exact', head: true }).eq('league_id', league.id), 8000
+          );
+          leagueMemberCount = count || 0;
+          renderLeagueHomeHeader();
+        } catch {}
+
+        if (activeLeague.type === 'custom') {
+          try {
+            const { data: season } = await dbWithTimeout(
+              db.from('league_seasons').select('*').eq('league_id', league.id)
+                .is('ended_at', null).order('started_at', { ascending: false }).limit(1).maybeSingle(), 8000
+            );
+            activeLeagueSeason = season;
+            renderLeagueHomeHeader();
+            if (!activeLeagueSeason && activeLeague.is_admin) {
+              try {
+                const { data: last } = await dbWithTimeout(
+                  db.from('league_seasons').select('*').eq('league_id', league.id)
+                    .not('ended_at', 'is', null).order('ended_at', { ascending: false }).limit(1).maybeSingle(), 8000
+                );
+                if (last) showSeasonWinnerModal(last);
+              } catch {}
+            }
+          } catch {}
+        }
+      })();
+
       await fetchAndRenderLeagueLeaderboard();
     }
 
