@@ -3933,6 +3933,7 @@
     }
     let universityData     = null; // lazy-loaded Hipo dataset
     let pendingJoinedLeague = null;
+    let _leagueFetchPromise = null; // resolves when loadMyLeagues inner fetch completes
     let pendingVerifyUni   = null;
 
     function showJoinedModal(league) {
@@ -3976,40 +3977,58 @@
 
     async function autoOpenUniversityLeague(slug) {
       const slugMatch = l => l.type === 'university' && toLeagueSlug(l.university_name || l.name) === slug;
-      // Fast path: already in myLeagues (cache hit or loadMyLeagues succeeded in time)
-      const match = myLeagues.find(slugMatch);
+
+      // Fast path: cache hit or loadMyLeagues() already finished.
+      let match = myLeagues.find(slugMatch);
       if (match) { openLeagueHome(match); return; }
+
+      // Cold-start path: loadMyLeagues() timed out at 6s but its inner fetch is still
+      // running. Wait up to 10s more for it to complete rather than making new REST calls.
+      if (_leagueFetchPromise) {
+        await Promise.race([_leagueFetchPromise, new Promise(r => setTimeout(r, 10000))]);
+        match = myLeagues.find(slugMatch);
+        if (match) { openLeagueHome(match); return; }
+      }
+
+      // At this point myLeagues either has leagues (and target isn't one of them) or
+      // is empty (REST completely failed). Look up the university with a timeout so we
+      // can name it, then do a direct membership check before showing the join modal.
       try {
-        // Fetch all university league rows so we can find the name and ID for this slug.
-        // Select '*' so we have all fields needed for openLeagueHome.
-        const { data: rows } = await db.from('leagues').select('*').eq('type', 'university');
-        // Re-check myLeagues after the await — background loadMyLeagues() may have
-        // finished while we were waiting, giving us membership data for free.
-        const recheck = myLeagues.find(slugMatch);
-        if (recheck) { openLeagueHome(recheck); return; }
+        const { data: rows } = await dbWithTimeout(
+          db.from('leagues').select('id, name, university_name').eq('type', 'university'),
+          8000
+        );
         const found = (rows || []).find(l => toLeagueSlug(l.university_name || l.name) === slug);
         if (!found) return;
-        const uniName = found.university_name || found.name;
-        // Direct membership check — confirms whether user is already in this league
-        // regardless of whether loadMyLeagues() completed or timed out.
-        const { data: mem } = await db.from('league_members')
-          .select('is_admin, joined_at')
-          .eq('league_id', found.id)
-          .eq('user_id', currentSession.user.id)
-          .maybeSingle();
+        // One last myLeagues check in case the background fetch just finished.
+        const lastCheck = myLeagues.find(l => l.id === found.id);
+        if (lastCheck) { openLeagueHome(lastCheck); return; }
+        // Direct membership check — prevents showing the join modal to a member
+        // whose league_members fetch failed or was empty due to a REST error.
+        const { data: mem } = await dbWithTimeout(
+          db.from('league_members')
+            .select('is_admin, joined_at')
+            .eq('league_id', found.id)
+            .eq('user_id', currentSession.user.id)
+            .maybeSingle(),
+          8000
+        );
         if (mem) {
-          const league = { ...found, is_admin: mem.is_admin, joined_at: mem.joined_at };
-          if (!myLeagues.find(l => l.id === found.id)) {
+          const { data: full } = await dbWithTimeout(
+            db.from('leagues').select('*').eq('id', found.id).maybeSingle(), 8000
+          );
+          if (full) {
+            const league = { ...full, is_admin: mem.is_admin, joined_at: mem.joined_at };
             myLeagues.push(league);
             try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
             renderLeaguesLobby();
+            openLeagueHome(league);
           }
-          openLeagueHome(league);
           return;
         }
         openJoinUniversityModal();
         const searchInput = document.getElementById('universitySearch');
-        searchInput.value = uniName;
+        searchInput.value = found.university_name || found.name;
         searchInput.dispatchEvent(new Event('input'));
       } catch {}
     }
@@ -4023,35 +4042,36 @@
         if (c?.leagues) { myLeagues = c.leagues; hasCached = true; }
       } catch {}
 
-      const fetchFresh = async () => {
+      // innerFetch never rejects — errors are caught inside. We expose it as
+      // _leagueFetchPromise so autoOpenUniversityLeague() can await it after a
+      // cold-start timeout instead of making duplicate REST calls.
+      const innerFetch = (async () => {
         try {
-          await Promise.race([
-            (async () => {
-              const { data: memberships, error } = await db
-                .from('league_members')
-                .select('league_id, is_admin, joined_at')
-                .eq('user_id', currentSession.user.id)
-                .order('joined_at', { ascending: true });
-              if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
-              const ids = memberships.map(r => r.league_id);
-              const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
-              const byId = {};
-              (leagueRows || []).forEach(l => { byId[l.id] = l; });
-              myLeagues = memberships
-                .filter(r => byId[r.league_id])
-                .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
-              try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
-            })(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
-          ]);
+          const { data: memberships, error } = await db
+            .from('league_members')
+            .select('league_id, is_admin, joined_at')
+            .eq('user_id', currentSession.user.id)
+            .order('joined_at', { ascending: true });
+          if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
+          const ids = memberships.map(r => r.league_id);
+          const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
+          const byId = {};
+          (leagueRows || []).forEach(l => { byId[l.id] = l; });
+          myLeagues = memberships
+            .filter(r => byId[r.league_id])
+            .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
+          try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
         } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
-      };
+      })();
 
-      if (hasCached) {
-        fetchFresh(); // warm cache — refresh in background, don't block rendering
-      } else {
-        await fetchFresh(); // cold start — must wait
+      _leagueFetchPromise = innerFetch;
+
+      if (!hasCached) {
+        // Cold start — block up to 6s then render whatever we have.
+        // innerFetch continues running in background after the timeout.
+        await Promise.race([innerFetch, new Promise(r => setTimeout(r, 6000))]);
       }
+      // Warm start — cache already loaded, innerFetch refreshes in background.
     }
 
     function renderLeaguesLobby() {
@@ -4891,9 +4911,8 @@
       } else if (universitySlug) {
         pendingUniversitySlug = universitySlug;
         activeMode = 'leagues';
-        setMode('leagues');
+        setMode('leagues'); // setMode already calls enterLeaguesMode() for 'leagues'
         updateRouteMeta('/leagues', ROUTES['/leagues']);
-        if (currentSession) enterLeaguesMode(); // signed-in: INITIAL_SESSION won't trigger this
       } else if (ROUTES[initialPath]) {
         history.replaceState({ path: initialPath }, '', initialPath);
         applyRoute(initialPath);
