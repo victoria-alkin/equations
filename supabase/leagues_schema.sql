@@ -313,7 +313,7 @@ AS $$
     COALESCE(MAX(ts.score), 0) AS best_score
   FROM league_members lm
   LEFT JOIN timed_scores ts
-    ON ts.user_id = lm.user_id AND ts.day = p_day
+    ON ts.user_id = lm.user_id AND ts.day = p_day::date
   WHERE lm.league_id = p_league_id
   GROUP BY lm.user_id, lm.display_name
   ORDER BY best_score DESC;
