@@ -4347,13 +4347,27 @@
 
       if (leagueLbTab === 'today') {
         document.getElementById('leagueLbHeading').textContent = "Today's Scores";
+        // Render cached scores instantly (set synchronously before the first await,
+        // so the "Loading..." above never actually paints). The query itself is ~2ms;
+        // the visible wait is the network round-trip, which the cache hides.
+        const cacheKey = `eq_league_today_${activeLeague.id}`;
+        let renderedFromCache = false;
+        try {
+          const c = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+          if (c && c.day === today && Array.isArray(c.rows)) {
+            renderLeagueLbRows(contentEl, c.rows, myId, 'score');
+            renderedFromCache = true;
+          }
+        } catch {}
+
         const rpcParams = { p_league_id: activeLeague.id, p_day: today };
         if (activeLeague.type === 'university') rpcParams.p_limit = 10;
-        const _t0 = performance.now();
-        const { data, error } = await db.rpc('get_league_today_scores', rpcParams);
-        console.log(`[league] today RPC took ${Math.round(performance.now() - _t0)}ms`, error || `${(data || []).length} rows`);
+        const { data } = await db.rpc('get_league_today_scores', rpcParams);
         const rows = (data || []).map(r => ({ ...r, score: r.best_score }));
-        renderLeagueLbRows(contentEl, rows, myId, 'score');
+        // Overwrite with fresh data once it arrives (skip only if the fetch failed
+        // and we already showed cached rows).
+        if (data || !renderedFromCache) renderLeagueLbRows(contentEl, rows, myId, 'score');
+        if (data) { try { localStorage.setItem(cacheKey, JSON.stringify({ day: today, rows })); } catch {} }
 
       } else if (leagueLbTab === 'season') {
         document.getElementById('leagueLbHeading').textContent =
