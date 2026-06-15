@@ -6,6 +6,12 @@ function isValidEmail(e) {
   return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254;
 }
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
 function domainMatches(emailDomain, uniDomains) {
   const d = emailDomain.toLowerCase();
   return uniDomains.some(ud => d === ud.toLowerCase() || d.endsWith('.' + ud.toLowerCase()));
@@ -66,14 +72,20 @@ export default async function handler(req, res) {
   if (!rpcRes.ok) {
     const e = await rpcRes.json().catch(() => ({}));
     console.error('create_university_otp failed:', e);
+    // Surface the rate-limit messages raised by the RPC so the user sees them.
+    const msg = (e && e.message) || '';
+    if (/wait a moment|too many/i.test(msg)) {
+      return res.status(429).json({ error: msg });
+    }
     return res.status(500).json({ error: 'Failed to store verification code' });
   }
 
   // Send the code via Resend
+  const safeUni = escapeHtml(university_name);
   const html = `
     <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:2rem;color:#333">
       <h2 style="color:#8DC883;margin-bottom:0.5rem">Equations — University Verification</h2>
-      <p>Your verification code for joining the <strong>${university_name}</strong> league:</p>
+      <p>Your verification code for joining the <strong>${safeUni}</strong> league:</p>
       <p style="font-size:2.6rem;font-weight:800;letter-spacing:0.3em;color:#222;margin:1.2rem 0">${code}</p>
       <p style="color:#888;font-size:0.85rem">This code expires in 10 minutes.<br>If you didn't request this, you can safely ignore it.</p>
     </div>

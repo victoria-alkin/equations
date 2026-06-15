@@ -26,8 +26,25 @@ CREATE OR REPLACE FUNCTION create_university_otp(
   p_university_name TEXT
 ) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
+  -- Housekeeping: clear this user's stale rows so the rate-limit counts below
+  -- only reflect recent activity (and the table doesn't grow unbounded).
   DELETE FROM university_verifications
-  WHERE user_id = auth.uid() AND email = lower(p_email);
+  WHERE user_id = auth.uid() AND created_at < now() - interval '1 hour';
+
+  -- Rate limit: 30s cooldown between sends, and at most 5 codes per hour per user.
+  -- Each code costs an email send, so this caps spam/abuse and Resend cost.
+  IF EXISTS (
+    SELECT 1 FROM university_verifications
+    WHERE user_id = auth.uid() AND created_at > now() - interval '30 seconds'
+  ) THEN
+    RAISE EXCEPTION 'Please wait a moment before requesting another code.';
+  END IF;
+  IF (
+    SELECT COUNT(*) FROM university_verifications
+    WHERE user_id = auth.uid() AND created_at > now() - interval '1 hour'
+  ) >= 5 THEN
+    RAISE EXCEPTION 'Too many verification codes requested. Please try again later.';
+  END IF;
 
   INSERT INTO university_verifications(user_id, email, code, university_name, expires_at)
   VALUES (auth.uid(), lower(p_email), p_code, p_university_name, now() + interval '10 minutes');
