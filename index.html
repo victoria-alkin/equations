@@ -4602,8 +4602,12 @@
       btn.disabled = false; btn.textContent = 'Leave';
       if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
       document.getElementById('leaveLeagueModal').classList.remove('open');
+      // Remove from in-memory list and cache immediately — the RPC already
+      // succeeded so re-fetching would just serve the stale localStorage cache.
+      const leftId = activeLeague.id;
+      myLeagues = myLeagues.filter(l => l.id !== leftId);
+      try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
       activeLeague = null; activeLeagueSeason = null;
-      await loadMyLeagues();
       showLeagueSection('leaguesLobby');
       renderLeaguesLobby();
     });
