@@ -1322,16 +1322,22 @@
 
     async function containsProfanity(name) {
       if (!name) return false;
+      // Third-party check on the signup / create-league path — time it out so a slow
+      // or down service can't hang the flow. Fails open (allows the name) on error.
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 4000);
       try {
         const r = await fetch(
           `https://www.purgomalum.com/service/containsprofanity?text=${encodeURIComponent(name)}`,
-          { method: 'GET' }
+          { method: 'GET', signal: ac.signal }
         );
         if (!r.ok) return false;
         const txt = (await r.text()).trim().toLowerCase();
         return txt === 'true';
       } catch {
         return false;
+      } finally {
+        clearTimeout(t);
       }
     }
     let currentSession = null;
@@ -2707,13 +2713,19 @@
     }
 
     async function saveTimedScore(score) {
-      const userId      = currentSession.user.id;
-      const displayName = currentUsername;
-      const today       = getEstDateString();
-      await db.from('timed_scores').insert({ user_id: userId, display_name: displayName, score, day: today });
-      const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
-      if (!existing || score > existing.score) {
-        await db.from('best_scores').upsert({ user_id: userId, display_name: displayName, score, achieved_on: today, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+      try {
+        await ensureCurrentUsername(); // avoid saving a blank display_name
+        const userId      = currentSession.user.id;
+        const displayName = currentUsername;
+        const today       = getEstDateString();
+        await db.from('timed_scores').insert({ user_id: userId, display_name: displayName, score, day: today });
+        const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
+        if (!existing || score > existing.score) {
+          await db.from('best_scores').upsert({ user_id: userId, display_name: displayName, score, achieved_on: today, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        }
+      } catch (e) {
+        // Don't let a failed save break the post-game leaderboard refresh.
+        console.error('saveTimedScore error:', e);
       }
     }
 
@@ -3781,11 +3793,18 @@
       if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { setModalAuthMsg('Username: 3–20 chars, letters/numbers/_ only.', 'err'); return; }
       if (password !== confirm) { setModalAuthMsg('Passwords do not match.', 'err'); return; }
       if (password.length < 6)  { setModalAuthMsg('Password must be at least 6 characters.', 'err'); return; }
-      if (await containsProfanity(username)) { setModalAuthMsg('Please choose a different username.', 'err'); return; }
+      // Disable the button across the async flow (profanity check → username check →
+      // signUp) so a double-click can't fire duplicate signups, and to give feedback.
+      const signupBtn = document.getElementById('btnModalSignup');
+      const signupBtnText = signupBtn.textContent;
+      const failSignup = (msg) => { setModalAuthMsg(msg, 'err'); signupBtn.disabled = false; signupBtn.textContent = signupBtnText; };
+      signupBtn.disabled = true; signupBtn.textContent = 'Creating account…';
+      setModalAuthMsg('');
+      if (await containsProfanity(username)) { failSignup('Please choose a different username.'); return; }
       const { data: existing } = await db.from('profiles').select('id').ilike('username', escapeIlike(username)).maybeSingle();
-      if (existing) { setModalAuthMsg('That username is already taken.', 'err'); return; }
+      if (existing) { failSignup('That username is already taken.'); return; }
       const { data: signUpData, error } = await db.auth.signUp({ email, password, options: { data: { username } } });
-      if (error) { setModalAuthMsg(error.message, 'err'); return; }
+      if (error) { failSignup(error.message); return; }
       track('signup', { surface: 'modal' });
       const accessToken = signUpData?.session?.access_token;
       if (accessToken) {
