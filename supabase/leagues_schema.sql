@@ -259,7 +259,7 @@ BEGIN
       LEFT JOIN timed_scores ts
         ON ts.user_id = lm.user_id AND ts.day = yesterday_est
       WHERE lm.league_id = league_rec.id
-      GROUP BY lm.user_id, lm.display_name
+      GROUP BY lm.user_id, lm.display_name, lm.joined_at
       ORDER BY COALESCE(MAX(ts.score), 0) DESC, lm.joined_at ASC
     ) LOOP
       INSERT INTO league_daily_points(league_id, season_id, user_id, day, best_score, rank, points)
