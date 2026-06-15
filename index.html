@@ -89,6 +89,16 @@
       padding: 2rem 1rem 3rem;
     }
 
+    /* Toast — styled replacement for native showToast() */
+    .toast {
+      position: fixed; left: 50%; bottom: 2rem; transform: translateX(-50%);
+      background: #333; color: #fff; padding: 0.75rem 1.25rem; border-radius: 12px;
+      font-size: 0.9rem; font-weight: 600; z-index: 9999; max-width: 90vw; text-align: center;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.28);
+    }
+    .toast.err { background: #cc4444; }
+    .toast.hidden { display: none; }
+
     .logo-heading { margin: 0; line-height: 0; font-size: 0; font-weight: inherit; }
     .logo { width: 380px; max-width: 90vw; margin-bottom: 0.4rem; }
 
@@ -1304,6 +1314,8 @@
     </div>
   </div>
 
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
     // ─── Supabase ────────────────────────────────────────────────────────────────
@@ -1314,6 +1326,17 @@
     );
     function track(name, params) {
       try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch {}
+    }
+
+    // Styled, auto-dismissing toast — replaces native showToast() for transient errors.
+    let _toastTimer = null;
+    function showToast(msg, type = 'err') {
+      const el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'toast' + (type ? ' ' + type : '');
+      if (_toastTimer) clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => el.classList.add('hidden'), 3500);
     }
 
     function escapeIlike(s) {
@@ -2855,7 +2878,7 @@
         host_name: currentUsername || 'Host',
         duration_seconds: 60,
       });
-      if (error) { alert('Could not create battle: ' + error.message); return; }
+      if (error) { showToast('Could not create battle: ' + error.message); return; }
       track('battle_created');
       battleId = id; battleRole = 'host';
       history.replaceState(null, '', `/battle?battle=${id}`);
@@ -2881,7 +2904,7 @@
       battleRow = null;
       // Peek at the row to figure out our role
       const { data: row } = await db.from('battles').select('*').eq('id', id).maybeSingle();
-      if (!row) { alert('Battle not found.'); enterBattleHome(); history.replaceState(null, '', '/battle'); return; }
+      if (!row) { showToast('Battle not found.'); enterBattleHome(); history.replaceState(null, '', '/battle'); return; }
       if (row.host_id === currentSession.user.id) {
         battleRole = 'host';
         battleRow = row;
@@ -2896,12 +2919,12 @@
         return;
       }
       if (row.guest_id && row.guest_id !== currentSession.user.id) {
-        alert('This battle already has two players.');
+        showToast('This battle already has two players.');
         enterBattleHome(); history.replaceState(null, '', '/battle'); return;
       }
       if (!row.guest_id) {
         const { error } = await db.rpc('join_battle', { p_id: id, p_name: currentUsername || 'Guest' });
-        if (error) { alert('Could not join: ' + error.message); enterBattleHome(); return; }
+        if (error) { showToast('Could not join: ' + error.message); enterBattleHome(); return; }
         track('battle_joined');
       }
       battleRole = 'guest';
@@ -3088,7 +3111,7 @@
       const { data: newId, error } = await db.rpc('request_rematch', { p_id: battleId });
       if (error) {
         console.error('request_rematch error:', error);
-        alert('Could not request rematch: ' + (error.message || JSON.stringify(error)));
+        showToast('Could not request rematch: ' + (error.message || JSON.stringify(error)));
         btn.disabled = false; btn.textContent = 'Rematch';
         status.classList.add('hidden');
         startBattlePolling();
@@ -3124,7 +3147,7 @@
         renderHostShareRow(battleId, sec);
         const { error } = await db.from('battles').update({ duration_seconds: sec }).eq('id', battleId);
         if (error) {
-          alert('Could not update duration: ' + error.message);
+          showToast('Could not update duration: ' + error.message);
           const prev = battleRow?.duration_seconds || 60;
           updateDurationButtons(prev);
           renderHostShareRow(battleId, prev);
@@ -4880,7 +4903,7 @@
       btn.disabled = true;
       const { error } = await db.rpc('start_league_season', { p_league_id: activeLeague.id });
       btn.disabled = false;
-      if (error) { alert('Could not start season: ' + error.message); return; }
+      if (error) { showToast('Could not start season: ' + error.message); return; }
       await openLeagueHome(activeLeague);
     });
 
@@ -5019,7 +5042,7 @@
       document.getElementById('seasonWinnerModal').classList.remove('open');
       if (activeLeague) {
         const { error } = await db.rpc('start_league_season', { p_league_id: activeLeague.id });
-        if (error) { alert('Could not start season: ' + error.message); return; }
+        if (error) { showToast('Could not start season: ' + error.message); return; }
         await openLeagueHome(activeLeague);
       }
     });
@@ -5225,7 +5248,7 @@
           document.getElementById('createLeagueModal').classList.remove('open');
           showLeagueSection('leaguesLobby');
           renderLeaguesLobby();
-        } catch(e) { console.error('post-create render error:', e); alert('League created but display error: ' + e.message); }
+        } catch(e) { console.error('post-create render error:', e); showToast('League created but display error: ' + e.message); }
         loadMyLeagues().catch(console.error);
       }, 700);
     });
