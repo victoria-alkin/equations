@@ -4005,6 +4005,30 @@
 
     // ── Invite page (non-member landing from a league URL) ──────────────────
 
+    function prettifySlug(slug) {
+      const small = new Set(['of', 'the', 'and', 'at', 'for', 'in', 'on']);
+      return String(slug || '').split('-').filter(Boolean)
+        .map((w, i) => (i > 0 && small.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    // Show the league page immediately with a loading state while we resolve
+    // membership — avoids parking the user on the general lobby splash after a
+    // deep-link sign-in. The real openLeagueHome/openLeagueInvite replaces this.
+    function showLeagueInviteLoading(slug) {
+      document.getElementById('inviteLeagueName').textContent = prettifySlug(slug);
+      document.getElementById('inviteLeagueMeta').textContent = 'Loading…';
+      document.getElementById('inviteSignedIn').classList.add('hidden');
+      document.getElementById('inviteSignedOut').classList.add('hidden');
+      showLeagueSection('leagueInvite');
+    }
+
+    // Fallback when a deep-linked league can't be resolved — show the lobby.
+    function showLeaguesLobby() {
+      showLeagueSection('leaguesLobby');
+      try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
+    }
+
     async function openLeagueInvite(found) {
       // found = { id, name, university_name, type } — partial league data
       pendingInviteLeague = found;
@@ -4039,8 +4063,22 @@
     // ── Entry point ─────────────────────────────────────────────────────────
 
     async function enterLeaguesMode() {
+      if (!currentSession) { showLeagueSection('leaguesLobby'); showLobbySection('leaguesAuthNote'); return; }
+
+      // Deep-linked straight to a university league — skip the lobby splash and
+      // show the league page with a loading state while membership resolves.
+      // loadMyLeagues() (called without await) synchronously primes myLeagues
+      // from cache and sets _leagueFetchPromise, which autoOpenUniversityLeague
+      // awaits internally.
+      if (pendingUniversitySlug) {
+        const slug = pendingUniversitySlug; pendingUniversitySlug = null;
+        showLeagueInviteLoading(slug);
+        loadMyLeagues();
+        autoOpenUniversityLeague(slug);
+        return;
+      }
+
       showLeagueSection('leaguesLobby');
-      if (!currentSession) { showLobbySection('leaguesAuthNote'); return; }
       showLobbySection('leaguesLoading');
       await loadMyLeagues();
       try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
@@ -4048,9 +4086,6 @@
       if (pendingLeagueCode) {
         const code = pendingLeagueCode; pendingLeagueCode = null;
         autoJoinByCode(code);
-      } else if (pendingUniversitySlug) {
-        const slug = pendingUniversitySlug; pendingUniversitySlug = null;
-        autoOpenUniversityLeague(slug);
       }
     }
 
@@ -4078,7 +4113,7 @@
           8000
         );
         const found = (rows || []).find(l => toLeagueSlug(l.university_name || l.name) === slug);
-        if (!found) return;
+        if (!found) { showLeaguesLobby(); return; }
         // One last myLeagues check in case the background fetch just finished.
         const lastCheck = myLeagues.find(l => l.id === found.id);
         if (lastCheck) { openLeagueHome(lastCheck); return; }
@@ -4102,11 +4137,15 @@
             try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
             renderLeaguesLobby();
             openLeagueHome(league);
+          } else {
+            // Member, but couldn't load full league row — still show the invite
+            // page (with what we have) rather than stranding on the loading state.
+            openLeagueInvite(found);
           }
           return;
         }
         openLeagueInvite(found);
-      } catch {}
+      } catch { showLeaguesLobby(); }
     }
 
     async function loadMyLeagues() {
