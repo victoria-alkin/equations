@@ -3228,13 +3228,16 @@
     async function fetchLeaderboards() {
       document.getElementById('lbContent').innerHTML = '<p class="lb-loading">Loading...</p>';
       const today = getEstDateString();
-      const { data: dailyRaw } = await db.from('timed_scores').select('user_id, display_name, score').eq('day', today).order('score', { ascending: false }).limit(200);
+      // Daily and all-time are independent — fetch them together.
+      const [{ data: dailyRaw }, { data: allTime }] = await Promise.all([
+        db.from('timed_scores').select('user_id, display_name, score').eq('day', today).order('score', { ascending: false }).limit(200),
+        db.from('best_scores').select('user_id, display_name, score').order('score', { ascending: false }).limit(10)
+      ]);
       const userBest = {};
       for (const row of (dailyRaw || [])) {
         if (!userBest[row.user_id] || row.score > userBest[row.user_id].score) userBest[row.user_id] = row;
       }
       lbData.daily = Object.values(userBest).sort((a, b) => b.score - a.score).slice(0, 10);
-      const { data: allTime } = await db.from('best_scores').select('user_id, display_name, score').order('score', { ascending: false }).limit(10);
       lbData.allTime = allTime || [];
       const ids = Array.from(new Set([...lbData.daily, ...lbData.allTime].map(r => r.user_id)));
       lbData.badgeCounts = await fetchBadgeCounts(ids);
