@@ -3119,7 +3119,10 @@
     async function settleBadges() {
       const { error } = await db.rpc('settle_past_leaderboard_days');
       if (error) console.error('settle_past_leaderboard_days error:', error);
-      db.rpc('settle_league_points').catch(e => console.error('settle_league_points error:', e));
+      db.rpc('settle_league_points').then(
+        ({ error }) => { if (error) console.error('settle_league_points error:', error); },
+        e => console.error('settle_league_points error:', e)
+      );
     }
 
     async function fetchBadgeCounts(userIds) {
