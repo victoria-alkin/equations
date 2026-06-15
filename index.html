@@ -4339,9 +4339,10 @@
           const mon = new Date(estNow); mon.setDate(estNow.getDate() - (dow === 0 ? 6 : dow - 1));
           const weekStart  = mon.toLocaleDateString('en-CA');
           const monthStart = `${estNow.getFullYear()}-${String(estNow.getMonth() + 1).padStart(2, '0')}-01`;
+          // Settled days only (today is added live at render time, not stored here).
           const [{ data: week }, { data: month }] = await Promise.all([
-            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', weekStart).lte('day', day),
-            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', monthStart).lte('day', day)
+            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', weekStart).lt('day', day),
+            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', monthStart).lt('day', day)
           ]);
           if (activeLeague?.id === _pid) {
             _leagueLbTabCache = { leagueId: _pid, week: week || [], month: month || [] };
@@ -4428,6 +4429,40 @@
 
     // ── Leaderboard fetching ────────────────────────────────────────────────
 
+    // Today's best scores for a league — reuses the Today-tab localStorage cache
+    // (eq_league_today_<id>) when warm, otherwise fetches. Returns rows sorted by
+    // best_score DESC. Top 10 is enough for points (only ranks 1..N≤10 score).
+    async function getTodayScoresForLeague(league) {
+      const today = getEstDateString();
+      const cacheKey = `eq_league_today_${league.id}`;
+      try {
+        const c = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (c && c.day === today && Array.isArray(c.rows)) return c.rows;
+      } catch {}
+      const params = { p_league_id: league.id, p_day: today };
+      if (league.type === 'university') params.p_limit = 10;
+      const { data } = await db.rpc('get_league_today_scores', params);
+      const rows = (data || []).map(r => ({ ...r, score: r.best_score }));
+      if (data) { try { localStorage.setItem(cacheKey, JSON.stringify({ day: today, rows })); } catch {} }
+      return rows;
+    }
+
+    // Provisional points for today (today isn't settled yet) using the same
+    // rank-based formula as settle_league_points(): N = min(memberCount, 10);
+    // 1st gets N, 2nd N-1, …; only players who scored (>0) and rank ≤ N earn points.
+    // todayRows must be sorted by score DESC.
+    function addTodayProvisionalPoints(totalByUser, todayRows, memberCount) {
+      const n = Math.min(memberCount, 10);
+      let rank = 1;
+      for (const r of todayRows) {
+        const score = r.best_score ?? r.score ?? 0;
+        if (score > 0 && rank <= n) {
+          totalByUser[r.user_id] = (totalByUser[r.user_id] || 0) + (n - rank + 1);
+        }
+        rank++;
+      }
+    }
+
     async function fetchAndRenderLeagueLeaderboard() {
       const contentEl = document.getElementById('leagueLbContent');
       contentEl.innerHTML = '<p class="lb-loading">Loading...</p>';
@@ -4494,16 +4529,21 @@
         }
         const cachedPts = _leagueLbTabCache?.leagueId === activeLeague.id ? _leagueLbTabCache[leagueLbTab] : null;
         const membersPromise = fetchLeagueMembersFor(activeLeague.id);
+        const todayPromise   = getTodayScoresForLeague(activeLeague);
         let pts;
         if (cachedPts) {
           pts = cachedPts;
         } else {
-          const { data } = await db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lte('day', today);
+          // Settled days only — today isn't in league_daily_points yet; we add it live below.
+          const { data } = await db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lt('day', today);
           pts = data || [];
         }
-        const members = await membersPromise;
+        const members   = await membersPromise;
+        const todayRows = await todayPromise;
         const totalByUser = {};
         pts.forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
+        // Include today's provisional points so a score you just earned shows up now.
+        addTodayProvisionalPoints(totalByUser, todayRows, members.length);
 
         const rows = members
           .map(m => ({ user_id: m.user_id, display_name: m.display_name || 'Unknown', score: totalByUser[m.user_id] || 0 }))
