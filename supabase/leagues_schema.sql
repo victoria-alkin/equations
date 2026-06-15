@@ -53,6 +53,8 @@ CREATE INDEX IF NOT EXISTS idx_league_members_user     ON league_members(user_id
 CREATE INDEX IF NOT EXISTS idx_league_dp_league_day    ON league_daily_points(league_id, day);
 CREATE INDEX IF NOT EXISTS idx_league_dp_season        ON league_daily_points(season_id);
 CREATE INDEX IF NOT EXISTS idx_league_seasons_league   ON league_seasons(league_id);
+-- Needed by get_league_today_scores(): join on ts.user_id + ts.day
+CREATE INDEX IF NOT EXISTS idx_timed_scores_user_day   ON timed_scores(user_id, day);
 
 -- ── Row-Level Security ────────────────────────────────────────────────────
 ALTER TABLE leagues             ENABLE ROW LEVEL SECURITY;
