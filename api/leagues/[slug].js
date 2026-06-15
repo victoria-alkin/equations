@@ -89,6 +89,12 @@ export default async function handler(req, res) {
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${desc}">
 <meta name="twitter:image" content="${img}">
+<!-- Warm the SPA + its dependencies while this page is shown, so the redirect to
+     /leagues after sign-in (or immediately, for signed-in users) loads from cache
+     instead of a cold fetch. -->
+<link rel="prefetch" href="/leagues">
+<link rel="preconnect" href="https://pcyymbfaxacvmkxrvmhx.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
