@@ -2763,6 +2763,8 @@
     let battleRow = null;
     let battleRole = null;       // 'host' | 'guest'
     let battlePollTimer = null;
+    let battlePollGen = 0;        // invalidates stale self-scheduled poll loops
+    let battleChannel = null;     // Realtime subscription for instant updates
     let battleCountdownTimer = null;
     let battleStartMs = null;
 
@@ -2793,7 +2795,9 @@
     }
 
     function stopBattlePolling() {
-      if (battlePollTimer) { clearInterval(battlePollTimer); battlePollTimer = null; }
+      battlePollGen++; // invalidate any in-flight self-scheduled loop
+      if (battlePollTimer) { clearTimeout(battlePollTimer); battlePollTimer = null; }
+      if (battleChannel) { try { db.removeChannel(battleChannel); } catch {} battleChannel = null; }
     }
     function stopBattleCountdown() {
       if (battleCountdownTimer) { clearInterval(battleCountdownTimer); battleCountdownTimer = null; }
@@ -2940,10 +2944,41 @@
       startBattlePolling();
     }
 
+    // How often to poll, by phase: fast during live play, slow during the
+    // long idle phases (waiting for an opponent, sitting on the results screen)
+    // where 1s polling was just wasted reads.
+    function battlePollDelay() {
+      const vis = id => !document.getElementById(id).classList.contains('hidden');
+      if (vis('battlePlaying') || vis('battleCountdown')) return 1000;
+      if (vis('battleWaiting')) return 2000;
+      return 4000; // results / idle
+    }
+
+    function scheduleBattlePoll(gen) {
+      if (battlePollTimer) clearTimeout(battlePollTimer);
+      battlePollTimer = setTimeout(async () => {
+        if (gen !== battlePollGen || !battleId) return;
+        await tickBattlePoll();
+        if (gen === battlePollGen) scheduleBattlePoll(gen); // stale loop (e.g. after rematch) won't reschedule
+      }, battlePollDelay());
+    }
+
     function startBattlePolling() {
       stopBattlePolling();
-      battlePollTimer = setInterval(tickBattlePoll, 1000);
+      const gen = ++battlePollGen;
+      // Realtime push — refresh instantly on any change to this battle row.
+      // Purely additive: correctness still rests on the adaptive poll below, so
+      // battle works even if Realtime isn't enabled on the table. Defensive so a
+      // subscription failure can't break sync.
+      try {
+        battleChannel = db.channel(`battle:${battleId}`)
+          .on('postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'battles', filter: `id=eq.${battleId}` },
+            () => { tickBattlePoll().catch(() => {}); })
+          .subscribe();
+      } catch (e) { console.warn('battle realtime unavailable:', e); }
       tickBattlePoll();
+      scheduleBattlePoll(gen);
     }
 
     async function tickBattlePoll() {
