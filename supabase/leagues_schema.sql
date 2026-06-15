@@ -299,3 +299,22 @@ BEGIN
   END LOOP;
 END;
 $$;
+
+-- ── Today's leaderboard in one query ────────────────────────────────────────
+-- Replaces the two-step client fetch (league_members → timed_scores IN (...))
+-- with a single server-side join, eliminating one round trip.
+CREATE OR REPLACE FUNCTION get_league_today_scores(p_league_id uuid, p_day text)
+RETURNS TABLE (user_id uuid, display_name text, best_score int)
+LANGUAGE sql STABLE SECURITY DEFINER
+AS $$
+  SELECT
+    lm.user_id,
+    lm.display_name,
+    COALESCE(MAX(ts.score), 0) AS best_score
+  FROM league_members lm
+  LEFT JOIN timed_scores ts
+    ON ts.user_id = lm.user_id AND ts.day = p_day
+  WHERE lm.league_id = p_league_id
+  GROUP BY lm.user_id, lm.display_name
+  ORDER BY best_score DESC;
+$$;

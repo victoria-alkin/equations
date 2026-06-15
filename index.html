@@ -4261,24 +4261,11 @@
 
       if (leagueLbTab === 'today') {
         document.getElementById('leagueLbHeading').textContent = "Today's Scores";
-        const members = await fetchLeagueMembersFor(activeLeague.id);
-        const memberIds = members.map(m => m.user_id);
-        const nameMap = {};
-        members.forEach(m => { nameMap[m.user_id] = m.display_name || 'Unknown'; });
-
-        const { data: scores } = await db
-          .from('timed_scores')
-          .select('user_id, score')
-          .in('user_id', memberIds)
-          .eq('day', today);
-        const bestByUser = {};
-        (scores || []).forEach(s => {
-          if (!bestByUser[s.user_id] || s.score > bestByUser[s.user_id]) bestByUser[s.user_id] = s.score;
+        const { data } = await db.rpc('get_league_today_scores', {
+          p_league_id: activeLeague.id,
+          p_day: today
         });
-
-        let rows = members.map(m => ({
-          user_id: m.user_id, display_name: nameMap[m.user_id], score: bestByUser[m.user_id] || 0
-        })).sort((a, b) => b.score - a.score);
+        let rows = (data || []).map(r => ({ ...r, score: r.best_score }));
         if (activeLeague.type === 'university') rows = rows.slice(0, 10);
         renderLeagueLbRows(contentEl, rows, myId, 'score');
 
