@@ -2415,7 +2415,13 @@
         document.getElementById('splashAuthNote').classList.remove('hidden');
       }
       showUserAvatarBtn();
-      showTimedState('splash');
+      // Only reset the view to the splash when not mid-game. updateAuthUI() runs
+      // on every auth event (including TOKEN_REFRESHED, which fires on tab focus
+      // and periodically) — without this guard, a refresh during a timed game
+      // (regular or league) would yank the player back to the splash screen.
+      const playing  = !document.getElementById('timedPlaying').classList.contains('hidden');
+      const finished = !document.getElementById('timedFinished').classList.contains('hidden');
+      if (!playing && !finished) showTimedState('splash');
     }
 
     function startTimedGame() {
