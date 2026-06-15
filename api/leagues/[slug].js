@@ -179,6 +179,7 @@ export default async function handler(req, res) {
 
   <!-- State: not signed in -->
   <div id="stateAuth" class="hidden">
+    <p style="font-size:0.83rem;color:#888;margin-bottom:1rem">Hint: use your university email for a quicker sign-in experience</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Log In</button>
       <button class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>

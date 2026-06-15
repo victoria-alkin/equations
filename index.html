@@ -981,6 +981,28 @@
       </div>
     </div>
 
+    <!-- League Invite (non-member landing) -->
+    <div id="leagueInvite" class="hidden">
+      <button class="splash-back" id="btnInviteBack">← Leagues</button>
+      <p class="league-home-name" id="inviteLeagueName"></p>
+      <p class="league-home-meta" id="inviteLeagueMeta"></p>
+
+      <!-- Signed in: join button -->
+      <div id="inviteSignedIn" class="hidden" style="text-align:center;margin-top:1.6rem">
+        <div id="inviteCodeRow" class="hidden" style="margin-bottom:0.8rem">
+          <input type="text" id="inviteCodeField" class="settings-input" placeholder="Enter invite code" autocomplete="off" style="text-align:center;letter-spacing:0.08em">
+        </div>
+        <button class="btn-start" id="btnJoinFromInvite">Join League</button>
+        <p class="settings-msg" id="inviteJoinMsg" style="margin-top:0.6rem"></p>
+      </div>
+
+      <!-- Not signed in: auth prompt -->
+      <div id="inviteSignedOut" class="hidden" style="text-align:center;margin-top:1.6rem">
+        <p id="inviteUniHint" class="hidden" style="font-size:0.83rem;color:#888;margin-bottom:0.9rem">Hint: use your university email for a quicker sign-in experience</p>
+        <button class="action-btn btn-check" id="btnInviteAuth" style="display:block;margin:0 auto;max-width:260px">Log in or sign up to join</button>
+      </div>
+    </div>
+
     <!-- League Home -->
     <div id="leagueHome" class="hidden">
       <button class="splash-back" id="btnLeagueBack">← All Leagues</button>
@@ -3466,8 +3488,15 @@
         // enterLeaguesMode will handle pendingUniversitySlug
       }
       if (event === 'SIGNED_IN' && session && activeMode === 'leagues') {
-        const isViewingLeagueHome = !document.getElementById('leagueHome').classList.contains('hidden');
-        if (!isViewingLeagueHome) enterLeaguesMode();
+        const isViewingLeagueHome   = !document.getElementById('leagueHome').classList.contains('hidden');
+        const isViewingLeagueInvite = !document.getElementById('leagueInvite').classList.contains('hidden');
+        if (isViewingLeagueInvite && pendingInviteLeague) {
+          // User logged in from the invite page — re-render it in signed-in state
+          document.getElementById('loginModal')?.classList.remove('open');
+          openLeagueInvite(pendingInviteLeague);
+        } else if (!isViewingLeagueHome) {
+          enterLeaguesMode();
+        }
       }
       if (event === 'PASSWORD_RECOVERY') {
         document.getElementById('loginModal')?.classList.remove('open');
@@ -3934,6 +3963,7 @@
     }
     let universityData     = null; // lazy-loaded Hipo dataset
     let pendingJoinedLeague = null;
+    let pendingInviteLeague = null; // partial league data shown on invite page
     let _leagueFetchPromise = null; // resolves when loadMyLeagues inner fetch completes
     let _leagueLbTabCache  = null; // { leagueId, week, month } — pre-fetched after today renders
     let _leagueMembersCache = null; // { leagueId, promise } — reused across leaderboard tabs
@@ -3959,7 +3989,7 @@
     // ── Visibility helpers ──────────────────────────────────────────────────
 
     function showLeagueSection(id) {
-      ['leaguesLobby', 'leagueHome'].forEach(s =>
+      ['leaguesLobby', 'leagueHome', 'leagueInvite'].forEach(s =>
         document.getElementById(s).classList.toggle('hidden', s !== id));
       if (id === 'leaguesLobby') history.replaceState({ path: '/leagues' }, '', '/leagues');
     }
@@ -3968,6 +3998,39 @@
       const show = Array.isArray(ids) ? ids : [ids];
       ['leaguesAuthNote','leaguesLoading','leaguesMyLeagues','leaguesOptions'].forEach(s =>
         document.getElementById(s).classList.toggle('hidden', !show.includes(s)));
+    }
+
+    // ── Invite page (non-member landing from a league URL) ──────────────────
+
+    async function openLeagueInvite(found) {
+      // found = { id, name, university_name, type } — partial league data
+      pendingInviteLeague = found;
+      const displayName = found.university_name || found.name;
+      const typeLabel   = found.type === 'university' ? '🏫 University League' : '👥 Custom League';
+      document.getElementById('inviteLeagueName').textContent = displayName;
+      document.getElementById('inviteLeagueMeta').textContent = typeLabel;
+      showLeagueSection('leagueInvite');
+
+      // Fetch member count in background
+      dbWithTimeout(
+        db.from('league_members').select('*', { count: 'exact', head: true }).eq('league_id', found.id), 8000
+      ).then(({ count }) => {
+        document.getElementById('inviteLeagueMeta').textContent =
+          `${typeLabel} · ${count || 0} member${count !== 1 ? 's' : ''}`;
+      }).catch(() => {});
+
+      if (currentSession) {
+        document.getElementById('inviteCodeRow').classList.toggle('hidden', found.type === 'university');
+        document.getElementById('inviteJoinMsg').textContent = '';
+        const btn = document.getElementById('btnJoinFromInvite');
+        btn.disabled = false; btn.textContent = 'Join League';
+        document.getElementById('inviteSignedIn').classList.remove('hidden');
+        document.getElementById('inviteSignedOut').classList.add('hidden');
+      } else {
+        document.getElementById('inviteUniHint').classList.toggle('hidden', found.type !== 'university');
+        document.getElementById('inviteSignedIn').classList.add('hidden');
+        document.getElementById('inviteSignedOut').classList.remove('hidden');
+      }
     }
 
     // ── Entry point ─────────────────────────────────────────────────────────
@@ -4039,10 +4102,7 @@
           }
           return;
         }
-        openJoinUniversityModal();
-        const searchInput = document.getElementById('universitySearch');
-        searchInput.value = found.university_name || found.name;
-        searchInput.dispatchEvent(new Event('input'));
+        openLeagueInvite(found);
       } catch {}
     }
 
@@ -4527,6 +4587,84 @@
     document.getElementById('btnJoinUniversity').addEventListener('click', openJoinUniversityModal);
     document.getElementById('btnJoinExistingLeague').addEventListener('click', openJoinExistingModal);
     document.getElementById('btnCreateNewLeague').addEventListener('click', openCreateLeagueModal);
+
+    document.getElementById('btnInviteBack').addEventListener('click', () => {
+      pendingInviteLeague = null;
+      showLeagueSection('leaguesLobby');
+    });
+
+    document.getElementById('btnInviteAuth').addEventListener('click', () => {
+      document.getElementById('loginModal')?.classList.add('open');
+    });
+
+    document.getElementById('btnJoinFromInvite').addEventListener('click', async () => {
+      if (!pendingInviteLeague || !currentSession) return;
+      const btn   = document.getElementById('btnJoinFromInvite');
+      const msgEl = document.getElementById('inviteJoinMsg');
+      msgEl.textContent = '';
+
+      if (pendingInviteLeague.type === 'university') {
+        btn.disabled = true; btn.textContent = 'Joining...';
+        try {
+          const uniName = pendingInviteLeague.university_name || pendingInviteLeague.name;
+          // Look up university in Hipo to check email domain
+          const hipo = await loadUniversityData().catch(() => []);
+          const uni  = hipo.find(u => u.name.toLowerCase() === uniName.toLowerCase())
+            || { name: uniName, domains: [] };
+          const loginEmail = currentSession?.user?.email || '';
+          if (loginEmail && uni.domains?.length > 0 && domainMatchesUni(loginEmail, uni.domains)) {
+            // Email verified — join directly without a modal
+            await ensureCurrentUsername();
+            const { error } = await db.rpc('join_university_league',
+              { p_league_id: pendingInviteLeague.id, p_display_name: currentUsername || '' });
+            if (error && error.code !== '23505') {
+              msgEl.textContent = error.message; msgEl.className = 'settings-msg err';
+              btn.disabled = false; btn.textContent = 'Join League'; return;
+            }
+            const { data: full } = await dbWithTimeout(
+              db.from('leagues').select('*').eq('id', pendingInviteLeague.id).maybeSingle(), 8000
+            ).catch(() => ({ data: null }));
+            const league = full
+              ? { ...full, is_admin: false }
+              : { ...pendingInviteLeague, is_admin: false };
+            if (!myLeagues.find(l => l.id === league.id)) myLeagues.push(league);
+            try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
+            renderLeaguesLobby();
+            pendingInviteLeague = null;
+            showJoinedModal(league);
+          } else {
+            // OTP or honor-system path — open the university modal with university pre-selected
+            btn.disabled = false; btn.textContent = 'Join League';
+            resetUniModal();
+            document.getElementById('joinUniversityModal').classList.add('open');
+            selectUniversity(uni);
+          }
+        } catch {
+          msgEl.textContent = 'Something went wrong. Please try again.';
+          msgEl.className = 'settings-msg err';
+          btn.disabled = false; btn.textContent = 'Join League';
+        }
+      } else {
+        // Custom league: join by invite code
+        const raw  = document.getElementById('inviteCodeField').value.trim();
+        const code = (raw.includes('/') ? raw.split('/').pop() : raw).replace(/[^a-z0-9]/gi, '').toLowerCase();
+        if (!code) { msgEl.textContent = 'Enter a code first.'; msgEl.className = 'settings-msg err'; return; }
+        btn.disabled = true; btn.textContent = 'Joining...';
+        await ensureCurrentUsername();
+        const { data: leagueId, error } = await db.rpc('join_league_by_code',
+          { p_invite_code: code, p_display_name: currentUsername || '' });
+        btn.disabled = false; btn.textContent = 'Join League';
+        if (error) { msgEl.textContent = error.message || 'Invalid code.'; msgEl.className = 'settings-msg err'; return; }
+        await loadMyLeagues();
+        const joined = myLeagues.find(l => l.id === leagueId) ||
+          { id: leagueId, name: 'League', type: 'custom', university_name: null,
+            invite_code: code, is_admin: false, joined_at: new Date().toISOString() };
+        if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joined);
+        try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
+        pendingInviteLeague = null;
+        openLeagueHome(joined);
+      }
+    });
 
     document.getElementById('btnLeagueBack').addEventListener('click', async () => {
       activeLeague = null; activeLeagueSeason = null;
