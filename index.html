@@ -4108,6 +4108,18 @@
       if (hintId) {
         const found = { id: hintId, name: hintName || prettifySlug(slug),
                         university_name: hintName || prettifySlug(slug), type: 'university' };
+        // Membership comes from loadMyLeagues() — the authoritative source used
+        // everywhere else, with its localStorage cache. Check cache first, then
+        // wait for the in-flight fetch. Never show "Join" to an actual member
+        // just because a one-off probe was slow.
+        let m = myLeagues.find(l => l.id === hintId);
+        if (!m && _leagueFetchPromise) {
+          await Promise.race([_leagueFetchPromise, new Promise(r => setTimeout(r, 8000))]);
+          m = myLeagues.find(l => l.id === hintId);
+        }
+        if (m) { openLeagueHome(m); return; }
+        // Cache/fetch says non-member — do one direct check as a final guard
+        // (covers a stale or failed loadMyLeagues) before showing the invite.
         try {
           const { data: mem } = await dbWithTimeout(
             db.from('league_members').select('is_admin, joined_at')
@@ -4123,10 +4135,10 @@
             if (!myLeagues.find(l => l.id === hintId)) myLeagues.push(league);
             try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
             openLeagueHome(league);
-          } else {
-            openLeagueInvite(found);
+            return;
           }
-        } catch { openLeagueInvite(found); }
+        } catch {}
+        openLeagueInvite(found);
         return;
       }
 
