@@ -4344,12 +4344,10 @@
 
       if (leagueLbTab === 'today') {
         document.getElementById('leagueLbHeading').textContent = "Today's Scores";
-        const { data } = await db.rpc('get_league_today_scores', {
-          p_league_id: activeLeague.id,
-          p_day: today
-        });
-        let rows = (data || []).map(r => ({ ...r, score: r.best_score }));
-        if (activeLeague.type === 'university') rows = rows.slice(0, 10);
+        const rpcParams = { p_league_id: activeLeague.id, p_day: today };
+        if (activeLeague.type === 'university') rpcParams.p_limit = 10;
+        const { data } = await db.rpc('get_league_today_scores', rpcParams);
+        const rows = (data || []).map(r => ({ ...r, score: r.best_score }));
         renderLeagueLbRows(contentEl, rows, myId, 'score');
 
       } else if (leagueLbTab === 'season') {

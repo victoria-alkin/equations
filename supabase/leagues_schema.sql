@@ -55,6 +55,9 @@ CREATE INDEX IF NOT EXISTS idx_league_dp_season        ON league_daily_points(se
 CREATE INDEX IF NOT EXISTS idx_league_seasons_league   ON league_seasons(league_id);
 -- Needed by get_league_today_scores(): join on ts.user_id + ts.day
 CREATE INDEX IF NOT EXISTS idx_timed_scores_user_day   ON timed_scores(user_id, day);
+-- Allows Postgres to sweep all of today's scores in one pass (hash join with league_members)
+-- instead of doing one index probe per member (nested loop). Critical for large leagues.
+CREATE INDEX IF NOT EXISTS idx_timed_scores_day        ON timed_scores(day);
 
 -- ── Row-Level Security ────────────────────────────────────────────────────
 ALTER TABLE leagues             ENABLE ROW LEVEL SECURITY;
@@ -305,7 +308,9 @@ $$;
 -- ── Today's leaderboard in one query ────────────────────────────────────────
 -- Replaces the two-step client fetch (league_members → timed_scores IN (...))
 -- with a single server-side join, eliminating one round trip.
-CREATE OR REPLACE FUNCTION get_league_today_scores(p_league_id uuid, p_day text)
+-- p_limit: pass 10 for university leagues so only top-N rows are transferred.
+-- Omit (or pass NULL) for custom leagues to return all members.
+CREATE OR REPLACE FUNCTION get_league_today_scores(p_league_id uuid, p_day text, p_limit int DEFAULT NULL)
 RETURNS TABLE (user_id uuid, display_name text, best_score int)
 LANGUAGE sql STABLE SECURITY DEFINER
 AS $$
@@ -318,5 +323,6 @@ AS $$
     ON ts.user_id = lm.user_id AND ts.day = p_day::date
   WHERE lm.league_id = p_league_id
   GROUP BY lm.user_id, lm.display_name
-  ORDER BY best_score DESC;
+  ORDER BY best_score DESC
+  LIMIT p_limit;
 $$;
