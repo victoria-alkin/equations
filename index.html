@@ -3466,7 +3466,8 @@
         // enterLeaguesMode will handle pendingUniversitySlug
       }
       if (event === 'SIGNED_IN' && session && activeMode === 'leagues') {
-        enterLeaguesMode();
+        const isViewingLeagueHome = !document.getElementById('leagueHome').classList.contains('hidden');
+        if (!isViewingLeagueHome) enterLeaguesMode();
       }
       if (event === 'PASSWORD_RECOVERY') {
         document.getElementById('loginModal')?.classList.remove('open');
@@ -4275,17 +4276,13 @@
           contentEl.innerHTML = '<p class="lb-empty">No active season — start one to begin competing!</p>';
           return;
         }
-        const { data: pts } = await db
-          .from('league_daily_points')
-          .select('user_id, points')
-          .eq('season_id', activeLeagueSeason.id);
+        const [{ data: pts }, { data: members }] = await Promise.all([
+          db.from('league_daily_points').select('user_id, points').eq('season_id', activeLeagueSeason.id),
+          db.from('league_members').select('user_id, display_name').eq('league_id', activeLeague.id)
+        ]);
         const totalByUser = {};
         (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
 
-        const { data: members } = await db
-          .from('league_members')
-          .select('user_id, display_name')
-          .eq('league_id', activeLeague.id);
         const rows = (members || []).map(m => ({
           user_id: m.user_id, display_name: m.display_name || 'Unknown',
           score: totalByUser[m.user_id] || 0
@@ -4306,19 +4303,13 @@
           document.getElementById('leagueLbHeading').textContent =
             estNow.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
-        const { data: pts } = await db
-          .from('league_daily_points')
-          .select('user_id, points')
-          .eq('league_id', activeLeague.id)
-          .gte('day', startStr)
-          .lte('day', today);
+        const [{ data: pts }, { data: members }] = await Promise.all([
+          db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lte('day', today),
+          db.from('league_members').select('user_id, display_name').eq('league_id', activeLeague.id)
+        ]);
         const totalByUser = {};
         (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
 
-        const { data: members } = await db
-          .from('league_members')
-          .select('user_id, display_name')
-          .eq('league_id', activeLeague.id);
         const rows = (members || [])
           .map(m => ({ user_id: m.user_id, display_name: m.display_name || 'Unknown', score: totalByUser[m.user_id] || 0 }))
           .sort((a, b) => b.score - a.score)
