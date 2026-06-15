@@ -2719,9 +2719,14 @@
         const displayName = currentUsername;
         const today       = getEstDateString();
         await db.from('timed_scores').insert({ user_id: userId, display_name: displayName, score, day: today });
-        const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
-        if (!existing || score > existing.score) {
-          await db.from('best_scores').upsert({ user_id: userId, display_name: displayName, score, achieved_on: today, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        // Atomic "update best score if higher" in one round trip. Falls back to the
+        // read-then-write if the RPC isn't deployed yet (see record_best_score.sql).
+        const { error: rpcErr } = await db.rpc('record_best_score', { p_display_name: displayName, p_score: score, p_day: today });
+        if (rpcErr) {
+          const { data: existing } = await db.from('best_scores').select('score').eq('user_id', userId).maybeSingle();
+          if (!existing || score > existing.score) {
+            await db.from('best_scores').upsert({ user_id: userId, display_name: displayName, score, achieved_on: today, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+          }
         }
       } catch (e) {
         // Don't let a failed save break the post-game leaderboard refresh.
