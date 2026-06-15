@@ -205,11 +205,16 @@ export default async function handler(req, res) {
 <script>
   var SLUG      = ${JSON.stringify(slug)};
   var LEAGUE_ID = ${JSON.stringify(leagueId)};
+  var LEAGUE_NAME = ${JSON.stringify(displayName)};
   var SB_URL    = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
   var SB_KEY    = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
 
   function goPlay() {
     sessionStorage.setItem('pendingUniversitySlug', SLUG);
+    // Pass the already-resolved league id/name so the SPA can skip looking it up
+    // (it otherwise fetches every university league to match the slug).
+    if (LEAGUE_ID)   sessionStorage.setItem('pendingUniversityLeagueId', LEAGUE_ID);
+    if (LEAGUE_NAME) sessionStorage.setItem('pendingUniversityLeagueName', LEAGUE_NAME);
     location.replace('/leagues');
   }
 

@@ -3960,6 +3960,8 @@
     let leagueIsPlaying  = false; // true while timed game is running for a league
     let pendingLeagueCode    = null; // invite code waiting for sign-in
     let pendingUniversitySlug = null; // university slug waiting for sign-in
+    let pendingUniversityLeagueId   = null; // league id resolved server-side (skip slug lookup)
+    let pendingUniversityLeagueName = null; // league display name resolved server-side
 
     function toLeagueSlug(name) {
       return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -4095,6 +4097,38 @@
       // Fast path: cache hit or loadMyLeagues() already finished.
       let match = myLeagues.find(slugMatch);
       if (match) { openLeagueHome(match); return; }
+
+      // Fastest path: the server already resolved this league's id (passed via
+      // sessionStorage on the post-sign-in redirect). Skip the 10s _leagueFetchPromise
+      // race and the fetch-all-university-leagues lookup — go straight to a single
+      // indexed membership check, then route to home (member) or invite (non-member).
+      const hintId   = pendingUniversityLeagueId;
+      const hintName = pendingUniversityLeagueName;
+      pendingUniversityLeagueId = pendingUniversityLeagueName = null;
+      if (hintId) {
+        const found = { id: hintId, name: hintName || prettifySlug(slug),
+                        university_name: hintName || prettifySlug(slug), type: 'university' };
+        try {
+          const { data: mem } = await dbWithTimeout(
+            db.from('league_members').select('is_admin, joined_at')
+              .eq('league_id', hintId).eq('user_id', currentSession.user.id).maybeSingle(), 8000
+          );
+          if (mem) {
+            const { data: full } = await dbWithTimeout(
+              db.from('leagues').select('*').eq('id', hintId).maybeSingle(), 8000
+            );
+            const league = full
+              ? { ...full, is_admin: mem.is_admin, joined_at: mem.joined_at }
+              : { ...found, is_admin: mem.is_admin, joined_at: mem.joined_at };
+            if (!myLeagues.find(l => l.id === hintId)) myLeagues.push(league);
+            try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
+            openLeagueHome(league);
+          } else {
+            openLeagueInvite(found);
+          }
+        } catch { openLeagueInvite(found); }
+        return;
+      }
 
       // Cold-start path: loadMyLeagues() timed out at 6s but its inner fetch is still
       // running. Wait up to 10s more for it to complete rather than making new REST calls.
@@ -5113,7 +5147,15 @@
       const bid           = params.get('battle');
       const leagueCode    = params.get('leagueCode');
       const universitySlug = sessionStorage.getItem('pendingUniversitySlug') || params.get('universitySlug');
-      if (universitySlug) sessionStorage.removeItem('pendingUniversitySlug');
+      if (universitySlug) {
+        sessionStorage.removeItem('pendingUniversitySlug');
+        // Optional league id/name resolved server-side — lets autoOpenUniversityLeague
+        // skip fetching every university league to match the slug.
+        pendingUniversityLeagueId   = sessionStorage.getItem('pendingUniversityLeagueId') || null;
+        pendingUniversityLeagueName = sessionStorage.getItem('pendingUniversityLeagueName') || null;
+        sessionStorage.removeItem('pendingUniversityLeagueId');
+        sessionStorage.removeItem('pendingUniversityLeagueName');
+      }
       const initialPath = normalizePath(location.pathname);
       if (bid) {
         activeMode = 'battle';
