@@ -249,14 +249,18 @@ export default async function handler(req, res) {
   async function lookupEmail(identifier) {
     if (identifier.includes('@')) return identifier;
     var ac = new AbortController();
-    var t = setTimeout(function() { ac.abort(); }, 5000);
-    var r = await fetch(
-      SB_URL + '/rest/v1/profiles?select=email&username=ilike.' + encodeURIComponent(identifier) + '&limit=1',
-      { headers: { apikey: SB_KEY, Accept: 'application/json' }, signal: ac.signal }
-    );
+    var t = setTimeout(function() { ac.abort(); }, 6000);
+    // Resolve server-side so the profiles.email column stays non-public.
+    var r = await fetch('/api/resolve-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: identifier }),
+      signal: ac.signal
+    });
     clearTimeout(t);
-    var rows = await r.json();
-    return rows && rows[0] && rows[0].email ? rows[0].email : null;
+    if (!r.ok) return null;
+    var data = await r.json().catch(function() { return {}; });
+    return data && data.email ? data.email : null;
   }
 
   async function doLogin() {

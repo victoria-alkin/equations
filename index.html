@@ -3320,6 +3320,29 @@
     });
 
     // ─── Auth ────────────────────────────────────────────────────────────────────
+    // Resolve a username → login email via the server (service-role) so the
+    // profiles.email column doesn't need to be publicly readable. Returns
+    // { ok: true, email } or { ok: false, error }.
+    async function resolveLoginEmail(username) {
+      try {
+        const ac = new AbortController();
+        const t = setTimeout(() => ac.abort(), 6000);
+        const r = await fetch('/api/resolve-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username }),
+          signal: ac.signal
+        });
+        clearTimeout(t);
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 404) return { ok: false, error: 'Username not found.' };
+        if (!r.ok || !data.email) return { ok: false, error: 'Something went wrong. Please try again.' };
+        return { ok: true, email: data.email };
+      } catch {
+        return { ok: false, error: 'Something went wrong. Please try again.' };
+      }
+    }
+
     function setAuthMsg(msg, type) {
       const el = document.getElementById('authMsg');
       el.textContent = msg; el.className = 'auth-msg ' + (type ?? '');
@@ -3378,20 +3401,9 @@
 
       let email = identifier;
       if (!identifier.includes('@')) {
-        try {
-          const ac = new AbortController();
-          const t = setTimeout(() => ac.abort(), 5000);
-          const r = await fetch(
-            `https://pcyymbfaxacvmkxrvmhx.supabase.co/rest/v1/profiles?select=email&username=ilike.${encodeURIComponent(identifier)}&limit=1`,
-            { headers: { apikey: 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u', Accept: 'application/json' }, signal: ac.signal }
-          );
-          clearTimeout(t);
-          const rows = await r.json();
-          if (!rows?.[0]?.email) { setAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-          email = rows[0].email;
-        } catch (e) {
-          setAuthMsg('Something went wrong. Please try again.', 'err'); btn.disabled = false; return;
-        }
+        const looked = await resolveLoginEmail(identifier);
+        if (!looked.ok) { setAuthMsg(looked.error, 'err'); btn.disabled = false; return; }
+        email = looked.email;
       }
 
       const { error } = await db.auth.signInWithPassword({ email, password });
@@ -3754,20 +3766,9 @@
       btn.disabled = true; setModalAuthMsg('Logging in...');
       let email = identifier;
       if (!identifier.includes('@')) {
-        try {
-          const ac = new AbortController();
-          const t = setTimeout(() => ac.abort(), 5000);
-          const r = await fetch(
-            `https://pcyymbfaxacvmkxrvmhx.supabase.co/rest/v1/profiles?select=email&username=ilike.${encodeURIComponent(identifier)}&limit=1`,
-            { headers: { apikey: 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u', Accept: 'application/json' }, signal: ac.signal }
-          );
-          clearTimeout(t);
-          const rows = await r.json();
-          if (!rows?.[0]?.email) { setModalAuthMsg('Username not found.', 'err'); btn.disabled = false; return; }
-          email = rows[0].email;
-        } catch (e) {
-          setModalAuthMsg('Something went wrong. Please try again.', 'err'); btn.disabled = false; return;
-        }
+        const looked = await resolveLoginEmail(identifier);
+        if (!looked.ok) { setModalAuthMsg(looked.error, 'err'); btn.disabled = false; return; }
+        email = looked.email;
       }
       const { error } = await db.auth.signInWithPassword({ email, password });
       btn.disabled = false;
