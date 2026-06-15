@@ -224,7 +224,6 @@ CREATE OR REPLACE FUNCTION settle_league_points()
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   yesterday_est DATE := (NOW() AT TIME ZONE 'America/New_York')::DATE - 1;
-  yesterday_str TEXT := yesterday_est::TEXT;
   league_rec    RECORD;
   member_count  INTEGER;
   n             INTEGER;
@@ -258,7 +257,7 @@ BEGIN
              COALESCE(MAX(ts.score), 0) AS best_score
       FROM league_members lm
       LEFT JOIN timed_scores ts
-        ON ts.user_id = lm.user_id AND ts.day = yesterday_str
+        ON ts.user_id = lm.user_id AND ts.day = yesterday_est
       WHERE lm.league_id = league_rec.id
       GROUP BY lm.user_id, lm.display_name
       ORDER BY COALESCE(MAX(ts.score), 0) DESC, lm.joined_at ASC
