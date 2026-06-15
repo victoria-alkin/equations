@@ -3935,6 +3935,7 @@
     let universityData     = null; // lazy-loaded Hipo dataset
     let pendingJoinedLeague = null;
     let _leagueFetchPromise = null; // resolves when loadMyLeagues inner fetch completes
+    let _leagueLbTabCache  = null; // { leagueId, week, month } — pre-fetched after today renders
     let _leagueMembersCache = null; // { leagueId, promise } — reused across leaderboard tabs
 
     function fetchLeagueMembersFor(leagueId) {
@@ -4119,6 +4120,7 @@
       leagueLbTab  = 'today';
       leagueMemberCount = 0;
       activeLeagueSeason = null;
+      _leagueLbTabCache  = null;
 
       // Show the league home immediately with the data we already have — don't block
       // on REST calls before rendering. All REST calls below refresh in the background.
@@ -4173,6 +4175,27 @@
       })();
 
       await fetchAndRenderLeagueLeaderboard();
+
+      // Pre-fetch week + month points in the background after today is rendered,
+      // so switching to those tabs is instant.
+      const _pid = league.id;
+      (async () => {
+        try {
+          const day = getEstDateString();
+          const estNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+          const dow = estNow.getDay();
+          const mon = new Date(estNow); mon.setDate(estNow.getDate() - (dow === 0 ? 6 : dow - 1));
+          const weekStart  = mon.toLocaleDateString('en-CA');
+          const monthStart = `${estNow.getFullYear()}-${String(estNow.getMonth() + 1).padStart(2, '0')}-01`;
+          const [{ data: week }, { data: month }] = await Promise.all([
+            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', weekStart).lte('day', day),
+            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', monthStart).lte('day', day)
+          ]);
+          if (activeLeague?.id === _pid) {
+            _leagueLbTabCache = { leagueId: _pid, week: week || [], month: month || [] };
+          }
+        } catch {}
+      })();
     }
 
     function renderLeagueHomeHeader() {
@@ -4303,12 +4326,18 @@
           document.getElementById('leagueLbHeading').textContent =
             estNow.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
-        const [{ data: pts }, members] = await Promise.all([
-          db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lte('day', today),
-          fetchLeagueMembersFor(activeLeague.id)
-        ]);
+        const cachedPts = _leagueLbTabCache?.leagueId === activeLeague.id ? _leagueLbTabCache[leagueLbTab] : null;
+        const membersPromise = fetchLeagueMembersFor(activeLeague.id);
+        let pts;
+        if (cachedPts) {
+          pts = cachedPts;
+        } else {
+          const { data } = await db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lte('day', today);
+          pts = data || [];
+        }
+        const members = await membersPromise;
         const totalByUser = {};
-        (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
+        pts.forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
 
         const rows = members
           .map(m => ({ user_id: m.user_id, display_name: m.display_name || 'Unknown', score: totalByUser[m.user_id] || 0 }))
