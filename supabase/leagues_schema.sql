@@ -325,3 +325,20 @@ AS $$
   ORDER BY best_score DESC
   LIMIT p_limit;
 $$;
+
+-- ── Nightly settle via pg_cron ──────────────────────────────────────────────
+-- Settling used to run on every page load from the client (settleBadges()),
+-- which meant two RPC scans per visitor. Schedule it once nightly instead.
+-- Run these in the Supabase SQL editor (pg_cron is available by default):
+--
+--   CREATE EXTENSION IF NOT EXISTS pg_cron;
+--
+--   -- 05:10 UTC ≈ just after midnight US Eastern (covers EST/EDT); adjust if desired.
+--   SELECT cron.schedule('settle-leaderboards-nightly', '10 5 * * *', $cron$
+--     SELECT settle_past_leaderboard_days();
+--     SELECT settle_league_points();
+--   $cron$);
+--
+-- To inspect or remove:
+--   SELECT * FROM cron.job;
+--   SELECT cron.unschedule('settle-leaderboards-nightly');

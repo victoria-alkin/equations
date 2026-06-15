@@ -3122,6 +3122,10 @@
     // ─── Leaderboard ────────────────────────────────────────────────────────────
     const MEDAL_IMG = { gold: '/images/1.png', silver: '/images/2.png', bronze: '/images/3.png' };
 
+    // Settling is handled nightly by pg_cron (see supabase/leagues_schema.sql).
+    // This remains only as an at-midnight client fallback so the day rolls over
+    // even if cron is delayed; both RPCs are idempotent (they skip already-settled
+    // days), so a redundant call is cheap. It is NOT called on page load anymore.
     async function settleBadges() {
       const { error } = await db.rpc('settle_past_leaderboard_days');
       if (error) console.error('settle_past_leaderboard_days error:', error);
@@ -3450,7 +3454,8 @@
             const c = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
             if (c) { delete c.badges; localStorage.setItem('eq_profile_cache', JSON.stringify(c)); }
           } catch {}
-          settleBadges().then(checkUnseenBadges);
+          // Settling now runs nightly via pg_cron — just surface any new badges.
+          checkUnseenBadges();
         }
         try {
           const { data: profile } = await dbWithTimeout(
@@ -5215,7 +5220,8 @@
     (async () => {
       // Step 1: route immediately using the localStorage-pre-set session.
       // Never block URL routing on any network call — getSession() comes after.
-      settleBadges().then(checkUnseenBadges);
+      // Settling runs nightly via pg_cron, not on every load — just show new badges.
+      checkUnseenBadges();
       const params = new URLSearchParams(location.search);
       const bid           = params.get('battle');
       const leagueCode    = params.get('leagueCode');
