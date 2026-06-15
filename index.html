@@ -4346,7 +4346,9 @@
         document.getElementById('leagueLbHeading').textContent = "Today's Scores";
         const rpcParams = { p_league_id: activeLeague.id, p_day: today };
         if (activeLeague.type === 'university') rpcParams.p_limit = 10;
-        const { data } = await db.rpc('get_league_today_scores', rpcParams);
+        const _t0 = performance.now();
+        const { data, error } = await db.rpc('get_league_today_scores', rpcParams);
+        console.log(`[league] today RPC took ${Math.round(performance.now() - _t0)}ms`, error || `${(data || []).length} rows`);
         const rows = (data || []).map(r => ({ ...r, score: r.best_score }));
         renderLeagueLbRows(contentEl, rows, myId, 'score');
 
