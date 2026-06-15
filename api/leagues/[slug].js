@@ -209,12 +209,15 @@ export default async function handler(req, res) {
   var SB_URL    = 'https://pcyymbfaxacvmkxrvmhx.supabase.co';
   var SB_KEY    = 'sb_publishable_Smdw6S4VdvXC7j-GVUiRhw_mzRILb1u';
 
-  function goPlay() {
+  function goPlay(isSignup) {
     sessionStorage.setItem('pendingUniversitySlug', SLUG);
     // Pass the already-resolved league id/name so the SPA can skip looking it up
     // (it otherwise fetches every university league to match the slug).
     if (LEAGUE_ID)   sessionStorage.setItem('pendingUniversityLeagueId', LEAGUE_ID);
     if (LEAGUE_NAME) sessionStorage.setItem('pendingUniversityLeagueName', LEAGUE_NAME);
+    // A brand-new account can't be a member of anything — let the SPA show the
+    // invite page immediately without a membership round-trip.
+    if (isSignup) sessionStorage.setItem('pendingLeagueFreshSignup', '1');
     location.replace('/leagues');
   }
 
@@ -317,7 +320,7 @@ export default async function handler(req, res) {
         }));
       }
       setMsg('signupMsg', 'Account created! Redirecting...', 'ok');
-      goPlay();
+      goPlay(true);
     } catch(e) {
       setMsg('signupMsg', 'Something went wrong. Please try again.', 'err');
       btn.disabled = false;

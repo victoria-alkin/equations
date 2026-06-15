@@ -3966,6 +3966,7 @@
     let pendingUniversitySlug = null; // university slug waiting for sign-in
     let pendingUniversityLeagueId   = null; // league id resolved server-side (skip slug lookup)
     let pendingUniversityLeagueName = null; // league display name resolved server-side
+    let pendingLeagueFreshSignup    = false; // just signed up — definitely not a member yet
 
     function toLeagueSlug(name) {
       return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -4112,6 +4113,13 @@
       if (hintId) {
         const found = { id: hintId, name: hintName || prettifySlug(slug),
                         university_name: hintName || prettifySlug(slug), type: 'university' };
+        // Brand-new signup: can't be a member, so skip the membership round-trip
+        // and show the invite page immediately.
+        if (pendingLeagueFreshSignup) {
+          pendingLeagueFreshSignup = false;
+          openLeagueInvite(found);
+          return;
+        }
         // Membership comes from loadMyLeagues() — the authoritative source used
         // everywhere else, with its localStorage cache. Check cache first, then
         // wait for the in-flight fetch. Never show "Join" to an actual member
@@ -5209,8 +5217,10 @@
         // skip fetching every university league to match the slug.
         pendingUniversityLeagueId   = sessionStorage.getItem('pendingUniversityLeagueId') || null;
         pendingUniversityLeagueName = sessionStorage.getItem('pendingUniversityLeagueName') || null;
+        pendingLeagueFreshSignup    = sessionStorage.getItem('pendingLeagueFreshSignup') === '1';
         sessionStorage.removeItem('pendingUniversityLeagueId');
         sessionStorage.removeItem('pendingUniversityLeagueName');
+        sessionStorage.removeItem('pendingLeagueFreshSignup');
       }
       const initialPath = normalizePath(location.pathname);
       if (bid) {
