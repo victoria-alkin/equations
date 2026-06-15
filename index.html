@@ -3497,7 +3497,11 @@
           // User logged in from the invite page — re-render it in signed-in state
           document.getElementById('loginModal')?.classList.remove('open');
           openLeagueInvite(pendingInviteLeague);
-        } else if (!isViewingLeagueHome) {
+        } else if (!isViewingLeagueHome && !isViewingLeagueInvite) {
+          // Not on a league page — show the lobby. Crucially, do NOT re-enter while
+          // viewing the invite page: a deep-link resolution may be in progress
+          // (showLeagueInviteLoading), and re-entering would flash the lobby because
+          // pendingUniversitySlug was already consumed.
           enterLeaguesMode();
         }
       }
