@@ -4189,9 +4189,17 @@
       }
 
       showLeagueSection('leaguesLobby');
-      showLobbySection('leaguesLoading');
-      await loadMyLeagues();
+      // Render the lobby immediately (interactive — create/join options, plus your
+      // leagues from cache) instead of blocking on a spinner. loadMyLeagues() primes
+      // myLeagues from cache synchronously and kicks off the refresh in the
+      // background; we re-render when it lands. This avoids the up-to-6s cold wait.
+      loadMyLeagues();
       try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
+      if (_leagueFetchPromise) _leagueFetchPromise.then(() => {
+        if (!document.getElementById('leaguesLobby').classList.contains('hidden')) {
+          try { renderLeaguesLobby(); } catch {}
+        }
+      });
       // Auto-join if we have a pending invite code
       if (pendingLeagueCode) {
         const code = pendingLeagueCode; pendingLeagueCode = null;
@@ -4323,19 +4331,18 @@
       // cold-start timeout instead of making duplicate REST calls.
       const innerFetch = (async () => {
         try {
+          // Single round trip: embed the joined league row via the league_members
+          // → leagues foreign key, instead of fetching memberships then leagues.
           const { data: memberships, error } = await db
             .from('league_members')
-            .select('league_id, is_admin, joined_at')
+            .select('is_admin, joined_at, leagues(*)')
             .eq('user_id', currentSession.user.id)
             .order('joined_at', { ascending: true });
-          if (error || !memberships || memberships.length === 0) { myLeagues = []; return; }
-          const ids = memberships.map(r => r.league_id);
-          const { data: leagueRows } = await db.from('leagues').select('*').in('id', ids);
-          const byId = {};
-          (leagueRows || []).forEach(l => { byId[l.id] = l; });
-          myLeagues = memberships
-            .filter(r => byId[r.league_id])
-            .map(r => ({ ...byId[r.league_id], is_admin: r.is_admin, joined_at: r.joined_at }));
+          // On error, keep the existing cache rather than wiping it to empty.
+          if (error) { console.error('loadMyLeagues:', error); return; }
+          myLeagues = (memberships || [])
+            .filter(r => r.leagues)
+            .map(r => ({ ...r.leagues, is_admin: r.is_admin, joined_at: r.joined_at }));
           try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
         } catch (e) { console.error('loadMyLeagues:', e); myLeagues = myLeagues || []; }
       })();
