@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   if (!accessToken)            return res.status(401).json({ error: 'Missing access token' });
   if (!university_name)        return res.status(400).json({ error: 'Missing university name' });
 
-  // Verify the JWT — just confirm the user is logged in
+  // Verify the JWT - just confirm the user is logged in
   let userId;
   try {
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
   const safeUni = escapeHtml(university_name);
   const html = `
     <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:2rem;color:#333">
-      <h2 style="color:#8DC883;margin-bottom:0.5rem">Equations — University Verification</h2>
+      <h2 style="color:#8DC883;margin-bottom:0.5rem">Equations: University Verification</h2>
       <p>Your verification code for joining the <strong>${safeUni}</strong> league:</p>
       <p style="font-size:2.6rem;font-weight:800;letter-spacing:0.3em;color:#222;margin:1.2rem 0">${code}</p>
       <p style="color:#888;font-size:0.85rem">This code expires in 10 minutes.<br>If you didn't request this, you can safely ignore it.</p>

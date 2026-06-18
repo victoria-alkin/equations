@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   const title = leagueName
     ? `Join "${escapeHtml(leagueName)}" on Equations!`
     : 'Join a league on Equations!';
-  const desc = 'Compete in Equations leagues — solve timed puzzles and climb the leaderboard!';
+  const desc = 'Compete in Equations leagues: solve timed puzzles and climb the leaderboard!';
   const img = 'https://equationsgame.com/images/opengraph2.png';
   const pageUrl = `https://equationsgame.com/league-invite/${encodeURIComponent(code)}`;
   const redirect = `/leagues?leagueCode=${encodeURIComponent(code)}`;

@@ -63,7 +63,7 @@ export default async function handler(req, res) {
   }
 
   const displayName = universityName || leagueName;
-  const title = `${escapeHtml(displayName)} League — Equations`;
+  const title = `${escapeHtml(displayName)} League - Equations`;
   const desc = `Compete in the ${escapeHtml(displayName)} league on Equations! Solve timed math puzzles and climb the leaderboard.`;
   const img = 'https://equationsgame.com/images/opengraph2.png';
   const pageUrl = `https://equationsgame.com/leagues/${encodeURIComponent(slug)}`;
@@ -178,7 +178,7 @@ export default async function handler(req, res) {
   <p class="sub">University League &middot; Equations</p>
   <p class="members">${escapeHtml(memberText)}</p>
 
-  <!-- State: signed in (member or not — SPA handles the distinction) -->
+  <!-- State: signed in (member or not - SPA handles the distinction) -->
   <div id="stateSignedIn" class="hidden">
     <button class="btn btn-green" onclick="goPlay()">Play &amp; Compete</button>
   </div>
@@ -221,7 +221,7 @@ export default async function handler(req, res) {
     // (it otherwise fetches every university league to match the slug).
     if (LEAGUE_ID)   sessionStorage.setItem('pendingUniversityLeagueId', LEAGUE_ID);
     if (LEAGUE_NAME) sessionStorage.setItem('pendingUniversityLeagueName', LEAGUE_NAME);
-    // A brand-new account can't be a member of anything — let the SPA show the
+    // A brand-new account can't be a member of anything - let the SPA show the
     // invite page immediately without a membership round-trip.
     if (isSignup) sessionStorage.setItem('pendingLeagueFreshSignup', '1');
     location.replace('/leagues');
@@ -345,7 +345,7 @@ export default async function handler(req, res) {
     if (e.key === 'Enter') doSignup();
   });
 
-  // Check for any stored session — if a refresh_token exists, the SPA can
+  // Check for any stored session - if a refresh_token exists, the SPA can
   // handle renewal. Don't reject expired access_tokens here; send them to the
   // SPA which calls db.auth.getSession() and refreshes automatically.
   function hasStoredSession() {
@@ -357,7 +357,7 @@ export default async function handler(req, res) {
     } catch(e) { return false; }
   }
 
-  // Determine which state to show — synchronous, no async calls
+  // Determine which state to show - synchronous, no async calls
   (function() {
     if (sessionStorage.getItem('eqInApp')) { goPlay(); return; }
     if (hasStoredSession()) { goPlay(); return; }

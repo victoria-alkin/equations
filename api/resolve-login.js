@@ -1,6 +1,6 @@
 // Resolves a username to its login email server-side, using the service-role key.
 // This exists so the `profiles.email` column does NOT need to be publicly readable
-// via the anon key — which previously allowed anyone to bulk-harvest every
+// via the anon key - which previously allowed anyone to bulk-harvest every
 // username→email pair (e.g. GET /rest/v1/profiles?select=username,email).
 //
 // After all callers use this endpoint, lock the column down (see comment at bottom).

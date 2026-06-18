@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Equations — Daily Math Puzzle Game | equationsgame.com</title>
-  <meta name="description" content="Play Equations, the free daily math puzzle game. Fill in the operators (+, −, ×, ÷) to make each equation true. New puzzles every day — solve them, race the clock, or challenge a friend in 1v1 battles.">
+  <title>Equations - Daily Math Puzzle Game | equationsgame.com</title>
+  <meta name="description" content="Play Equations, the free daily math puzzle game. Fill in the operators (+, −, ×, ÷) to make each equation true. New puzzles every day: solve them, race the clock, or challenge a friend in 1v1 battles.">
   <meta name="keywords" content="equations game, math puzzle, daily math game, math puzzle game, operators puzzle, arithmetic puzzle, order of operations, pemdas game, math wordle, daily brain teaser, math challenge, number puzzle, timed math game, math 1v1, math battle, free math game">
   <meta name="author" content="Equations Game">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -29,19 +29,19 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Equations">
   <meta property="og:locale" content="en_US">
-  <meta property="og:title" content="Equations — Daily Math Puzzle Game">
-  <meta property="og:description" content="Play the free daily math puzzle. Fill in the operators to make each equation true. New puzzles every day — plus Timed and 1v1 Battle modes.">
+  <meta property="og:title" content="Equations - Daily Math Puzzle Game">
+  <meta property="og:description" content="Play the free daily math puzzle. Fill in the operators to make each equation true. New puzzles every day, plus Timed and 1v1 Battle modes.">
   <meta property="og:url" content="https://equationsgame.com/">
   <meta property="og:image" content="https://equationsgame.com/images/opengraph2.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Equations — a daily math puzzle where you fill in the operators">
+  <meta property="og:image:alt" content="Equations: a daily math puzzle where you fill in the operators">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Equations — Daily Math Puzzle Game">
+  <meta name="twitter:title" content="Equations - Daily Math Puzzle Game">
   <meta name="twitter:description" content="Fill in the operators to make each equation true. A free daily math puzzle with Timed and 1v1 Battle modes.">
   <meta name="twitter:image" content="https://equationsgame.com/images/opengraph2.png">
-  <meta name="twitter:image:alt" content="Equations — a daily math puzzle where you fill in the operators">
+  <meta name="twitter:image:alt" content="Equations: a daily math puzzle where you fill in the operators">
   <meta name="twitter:url" content="https://equationsgame.com/">
 
   <script type="application/ld+json">
@@ -71,7 +71,7 @@
     "name": "Equations",
     "url": "https://equationsgame.com/",
     "inLanguage": "en",
-    "description": "Daily math puzzle game — fill in the operators to make the equation true."
+    "description": "Daily math puzzle game: fill in the operators to make the equation true."
   }
   </script>
   <style>
@@ -89,7 +89,7 @@
       padding: 2rem 1rem 3rem;
     }
 
-    /* Toast — styled replacement for native showToast() */
+    /* Toast - styled replacement for native showToast() */
     .toast {
       position: fixed; left: 50%; bottom: 2rem; transform: translateX(-50%);
       background: #333; color: #fff; padding: 0.75rem 1.25rem; border-radius: 12px;
@@ -755,7 +755,7 @@
     </div>
   </div>
 
-  <h1 class="logo-heading"><img src="images/finallogo no bg.png" alt="Equations — Daily Math Puzzle Game" class="logo"></h1>
+  <h1 class="logo-heading"><img src="images/finallogo no bg.png" alt="Equations - Daily Math Puzzle Game" class="logo"></h1>
   <p class="subtitle">New Puzzles Daily!</p>
 
   <div class="mode-switcher">
@@ -1160,7 +1160,7 @@
       <hr style="border:none;border-top:1px solid #eee;margin:0 0 0.9rem">
 
       <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#8DC883;margin-bottom:0.4rem">🏫 UNIVERSITY LEAGUES</p>
-      <p style="font-size:0.88rem;color:#555;margin-bottom:0.3rem">One league per university, open to anyone who selects it — no invite needed. Competition runs continuously with no seasons.</p>
+      <p style="font-size:0.88rem;color:#555;margin-bottom:0.3rem">One league per university, open to anyone who selects it, no invite needed. Competition runs continuously with no seasons.</p>
       <ul style="font-size:0.85rem;color:#555;margin:0.3rem 0 0.9rem;padding-left:1.2rem;line-height:1.7">
         <li>Leaderboards reset each <strong>calendar week</strong> (Mon–Sun) and <strong>calendar month</strong></li>
         <li>Each day, your best timed score earns you points</li>
@@ -1349,7 +1349,7 @@
       try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch {}
     }
 
-    // Styled, auto-dismissing toast — replaces native showToast() for transient errors.
+    // Styled, auto-dismissing toast - replaces native showToast() for transient errors.
     let _toastTimer = null;
     function showToast(msg, type = 'err') {
       const el = document.getElementById('toast');
@@ -1366,7 +1366,7 @@
 
     async function containsProfanity(name) {
       if (!name) return false;
-      // Third-party check on the signup / create-league path — time it out so a slow
+      // Third-party check on the signup / create-league path - time it out so a slow
       // or down service can't hang the flow. Fails open (allows the name) on error.
       const ac = new AbortController();
       const t = setTimeout(() => ac.abort(), 4000);
@@ -1618,7 +1618,7 @@
       { atoms:[A(6),A(4),A(2)],   binaryOps:[B('+'),B('×')],  result:14 },
       { atoms:[A(9),A(3),A(6)],   binaryOps:[B('÷'),B('+')],  result:9  },
       { atoms:[A(3),A(5),A(4)],   binaryOps:[B('×'),B('−')],  result:11 },
-      // — 100 additional timed puzzles —
+      // - 100 additional timed puzzles -
       { atoms:[A(11),A(5)],       binaryOps:[B('+')],          result:16 },
       { atoms:[A(16),A(8)],       binaryOps:[B('−')],          result:8  },
       { atoms:[A(4),A(7)],        binaryOps:[B('×')],          result:28 },
@@ -1968,7 +1968,7 @@
         }
         serverSolvedDay = today;
       } catch {
-        // Timed out — leave serverSolvedToday as default (all false)
+        // Timed out - leave serverSolvedToday as default (all false)
       }
     }
 
@@ -2473,7 +2473,7 @@
       showUserAvatarBtn();
       // Only reset the view to the splash when not mid-game. updateAuthUI() runs
       // on every auth event (including TOKEN_REFRESHED, which fires on tab focus
-      // and periodically) — without this guard, a refresh during a timed game
+      // and periodically) - without this guard, a refresh during a timed game
       // (regular or league) would yank the player back to the splash screen.
       const playing  = !document.getElementById('timedPlaying').classList.contains('hidden');
       const finished = !document.getElementById('timedFinished').classList.contains('hidden');
@@ -2987,7 +2987,7 @@
     function startBattlePolling() {
       stopBattlePolling();
       const gen = ++battlePollGen;
-      // Realtime push — refresh instantly on any change to this battle row.
+      // Realtime push - refresh instantly on any change to this battle row.
       // Purely additive: correctness still rests on the adaptive poll below, so
       // battle works even if Realtime isn't enabled on the table. Defensive so a
       // subscription failure can't break sync.
@@ -3178,7 +3178,7 @@
         await joinBattleById(newId);
         return;
       }
-      // Only one side has requested — resume polling so we see when opponent clicks
+      // Only one side has requested - resume polling so we see when opponent clicks
       startBattlePolling();
     }
 
@@ -3334,7 +3334,7 @@
     async function fetchLeaderboards() {
       document.getElementById('lbContent').innerHTML = '<p class="lb-loading">Loading...</p>';
       const today = getEstDateString();
-      // Daily and all-time are independent — fetch them together.
+      // Daily and all-time are independent - fetch them together.
       const [{ data: dailyRaw }, { data: allTime }] = await Promise.all([
         db.from('timed_scores').select('user_id, display_name, score').eq('day', today).order('score', { ascending: false }).limit(200),
         db.from('best_scores').select('user_id, display_name, score').order('score', { ascending: false }).limit(10)
@@ -3353,7 +3353,7 @@
       const rows = lbMode === 'daily' ? lbData.daily : lbData.allTime;
       const myId = currentSession?.user?.id;
       const container = document.getElementById('lbContent');
-      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet — be the first!</p>'; }
+      if (!rows || rows.length === 0) { container.innerHTML = '<p class="lb-empty">No scores yet. Be the first!</p>'; }
       else {
         const table = document.createElement('table'); table.className = 'lb-table';
         rows.forEach((row, i) => {
@@ -3522,7 +3522,7 @@
         setAuthMsg('Please choose a different username.', 'err'); btn.disabled = false; return;
       }
       const { data: existing } = await db.from('profiles').select('username').ilike('username', escapeIlike(username)).maybeSingle();
-      if (existing) { setAuthMsg('Username already taken — please choose another.', 'err'); btn.disabled = false; return; }
+      if (existing) { setAuthMsg('Username already taken. Please choose another.', 'err'); btn.disabled = false; return; }
 
       setAuthMsg('Creating account...');
       const { error } = await db.auth.signUp({ email, password, options: { data: { username } } });
@@ -3568,7 +3568,7 @@
             const c = JSON.parse(localStorage.getItem('eq_profile_cache') || 'null');
             if (c) { delete c.badges; localStorage.setItem('eq_profile_cache', JSON.stringify(c)); }
           } catch {}
-          // Settling now runs nightly via pg_cron — just surface any new badges.
+          // Settling now runs nightly via pg_cron - just surface any new badges.
           checkUnseenBadges();
         }
         try {
@@ -3622,11 +3622,11 @@
         const isViewingLeagueHome   = !document.getElementById('leagueHome').classList.contains('hidden');
         const isViewingLeagueInvite = !document.getElementById('leagueInvite').classList.contains('hidden');
         if (isViewingLeagueInvite && pendingInviteLeague) {
-          // User logged in from the invite page — re-render it in signed-in state
+          // User logged in from the invite page - re-render it in signed-in state
           document.getElementById('loginModal')?.classList.remove('open');
           openLeagueInvite(pendingInviteLeague);
         } else if (!isViewingLeagueHome && !isViewingLeagueInvite) {
-          // Not on a league page — show the lobby. Crucially, do NOT re-enter while
+          // Not on a league page - show the lobby. Crucially, do NOT re-enter while
           // viewing the invite page: a deep-link resolution may be in progress
           // (showLeagueInviteLoading), and re-entering would flash the lobby because
           // pendingUniversitySlug was already consumed.
@@ -3661,37 +3661,37 @@
     const ROUTES = {
       '/': {
         mode: 'daily',
-        title: 'Equations — Daily Math Puzzle Game | equationsgame.com',
-        description: 'Play Equations, the free daily math puzzle game. Fill in the operators (+, −, ×, ÷) to make each equation true. New puzzles every day — solve them, race the clock, or challenge a friend in 1v1 battles.'
+        title: 'Equations - Daily Math Puzzle Game | equationsgame.com',
+        description: 'Play Equations, the free daily math puzzle game. Fill in the operators (+, −, ×, ÷) to make each equation true. New puzzles every day: solve them, race the clock, or challenge a friend in 1v1 battles.'
       },
       '/daily': {
         mode: 'daily',
-        title: 'Daily Puzzle — Equations | equationsgame.com',
+        title: 'Daily Puzzle - Equations | equationsgame.com',
         description: 'Today\'s free daily math puzzle. Fill in the operators (+, −, ×, ÷) to make each equation true. Easy, medium, and hard puzzles refresh every day.'
       },
       '/timed': {
         mode: 'timed',
-        title: 'Timed Mode — Equations | Race the Clock Math Puzzles',
+        title: 'Timed Mode - Equations | Race the Clock Math Puzzles',
         description: 'Race the clock: solve as many equation puzzles as you can in 60 seconds. Climb the Equations Timed leaderboard.'
       },
       '/battle': {
         mode: 'battle',
-        title: '1v1 Battles — Equations | Multiplayer Math Puzzle Game',
+        title: '1v1 Battles - Equations | Multiplayer Math Puzzle Game',
         description: 'Challenge a friend to a 1v1 math puzzle battle. Choose 30s, 60s, 90s, or 2 minutes and see who can solve the most equations.'
       },
       '/leagues': {
         mode: 'leagues',
-        title: 'Leagues — Equations | Compete with Your University or Friends',
+        title: 'Leagues - Equations | Compete with Your University or Friends',
         description: 'Join your university league or create a private league with friends. Earn points daily and climb the season standings.'
       },
       '/how-to-play': {
         modal: 'help',
-        title: 'How to Play — Equations Daily Math Puzzle',
+        title: 'How to Play - Equations Daily Math Puzzle',
         description: 'Learn how to play Equations: fill in the operators (+, −, ×, ÷) to make each equation true, following PEMDAS order of operations.'
       },
       '/contact': {
         modal: 'contact',
-        title: 'Contact — Equations Daily Math Puzzle Game',
+        title: 'Contact - Equations Daily Math Puzzle Game',
         description: 'Get in touch with the Equations team. Send feedback, report a bug, or say hello.'
       }
     };
@@ -3956,7 +3956,7 @@
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({
             access_key: '2411e59b-7af4-45b2-8cbc-8881081d2a59',
-            subject: 'New contact form message — Equations Game',
+            subject: 'New contact form message - Equations Game',
             from_name: name || 'Equations Game contact form',
             name: name || '(not provided)',
             email,
@@ -4090,7 +4090,7 @@
     let pendingUniversitySlug = null; // university slug waiting for sign-in
     let pendingUniversityLeagueId   = null; // league id resolved server-side (skip slug lookup)
     let pendingUniversityLeagueName = null; // league display name resolved server-side
-    let pendingLeagueFreshSignup    = false; // just signed up — definitely not a member yet
+    let pendingLeagueFreshSignup    = false; // just signed up - definitely not a member yet
 
     function toLeagueSlug(name) {
       return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -4099,8 +4099,8 @@
     let pendingJoinedLeague = null;
     let pendingInviteLeague = null; // partial league data shown on invite page
     let _leagueFetchPromise = null; // resolves when loadMyLeagues inner fetch completes
-    let _leagueLbTabCache  = null; // { leagueId, week, month } — pre-fetched after today renders
-    let _leagueMembersCache = null; // { leagueId, promise } — reused across leaderboard tabs
+    let _leagueLbTabCache  = null; // { leagueId, week, month } - pre-fetched after today renders
+    let _leagueMembersCache = null; // { leagueId, promise } - reused across leaderboard tabs
 
     function fetchLeagueMembersFor(leagueId) {
       if (_leagueMembersCache?.leagueId === leagueId) return _leagueMembersCache.promise;
@@ -4181,7 +4181,7 @@
     }
 
     // Show the league page immediately with a loading state while we resolve
-    // membership — avoids parking the user on the general lobby splash after a
+    // membership - avoids parking the user on the general lobby splash after a
     // deep-link sign-in. The real openLeagueHome/openLeagueInvite replaces this.
     function showLeagueInviteLoading(slug) {
       document.getElementById('inviteLeagueName').textContent = prettifySlug(slug);
@@ -4191,14 +4191,14 @@
       showLeagueSection('leagueInvite');
     }
 
-    // Fallback when a deep-linked league can't be resolved — show the lobby.
+    // Fallback when a deep-linked league can't be resolved - show the lobby.
     function showLeaguesLobby() {
       showLeagueSection('leaguesLobby');
       try { renderLeaguesLobby(); } catch (e) { console.error('renderLeaguesLobby:', e); showLobbySection('leaguesOptions'); }
     }
 
     async function openLeagueInvite(found) {
-      // found = { id, name, university_name, type } — partial league data
+      // found = { id, name, university_name, type } - partial league data
       pendingInviteLeague = found;
       const displayName = found.university_name || found.name;
       const typeLabel   = found.type === 'university' ? '🏫 University League' : '👥 Custom League';
@@ -4233,7 +4233,7 @@
     async function enterLeaguesMode() {
       if (!currentSession) { showLeagueSection('leaguesLobby'); showLobbySection('leaguesAuthNote'); return; }
 
-      // Deep-linked straight to a university league — skip the lobby splash and
+      // Deep-linked straight to a university league - skip the lobby splash and
       // show the league page with a loading state while membership resolves.
       // loadMyLeagues() (called without await) synchronously primes myLeagues
       // from cache and sets _leagueFetchPromise, which autoOpenUniversityLeague
@@ -4247,7 +4247,7 @@
       }
 
       showLeagueSection('leaguesLobby');
-      // Render the lobby immediately (interactive — create/join options, plus your
+      // Render the lobby immediately (interactive - create/join options, plus your
       // leagues from cache) instead of blocking on a spinner. loadMyLeagues() primes
       // myLeagues from cache synchronously and kicks off the refresh in the
       // background; we re-render when it lands. This avoids the up-to-6s cold wait.
@@ -4274,7 +4274,7 @@
 
       // Fastest path: the server already resolved this league's id (passed via
       // sessionStorage on the post-sign-in redirect). Skip the 10s _leagueFetchPromise
-      // race and the fetch-all-university-leagues lookup — go straight to a single
+      // race and the fetch-all-university-leagues lookup - go straight to a single
       // indexed membership check, then route to home (member) or invite (non-member).
       const hintId   = pendingUniversityLeagueId;
       const hintName = pendingUniversityLeagueName;
@@ -4289,7 +4289,7 @@
           openLeagueInvite(found);
           return;
         }
-        // Membership comes from loadMyLeagues() — the authoritative source used
+        // Membership comes from loadMyLeagues() - the authoritative source used
         // everywhere else, with its localStorage cache. Check cache first, then
         // wait for the in-flight fetch. Never show "Join" to an actual member
         // just because a one-off probe was slow.
@@ -4299,7 +4299,7 @@
           m = myLeagues.find(l => l.id === hintId);
         }
         if (m) { openLeagueHome(m); return; }
-        // Cache/fetch says non-member — do one direct check as a final guard
+        // Cache/fetch says non-member - do one direct check as a final guard
         // (covers a stale or failed loadMyLeagues) before showing the invite.
         try {
           const { data: mem } = await dbWithTimeout(
@@ -4344,7 +4344,7 @@
         // One last myLeagues check in case the background fetch just finished.
         const lastCheck = myLeagues.find(l => l.id === found.id);
         if (lastCheck) { openLeagueHome(lastCheck); return; }
-        // Direct membership check — prevents showing the join modal to a member
+        // Direct membership check - prevents showing the join modal to a member
         // whose league_members fetch failed or was empty due to a REST error.
         const { data: mem } = await dbWithTimeout(
           db.from('league_members')
@@ -4365,7 +4365,7 @@
             renderLeaguesLobby();
             openLeagueHome(league);
           } else {
-            // Member, but couldn't load full league row — still show the invite
+            // Member, but couldn't load full league row - still show the invite
             // page (with what we have) rather than stranding on the loading state.
             openLeagueInvite(found);
           }
@@ -4376,7 +4376,7 @@
     }
 
     async function loadMyLeagues() {
-      // Serve from cache immediately — avoids waiting on two sequential Supabase
+      // Serve from cache immediately - avoids waiting on two sequential Supabase
       // calls (league_members then leagues) when the connection is slow.
       let hasCached = false;
       try {
@@ -4384,7 +4384,7 @@
         if (c?.leagues) { myLeagues = c.leagues; hasCached = true; }
       } catch {}
 
-      // innerFetch never rejects — errors are caught inside. We expose it as
+      // innerFetch never rejects - errors are caught inside. We expose it as
       // _leagueFetchPromise so autoOpenUniversityLeague() can await it after a
       // cold-start timeout instead of making duplicate REST calls.
       const innerFetch = (async () => {
@@ -4408,11 +4408,11 @@
       _leagueFetchPromise = innerFetch;
 
       if (!hasCached) {
-        // Cold start — block up to 6s then render whatever we have.
+        // Cold start - block up to 6s then render whatever we have.
         // innerFetch continues running in background after the timeout.
         await Promise.race([innerFetch, new Promise(r => setTimeout(r, 6000))]);
       }
-      // Warm start — cache already loaded, innerFetch refreshes in background.
+      // Warm start - cache already loaded, innerFetch refreshes in background.
     }
 
     function renderLeaguesLobby() {
@@ -4450,7 +4450,7 @@
       activeLeagueSeason = null;
       _leagueLbTabCache  = null;
 
-      // Show the league home immediately with the data we already have — don't block
+      // Show the league home immediately with the data we already have - don't block
       // on REST calls before rendering. All REST calls below refresh in the background.
       renderLeagueHomeHeader();
       showLeagueSection('leagueHome');
@@ -4460,11 +4460,11 @@
       }
 
       // Start members fetch immediately so it runs in parallel with the header background
-      // refresh below — by the time fetchAndRenderLeagueLeaderboard awaits it, it may
+      // refresh below - by the time fetchAndRenderLeagueLeaderboard awaits it, it may
       // already be done. Also shared across all leaderboard tab switches.
       fetchLeagueMembersFor(league.id);
 
-      // Background refresh — update header as each fetch completes.
+      // Background refresh - update header as each fetch completes.
       (async () => {
         try {
           const { data: full } = await dbWithTimeout(
@@ -4565,7 +4565,7 @@
         adminSection.classList.add('hidden');
       }
 
-      // Share button — university leagues always; custom leagues for non-admin members
+      // Share button - university leagues always; custom leagues for non-admin members
       const memberShareBtn = document.getElementById('btnShareInviteMember');
       if (activeLeague.type === 'university') {
         memberShareBtn.style.display = '';
@@ -4605,7 +4605,7 @@
 
     // ── Leaderboard fetching ────────────────────────────────────────────────
 
-    // Today's best scores for a league — reuses the Today-tab localStorage cache
+    // Today's best scores for a league - reuses the Today-tab localStorage cache
     // (eq_league_today_<id>) when warm, otherwise fetches. Returns rows sorted by
     // best_score DESC. Top 10 is enough for points (only ranks 1..N≤10 score).
     async function getTodayScoresForLeague(league) {
@@ -4673,7 +4673,7 @@
         document.getElementById('leagueLbHeading').textContent =
           activeLeagueSeason ? `Season ${activeLeagueSeason.season_number} Standings` : 'Season Standings';
         if (!activeLeagueSeason) {
-          contentEl.innerHTML = '<p class="lb-empty">No active season — start one to begin competing!</p>';
+          contentEl.innerHTML = '<p class="lb-empty">No active season. Start one to begin competing!</p>';
           return;
         }
         const [{ data: pts }, members] = await Promise.all([
@@ -4710,7 +4710,7 @@
         if (cachedPts) {
           pts = cachedPts;
         } else {
-          // Settled days only — today isn't in league_daily_points yet; we add it live below.
+          // Settled days only - today isn't in league_daily_points yet; we add it live below.
           const { data } = await db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lt('day', today);
           pts = data || [];
         }
@@ -4731,7 +4731,7 @@
 
     function renderLeagueLbRows(el, rows, myId, scoreLabel) {
       if (!rows || rows.length === 0) {
-        el.innerHTML = '<p class="lb-empty">No data yet — start playing!</p>'; return;
+        el.innerHTML = '<p class="lb-empty">No data yet. Start playing!</p>'; return;
       }
       const table = document.createElement('table'); table.className = 'lb-table';
       const medals = ['🥇', '🥈', '🥉'];
@@ -4938,7 +4938,7 @@
             || { name: uniName, domains: [] };
           const loginEmail = currentSession?.user?.email || '';
           if (loginEmail && uni.domains?.length > 0 && domainMatchesUni(loginEmail, uni.domains)) {
-            // Email verified — join directly without a modal
+            // Email verified - join directly without a modal
             await ensureCurrentUsername();
             const { error } = await db.rpc('join_university_league',
               { p_league_id: pendingInviteLeague.id, p_display_name: currentUsername || '' });
@@ -4958,7 +4958,7 @@
             pendingInviteLeague = null;
             showJoinedModal(league);
           } else {
-            // OTP or honor-system path — open the university modal with university pre-selected
+            // OTP or honor-system path - open the university modal with university pre-selected
             btn.disabled = false; btn.textContent = 'Join League';
             resetUniModal();
             document.getElementById('joinUniversityModal').classList.add('open');
@@ -5066,7 +5066,7 @@
       btn.disabled = false; btn.textContent = 'Leave';
       if (error) { msgEl.textContent = error.message; msgEl.className = 'settings-msg err'; return; }
       document.getElementById('leaveLeagueModal').classList.remove('open');
-      // Remove from in-memory list and cache immediately — the RPC already
+      // Remove from in-memory list and cache immediately - the RPC already
       // succeeded so re-fetching would just serve the stale localStorage cache.
       const leftId = activeLeague.id;
       myLeagues = myLeagues.filter(l => l.id !== leftId);
@@ -5237,16 +5237,16 @@
       document.getElementById('uniEmailInput').value = '';
       document.getElementById('uniCodeInput').value = '';
 
-      // Case 1: login email already matches — instant verification
+      // Case 1: login email already matches - instant verification
       const loginEmail = currentSession?.user?.email || '';
       if (loginEmail && uni.domains?.length > 0 && domainMatchesUni(loginEmail, uni.domains)) {
         const msgEl = document.getElementById('uniVerifyMsg');
-        msgEl.textContent = '✓ Email verified — joining...'; msgEl.className = 'settings-msg ok';
+        msgEl.textContent = '✓ Email verified, joining...'; msgEl.className = 'settings-msg ok';
         doJoinUniversity(uni);
         return;
       }
 
-      // Case 2: university has domains but login email doesn't match — OTP
+      // Case 2: university has domains but login email doesn't match - OTP
       if (uni.domains?.length > 0) {
         document.getElementById('uniOtpSection').classList.remove('hidden');
         const loginDomain = loginEmail.split('@')[1] || '';
@@ -5255,7 +5255,7 @@
         return;
       }
 
-      // Case 3: university not in Hipo — honor system
+      // Case 3: university not in Hipo - honor system
       document.getElementById('uniHonorSection').classList.remove('hidden');
     }
 
@@ -5371,14 +5371,14 @@
       const raw = localStorage.getItem('sb-pcyymbfaxacvmkxrvmhx-auth-token');
       if (raw) { const s = JSON.parse(raw); if (s?.access_token && s?.user) currentSession = s; }
     } catch {}
-    // Render puzzle immediately with local state — never block on network calls.
+    // Render puzzle immediately with local state - never block on network calls.
     // Auth and server-solved state load async and patch in after.
     puzzleIndex = getDailyIndex(difficulty);
     try { loadDailyPuzzle(); } catch (e) { console.error('loadDailyPuzzle error:', e); }
     (async () => {
       // Step 1: route immediately using the localStorage-pre-set session.
-      // Never block URL routing on any network call — getSession() comes after.
-      // Settling runs nightly via pg_cron, not on every load — just show new badges.
+      // Never block URL routing on any network call - getSession() comes after.
+      // Settling runs nightly via pg_cron, not on every load - just show new badges.
       checkUnseenBadges();
       const params = new URLSearchParams(location.search);
       const bid           = params.get('battle');
@@ -5386,7 +5386,7 @@
       const universitySlug = sessionStorage.getItem('pendingUniversitySlug') || params.get('universitySlug');
       if (universitySlug) {
         sessionStorage.removeItem('pendingUniversitySlug');
-        // Optional league id/name resolved server-side — lets autoOpenUniversityLeague
+        // Optional league id/name resolved server-side - lets autoOpenUniversityLeague
         // skip fetching every university league to match the slug.
         pendingUniversityLeagueId   = sessionStorage.getItem('pendingUniversityLeagueId') || null;
         pendingUniversityLeagueName = sessionStorage.getItem('pendingUniversityLeagueName') || null;
@@ -5425,7 +5425,7 @@
         applyRoute('/');
       }
 
-      // Step 2: verify/refresh auth — may make a network call for token refresh.
+      // Step 2: verify/refresh auth - may make a network call for token refresh.
       // Routing already ran above, so a slow or stalled getSession() can't block it.
       try {
         const { data: { session } } = await db.auth.getSession();
