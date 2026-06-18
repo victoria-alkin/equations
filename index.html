@@ -1057,6 +1057,7 @@
 
       <!-- Bottom links -->
       <div class="league-bottom-links">
+        <button class="link-btn" id="btnLeagueHowWorks">How this works</button>
         <button class="link-btn" id="btnShareInviteMember" style="display:none">Share invite link</button>
         <button class="link-btn" id="btnLeaveLeague" style="color:#cc4444">Leave League</button>
       </div>
@@ -1182,6 +1183,26 @@
       <h2 style="margin-bottom:0.3rem">You're in!</h2>
       <p id="joinedLeagueName" style="font-size:1rem;color:#555;margin-bottom:1.4rem"></p>
       <button class="btn-magic" id="btnGoToLeague">Go to League →</button>
+    </div>
+  </div>
+
+  <!-- First-join welcome / league intro -->
+  <div class="modal-overlay" id="leagueWelcomeModal">
+    <div class="modal" style="text-align:left;max-height:82vh;overflow-y:auto">
+      <button class="modal-close" id="leagueWelcomeClose">✕</button>
+      <h2 style="margin-bottom:1.1rem;text-align:center;line-height:1.3">Welcome to the <span id="welcomeLeagueName"></span> Equations League! 🎉</h2>
+
+      <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#8DC883;margin-bottom:0.3rem">🧩 THE PUZZLE</p>
+      <p style="font-size:0.88rem;color:#555;margin-bottom:0.9rem;line-height:1.6">Each puzzle has blank slots between the numbers. Drop in the operators (+, −, ×, ÷) so the equation comes out true. Order of operations applies, so × and ÷ happen before + and −.</p>
+
+      <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#8DC883;margin-bottom:0.3rem">⏱️ TIMED MODE</p>
+      <p style="font-size:0.88rem;color:#555;margin-bottom:0.9rem;line-height:1.6">In a league you play Timed mode: solve as many puzzles as you can in 60 seconds. How many you get right is your score for that round. Play as many rounds as you like.</p>
+
+      <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#8DC883;margin-bottom:0.3rem">🏆 HOW THIS LEAGUE WORKS</p>
+      <p id="welcomeMechUniversity" style="font-size:0.88rem;color:#555;margin-bottom:1.2rem;line-height:1.6">Each day, your best score is ranked against everyone in the league. 1st place earns the most points, down to 10th. Those points build the This Week (Mon–Sun) and This Month leaderboards, which reset each week and month. The top 10 are shown. Didn't play? That day's a 0, so a little every day goes a long way.</p>
+      <p id="welcomeMechCustom" class="hidden" style="font-size:0.88rem;color:#555;margin-bottom:1.2rem;line-height:1.6">Your league competes in 7-day seasons. Each day, your best score is ranked against the other members. 1st place earns the most points, down to 10th. Whoever has the most points when the season ends wins. Didn't play? That day's a 0, so play every day to take the crown.</p>
+
+      <button class="btn-magic" id="btnLeagueWelcomePlay" style="width:100%">Let's play! →</button>
     </div>
   </div>
 
@@ -4093,10 +4114,47 @@
     let pendingVerifyUni   = null;
 
     function showJoinedModal(league) {
+      // First league a user ever joins → show the welcome/intro instead.
+      if (maybeFirstJoinWelcome(league)) return;
       pendingJoinedLeague = league;
       document.getElementById('joinedLeagueName').textContent =
         `You've joined ${league.name}!`;
       document.getElementById('joinedLeagueModal').classList.add('open');
+    }
+
+    // ── First-join welcome / league intro ───────────────────────────────────
+    let _welcomeLeague = null;
+    let _welcomeNavigate = false;
+
+    // Shows the league intro the first time a user joins any league. Returns true
+    // if it was shown (so callers skip their normal "You're in!" / navigation).
+    function maybeFirstJoinWelcome(league) {
+      let seen = false;
+      try { seen = localStorage.getItem('eq_league_welcome_seen') === '1'; } catch {}
+      if (seen) return false;
+      try { localStorage.setItem('eq_league_welcome_seen', '1'); } catch {}
+      showLeagueWelcome(league, true); // navigate into the league when dismissed
+      return true;
+    }
+
+    // navigateOnClose: true after a fresh join (go to the league on dismiss);
+    // false when re-opened from the league's "How this works" link.
+    function showLeagueWelcome(league, navigateOnClose) {
+      _welcomeLeague = league;
+      _welcomeNavigate = !!navigateOnClose;
+      document.getElementById('welcomeLeagueName').textContent =
+        league.university_name || league.name;
+      const isUni = league.type === 'university';
+      document.getElementById('welcomeMechUniversity').classList.toggle('hidden', !isUni);
+      document.getElementById('welcomeMechCustom').classList.toggle('hidden', isUni);
+      document.getElementById('leagueWelcomeModal').classList.add('open');
+    }
+
+    function dismissLeagueWelcome() {
+      document.getElementById('leagueWelcomeModal').classList.remove('open');
+      const league = _welcomeLeague, navigate = _welcomeNavigate;
+      _welcomeLeague = null; _welcomeNavigate = false;
+      if (navigate && league) openLeagueHome(league);
     }
 
     // ── Visibility helpers ──────────────────────────────────────────────────
@@ -4847,6 +4905,9 @@
 
     document.getElementById('btnLeaguesShowAuth').addEventListener('click', () => openLoginModal('login'));
     document.getElementById('btnHowLeaguesWork').addEventListener('click', () => document.getElementById('howLeaguesModal').classList.add('open'));
+    document.getElementById('btnLeagueHowWorks').addEventListener('click', () => { if (activeLeague) showLeagueWelcome(activeLeague, false); });
+    document.getElementById('btnLeagueWelcomePlay').addEventListener('click', dismissLeagueWelcome);
+    document.getElementById('leagueWelcomeClose').addEventListener('click', dismissLeagueWelcome);
     document.getElementById('howLeaguesClose').addEventListener('click', () => document.getElementById('howLeaguesModal').classList.remove('open'));
     document.getElementById('btnJoinUniversity').addEventListener('click', openJoinUniversityModal);
     document.getElementById('btnJoinExistingLeague').addEventListener('click', openJoinExistingModal);
@@ -4926,7 +4987,8 @@
         if (!myLeagues.find(l => l.id === leagueId)) myLeagues.push(joined);
         try { localStorage.setItem('eq_leagues_cache', JSON.stringify({ leagues: myLeagues })); } catch {}
         pendingInviteLeague = null;
-        openLeagueHome(joined);
+        // First-ever join shows the welcome (which navigates in on dismiss).
+        if (!maybeFirstJoinWelcome(joined)) openLeagueHome(joined);
       }
     });
 
