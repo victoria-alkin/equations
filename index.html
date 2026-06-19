@@ -1150,9 +1150,8 @@
       <p style="font-size:0.88rem;color:#555;margin-bottom:0.3rem">Create a private league and invite friends via a link or code. The league admin controls when seasons start.</p>
       <ul style="font-size:0.85rem;color:#555;margin:0.3rem 0 0.9rem;padding-left:1.2rem;line-height:1.7">
         <li>Seasons last <strong>7 days</strong></li>
-        <li>Each day, your best timed score earns you points</li>
-        <li>Points are ranked: 1st place earns the most, down to 10th</li>
-        <li>The player with the most points at the end wins the season</li>
+        <li>Each day, your best timed score is added to your season total</li>
+        <li>The player with the <strong>highest total</strong> at the end wins the season</li>
         <li>The admin can start a new season anytime</li>
         <li>All members are shown ranked on the leaderboard</li>
       </ul>
@@ -1163,16 +1162,16 @@
       <p style="font-size:0.88rem;color:#555;margin-bottom:0.3rem">One league per university, open to anyone who selects it, no invite needed. Competition runs continuously with no seasons.</p>
       <ul style="font-size:0.85rem;color:#555;margin:0.3rem 0 0.9rem;padding-left:1.2rem;line-height:1.7">
         <li>Leaderboards reset each <strong>calendar week</strong> (Mon–Sun) and <strong>calendar month</strong></li>
-        <li>Each day, your best timed score earns you points</li>
-        <li>Points are ranked: 1st place earns the most, down to 10th</li>
+        <li>Each day, your best timed score is added to your weekly and monthly totals</li>
+        <li>The <strong>highest total</strong> climbs to the top</li>
         <li>Top 10 players shown on the leaderboard</li>
         <li>Your timed scores count for global leaderboards too</li>
       </ul>
 
       <hr style="border:none;border-top:1px solid #eee;margin:0 0 0.9rem">
 
-      <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#aaa;margin-bottom:0.4rem">📊 POINTS</p>
-      <p style="font-size:0.85rem;color:#555;line-height:1.6">Points are awarded based on your rank among players who played that day. If N players played (up to 10), 1st gets N points, 2nd gets N−1, and so on. Players who didn't play that day get 0.</p>
+      <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#aaa;margin-bottom:0.4rem">📊 SCORING</p>
+      <p style="font-size:0.85rem;color:#555;line-height:1.6">Your weekly, monthly, and season standings are the sum of your best timed score from each day. Solve more each day, and play more days, to climb. Days you don't play simply add nothing.</p>
     </div>
   </div>
 
@@ -1199,8 +1198,8 @@
       <p style="font-size:0.88rem;color:#555;margin-bottom:0.9rem;line-height:1.6">In a league you play Timed mode: solve as many puzzles as you can in 60 seconds. How many you get right is your score for that round. Play as many rounds as you like.</p>
 
       <p style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#8DC883;margin-bottom:0.3rem">🏆 HOW THIS LEAGUE WORKS</p>
-      <p id="welcomeMechUniversity" style="font-size:0.88rem;color:#555;margin-bottom:1.2rem;line-height:1.6">Each day, your best score is ranked against everyone in the league. 1st place earns the most points, down to 10th. Those points build the This Week (Mon–Sun) and This Month leaderboards, which reset each week and month. The top 10 are shown. Didn't play? That day's a 0, so a little every day goes a long way.</p>
-      <p id="welcomeMechCustom" class="hidden" style="font-size:0.88rem;color:#555;margin-bottom:1.2rem;line-height:1.6">Your league competes in 7-day seasons. Each day, your best score is ranked against the other members. 1st place earns the most points, down to 10th. Whoever has the most points when the season ends wins. Didn't play? That day's a 0, so play every day to take the crown.</p>
+      <p id="welcomeMechUniversity" style="font-size:0.88rem;color:#555;margin-bottom:1.2rem;line-height:1.6">Each day, your best timed score is added to your This Week (Mon–Sun) and This Month totals. The more you solve across the week and the month, the higher you climb. The top 10 are shown. Didn't play? That day adds nothing, so a little every day goes a long way.</p>
+      <p id="welcomeMechCustom" class="hidden" style="font-size:0.88rem;color:#555;margin-bottom:1.2rem;line-height:1.6">Your league competes in 7-day seasons. Each day, your best timed score is added to your season total. Whoever has the highest total when the season ends wins. Didn't play? That day adds nothing, so play every day to take the crown.</p>
 
       <button class="btn-magic" id="btnLeagueWelcomePlay" style="width:100%">Let's play! →</button>
     </div>
@@ -4504,8 +4503,8 @@
 
       await fetchAndRenderLeagueLeaderboard();
 
-      // Pre-fetch week + month points in the background after today is rendered,
-      // so switching to those tabs is instant.
+      // Pre-fetch week + month settled scores in the background after today is
+      // rendered, so switching to those tabs is instant.
       const _pid = league.id;
       (async () => {
         try {
@@ -4517,8 +4516,8 @@
           const monthStart = `${estNow.getFullYear()}-${String(estNow.getMonth() + 1).padStart(2, '0')}-01`;
           // Settled days only (today is added live at render time, not stored here).
           const [{ data: week }, { data: month }] = await Promise.all([
-            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', weekStart).lt('day', day),
-            db.from('league_daily_points').select('user_id, points').eq('league_id', _pid).gte('day', monthStart).lt('day', day)
+            db.from('league_daily_points').select('user_id, best_score').eq('league_id', _pid).gte('day', weekStart).lt('day', day),
+            db.from('league_daily_points').select('user_id, best_score').eq('league_id', _pid).gte('day', monthStart).lt('day', day)
           ]);
           if (activeLeague?.id === _pid) {
             _leagueLbTabCache = { leagueId: _pid, week: week || [], month: month || [] };
@@ -4605,38 +4604,23 @@
 
     // ── Leaderboard fetching ────────────────────────────────────────────────
 
-    // Today's best scores for a league - reuses the Today-tab localStorage cache
-    // (eq_league_today_<id>) when warm, otherwise fetches. Returns rows sorted by
-    // best_score DESC. Top 10 is enough for points (only ranks 1..N≤10 score).
-    async function getTodayScoresForLeague(league) {
+    // Today's best score per member, for the running week/month/season totals
+    // (today isn't settled into league_daily_points yet). Returns
+    // { user_id: bestScore } for everyone who scored today. No p_limit here:
+    // unlike the Today tab (which shows the top 10), aggregation must count
+    // every scorer's daily best. Cached separately from the Today-tab cache.
+    async function getTodayBestByUser(league) {
       const today = getEstDateString();
-      const cacheKey = `eq_league_today_${league.id}`;
+      const cacheKey = `eq_league_todayfull_${league.id}`;
       try {
         const c = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-        if (c && c.day === today && Array.isArray(c.rows)) return c.rows;
+        if (c && c.day === today && c.byUser) return c.byUser;
       } catch {}
-      const params = { p_league_id: league.id, p_day: today };
-      if (league.type === 'university') params.p_limit = 10;
-      const { data } = await db.rpc('get_league_today_scores', params);
-      const rows = (data || []).map(r => ({ ...r, score: r.best_score }));
-      if (data) { try { localStorage.setItem(cacheKey, JSON.stringify({ day: today, rows })); } catch {} }
-      return rows;
-    }
-
-    // Provisional points for today (today isn't settled yet) using the same
-    // rank-based formula as settle_league_points(): N = min(memberCount, 10);
-    // 1st gets N, 2nd N-1, …; only players who scored (>0) and rank ≤ N earn points.
-    // todayRows must be sorted by score DESC.
-    function addTodayProvisionalPoints(totalByUser, todayRows, memberCount) {
-      const n = Math.min(memberCount, 10);
-      let rank = 1;
-      for (const r of todayRows) {
-        const score = r.best_score ?? r.score ?? 0;
-        if (score > 0 && rank <= n) {
-          totalByUser[r.user_id] = (totalByUser[r.user_id] || 0) + (n - rank + 1);
-        }
-        rank++;
-      }
+      const { data } = await db.rpc('get_league_today_scores', { p_league_id: league.id, p_day: today });
+      const byUser = {};
+      (data || []).forEach(r => { if (r.best_score > 0) byUser[r.user_id] = r.best_score; });
+      if (data) { try { localStorage.setItem(cacheKey, JSON.stringify({ day: today, byUser })); } catch {} }
+      return byUser;
     }
 
     async function fetchAndRenderLeagueLeaderboard() {
@@ -4676,18 +4660,21 @@
           contentEl.innerHTML = '<p class="lb-empty">No active season. Start one to begin competing!</p>';
           return;
         }
-        const [{ data: pts }, members] = await Promise.all([
-          db.from('league_daily_points').select('user_id, points').eq('season_id', activeLeagueSeason.id),
-          fetchLeagueMembersFor(activeLeague.id)
+        const [{ data: pts }, members, todayBest] = await Promise.all([
+          db.from('league_daily_points').select('user_id, best_score').eq('season_id', activeLeagueSeason.id),
+          fetchLeagueMembersFor(activeLeague.id),
+          getTodayBestByUser(activeLeague)
         ]);
         const totalByUser = {};
-        (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
+        (pts || []).forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + (p.best_score || 0); });
+        // Add today's best (not settled into league_daily_points yet) so it counts live.
+        Object.entries(todayBest).forEach(([uid, s]) => { totalByUser[uid] = (totalByUser[uid] || 0) + s; });
 
         const rows = members.map(m => ({
           user_id: m.user_id, display_name: m.display_name || 'Unknown',
           score: totalByUser[m.user_id] || 0
         })).sort((a, b) => b.score - a.score);
-        renderLeagueLbRows(contentEl, rows, myId, 'pts');
+        renderLeagueLbRows(contentEl, rows, myId, 'score');
 
       } else if (leagueLbTab === 'week' || leagueLbTab === 'month') {
         const estNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -4705,27 +4692,27 @@
         }
         const cachedPts = _leagueLbTabCache?.leagueId === activeLeague.id ? _leagueLbTabCache[leagueLbTab] : null;
         const membersPromise = fetchLeagueMembersFor(activeLeague.id);
-        const todayPromise   = getTodayScoresForLeague(activeLeague);
+        const todayPromise   = getTodayBestByUser(activeLeague);
         let pts;
         if (cachedPts) {
           pts = cachedPts;
         } else {
           // Settled days only - today isn't in league_daily_points yet; we add it live below.
-          const { data } = await db.from('league_daily_points').select('user_id, points').eq('league_id', activeLeague.id).gte('day', startStr).lt('day', today);
+          const { data } = await db.from('league_daily_points').select('user_id, best_score').eq('league_id', activeLeague.id).gte('day', startStr).lt('day', today);
           pts = data || [];
         }
         const members   = await membersPromise;
-        const todayRows = await todayPromise;
+        const todayBest = await todayPromise;
         const totalByUser = {};
-        pts.forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + p.points; });
-        // Include today's provisional points so a score you just earned shows up now.
-        addTodayProvisionalPoints(totalByUser, todayRows, members.length);
+        pts.forEach(p => { totalByUser[p.user_id] = (totalByUser[p.user_id] || 0) + (p.best_score || 0); });
+        // Add today's best score live so a score you just earned shows up now.
+        Object.entries(todayBest).forEach(([uid, s]) => { totalByUser[uid] = (totalByUser[uid] || 0) + s; });
 
         const rows = members
           .map(m => ({ user_id: m.user_id, display_name: m.display_name || 'Unknown', score: totalByUser[m.user_id] || 0 }))
           .sort((a, b) => b.score - a.score)
           .slice(0, 10);
-        renderLeagueLbRows(contentEl, rows, myId, 'pts');
+        renderLeagueLbRows(contentEl, rows, myId, 'score');
       }
     }
 

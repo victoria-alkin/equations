@@ -160,19 +160,19 @@ BEGIN
     WHERE league_id = p_league_id AND user_id = auth.uid() AND is_admin
   ) THEN RAISE EXCEPTION 'Not an admin'; END IF;
 
-  -- End any active season first
+  -- End any active season first. Winner is the highest aggregate of daily best scores.
   UPDATE league_seasons
   SET ended_at = now(),
       winner_id   = (
         SELECT user_id FROM league_daily_points
         WHERE season_id = league_seasons.id
-        GROUP BY user_id ORDER BY SUM(points) DESC LIMIT 1
+        GROUP BY user_id ORDER BY SUM(best_score) DESC LIMIT 1
       ),
       winner_name = (
         SELECT lm.display_name FROM league_daily_points ldp
         JOIN league_members lm ON lm.league_id = ldp.league_id AND lm.user_id = ldp.user_id
         WHERE ldp.season_id = league_seasons.id
-        GROUP BY ldp.user_id, lm.display_name ORDER BY SUM(ldp.points) DESC LIMIT 1
+        GROUP BY ldp.user_id, lm.display_name ORDER BY SUM(ldp.best_score) DESC LIMIT 1
       )
   WHERE league_id = p_league_id AND ended_at IS NULL;
 
@@ -287,7 +287,7 @@ BEGIN
             winner_id   = (
               SELECT user_id FROM league_daily_points
               WHERE season_id = season_id_var
-              GROUP BY user_id ORDER BY SUM(points) DESC LIMIT 1
+              GROUP BY user_id ORDER BY SUM(best_score) DESC LIMIT 1
             ),
             winner_name = (
               SELECT lm.display_name FROM league_daily_points ldp
@@ -295,7 +295,7 @@ BEGIN
                 ON lm.league_id = ldp.league_id AND lm.user_id = ldp.user_id
               WHERE ldp.season_id = season_id_var
               GROUP BY ldp.user_id, lm.display_name
-              ORDER BY SUM(ldp.points) DESC LIMIT 1
+              ORDER BY SUM(ldp.best_score) DESC LIMIT 1
             )
         WHERE id = season_id_var AND ended_at IS NULL;
       END IF;
